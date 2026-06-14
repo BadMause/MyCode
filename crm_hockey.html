@@ -1,0 +1,1813 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hockey Coach CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ============================= BASE ============================= */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#fbfbfd; --ink:#1d1d1f; --ink2:#6e6e73;
+  --line:#e3e3e6; --accent:#0071e3; --accent2:#0a84ff; --good:#1d9e75; --warn:#ba7517;
+  --bad:#e24b4a; --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05); --r:14px;
+}
+html,body{height:100%}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#c9c9cf;border-radius:6px;border:2px solid var(--bg)}
+
+/* ============================= SIDEBAR ============================= */
+.sidebar{width:230px;flex:0 0 230px;background:var(--panel);border-right:1px solid var(--line);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;overflow-y:auto}
+.brand{padding:18px 18px 12px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#0071e3,#0a84ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.brand b{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.brand small{display:block;color:var(--ink2);font-size:11px;font-weight:500}
+#tabs{padding:6px 10px 20px;display:flex;flex-direction:column;gap:2px}
+.tab{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;color:var(--ink2);font-weight:500;font-size:13px;cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:background .12s,color .12s}
+.tab .ic{width:18px;height:18px;flex:0 0 18px;opacity:.85}
+.tab .num{margin-left:auto;font-size:10px;color:#b5b5ba;font-weight:600}
+.tab:hover{background:var(--panel2);color:var(--ink)}
+.tab.active{background:rgba(0,113,227,.1);color:var(--accent)}
+.tab.active .ic{opacity:1}
+.tab.active .num{color:var(--accent)}
+
+/* ============================= APP ROOT ============================= */
+#appRoot{flex:1;min-width:0;padding:26px 30px 60px;max-width:1500px}
+.sec-title{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.sec-title .badge{width:40px;height:40px;flex:0 0 40px;border-radius:11px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.sec-title h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+.sec-title p{color:var(--ink2);font-size:13px;margin-top:2px}
+.sec-title .actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ============================= COMPONENTS ============================= */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g6{grid-template-columns:repeat(6,1fr)}
+@media(max-width:1100px){.g4,.g6{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}}
+@media(max-width:760px){.g2,.g3,.g4,.g6{grid-template-columns:1fr}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.kpi .l{color:var(--ink2);font-size:12px;font-weight:500;margin-top:2px}
+.kpi .s{font-size:11px;margin-top:4px;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:13px;transition:.12s}
+.btn:hover{border-color:#c9c9cf;background:var(--panel2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#0062c4}
+.btn.danger{color:var(--bad);border-color:#f0c9c8}
+.btn.danger:hover{background:#fdf0f0}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn.ghost{border-color:transparent;background:none}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:var(--panel2);border:1px solid var(--line);color:var(--ink2)}
+.pill.good{color:var(--good);background:rgba(29,158,117,.1);border-color:transparent}
+.pill.warn{color:var(--warn);background:rgba(186,117,23,.1);border-color:transparent}
+.pill.bad{color:var(--bad);background:rgba(226,75,74,.1);border-color:transparent}
+.pill.accent{color:var(--accent);background:rgba(0,113,227,.1);border-color:transparent}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--ink2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;cursor:default;user-select:none}
+th.sortable{cursor:pointer}
+th.sortable:hover{color:var(--ink)}
+tbody tr:hover{background:var(--panel2)}
+td.num,th.num{text-align:center}
+input,select,textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
+label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:5px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.muted{color:var(--ink2)}
+.empty{text-align:center;color:var(--ink2);padding:40px 20px;font-size:13px}
+.tabsrow{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tabsrow button{padding:8px 14px;border:none;background:none;color:var(--ink2);font-weight:600;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabsrow button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{border:none;background:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;color:var(--ink2)}
+.seg button.active{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* ============================= MODAL ============================= */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.32);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:1000;overflow-y:auto;backdrop-filter:blur(2px)}
+#modal.open{display:flex}
+#modalBody{background:var(--panel);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:820px;padding:0;max-height:none}
+.modal-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);border-radius:18px 18px 0 0;z-index:2}
+.modal-head h2{font-size:17px;font-weight:700}
+.modal-head .x{margin-left:auto;width:30px;height:30px;border-radius:8px;border:none;background:var(--panel2);font-size:18px;color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.modal-head .x:hover{background:#ececef}
+.modal-body{padding:20px}
+
+/* ============================= TOASTS ============================= */
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:11px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:tin .25s ease}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ============================= RINK / ICE ============================= */
+.ice{background:linear-gradient(180deg,#f0f7ff,#e8f1fb);border:1px solid #d3e3f5;border-radius:14px;padding:16px}
+.slot{background:var(--panel);border:1px dashed #b9cfe6;border-radius:10px;padding:8px;min-height:54px;text-align:center;font-size:12px}
+.slot.filled{border-style:solid;border-color:var(--accent);background:#fff}
+.slot .pos{font-size:10px;color:var(--ink2);font-weight:700;text-transform:uppercase}
+.slot .nm{font-weight:600;font-size:12px;margin-top:2px}
+
+@media print{.sidebar,.sec-title .actions,.tabsrow,.btn{display:none!important}#appRoot{padding:0}}
+
+/* ============================= APPLE THEME OVERRIDES ============================= */
+.kpi{transition:transform .12s,box-shadow .12s}
+.kpi:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.card{transition:box-shadow .15s}
+.sec-title .badge{background:linear-gradient(135deg,#0071e3,#0a84ff);box-shadow:0 4px 12px rgba(0,113,227,.3)}
+.btn.primary{box-shadow:0 2px 8px rgba(0,113,227,.25)}
+.tab.active{font-weight:600}
+.grade{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;font-weight:800;font-size:12px;color:#fff}
+.bar{height:6px;border-radius:4px;background:#e8e8ec;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.chartbox{position:relative;height:240px}
+.chartbox.sm{height:180px}
+.chartbox.lg{height:320px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">🏒</div>
+    <div><b>Hockey CRM</b><small id="brandSub">Coach Workspace</small></div>
+  </div>
+  <nav id="tabs"></nav>
+</aside>
+<main id="appRoot"></main>
+<div id="modal"><div id="modalBody"></div></div>
+<div id="toasts"></div>
+
+<script>
+/* =====================================================================
+   HOCKEY COACH CRM — single-file offline app
+   namespace: CRM   |   storage: crm_hockey_v1
+   ===================================================================== */
+"use strict";
+const CRM = window.CRM = { modules:{}, LSKEY:"crm_hockey_v1" };
+
+/* --------------------------- TABS & ICONS --------------------------- */
+CRM.TABS = [
+  ["dashboard","01","Дашборд","Сводка по команде"],
+  ["scouting","02","Скаутинг","Скаут-база кандидатов"],
+  ["profiles","03","Игроки","Профили команды"],
+  ["roster","04","Состав","Звенья и спецбригады"],
+  ["matches","05","Матчи","Подготовка, день, итоги"],
+  ["stats","06","Статистика","Индивидуальная статистика"],
+  ["opponents","07","Соперники","Разбор и ростеры"],
+  ["physical","08","Физика","Тесты и нормативы"],
+  ["psycho","09","Психология","Психотесты"],
+  ["preseason","10","Предсезонка","План подготовки"],
+  ["calendar","11","Календарь","События сезона"],
+  ["medical","12","Медицина","Травмы и статусы"],
+  ["analytics","13","Аналитика","Графики и тренды"],
+  ["notes","14","Заметки","Записи тренера"],
+  ["settings","15","Настройки","Команда и данные"]
+];
+CRM.ICONS = (function(){
+  const w='width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';
+  const I=(p)=>`<svg ${w}>${p}</svg>`;
+  return {
+    dashboard:I('<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>'),
+    scouting:I('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'),
+    profiles:I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>'),
+    roster:I('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>'),
+    matches:I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>'),
+    stats:I('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
+    opponents:I('<path d="M14.5 2v6l4 4"/><path d="M3 3l7 7"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>'),
+    physical:I('<path d="M6 7v10M18 7v10M6 12h12M3 9v6M21 9v6"/>'),
+    psycho:I('<path d="M12 2a7 7 0 0 0-7 7c0 3 2 4 2 7h10c0-3 2-4 2-7a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/>'),
+    preseason:I('<path d="M3 12h4l3 8 4-16 3 8h4"/>'),
+    calendar:I('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+    medical:I('<path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2Z"/>'),
+    analytics:I('<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>'),
+    notes:I('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>'),
+    settings:I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>')
+  };
+})();
+
+/* --------------------------- GLOBAL HELPERS --------------------------- */
+function uuid(){ return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function parseLocalDate(s){ if(!s) return null; const m=String(s).split('-').map(Number); if(m.length<3||!m[0]) return null; return new Date(m[0],m[1]-1,m[2]); }
+function localYmd(d){ d=d||new Date(); const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+function fmtDate(s){ const d=parseLocalDate(s); if(!d) return '—'; return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateShort(s){ const d=parseLocalDate(s); if(!d) return '—'; return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}); }
+function num(v,d){ const n=parseFloat(v); return isNaN(n)?(d==null?0:d):n; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function avg(arr){ const a=arr.filter(x=>typeof x==='number'&&!isNaN(x)); return a.length?a.reduce((s,x)=>s+x,0)/a.length:0; }
+function round1(n){ return Math.round(n*10)/10; }
+
+const POS_LABEL={C:'Ц',LW:'ЛК',RW:'ПК',D:'З',G:'ВР'};
+const POS_FULL={C:'Центральный',LW:'Левый край',RW:'Правый край',D:'Защитник',G:'Вратарь'};
+const STATUS_LABEL={active:'Здоров',limited:'Ограничен',injured:'Травма',suspended:'Дисквал.'};
+const STATUS_CLASS={active:'good',limited:'warn',injured:'bad',suspended:'bad'};
+
+function playerById(id){ return (CRM.store.get('scout')||[]).find(p=>p.id===id)||null; }
+function scoutById(id){ return (CRM.store.get('scoutDB')||[]).find(p=>p.id===id)||null; }
+function playerSurname(p){ if(!p) return ''; return p.surname || (p.name||'').split(' ').slice(-1)[0] || p.name || ''; }
+function playerFirstName(p){ if(!p) return ''; return p.firstName || (p.name||'').split(' ')[0] || ''; }
+function playerName(p){ if(!p) return '—'; return p.name || ((p.surname||'')+' '+(p.firstName||'')).trim() || '—'; }
+function playerLabel(p){ if(!p) return '—'; const n=p.number?('#'+p.number+' '):''; return n+playerName(p); }
+function gradeColor(g){ const m={'A':'#1d9e75','A+':'#1d9e75','A-':'#1d9e75','B':'#0071e3','B+':'#0071e3','B-':'#0a84ff','C':'#ba7517','C+':'#ba7517','C-':'#cf8a2a','D':'#e24b4a','F':'#e24b4a'}; return m[g]||'#888780'; }
+
+function sectionTitle(num,title,desc,actions){
+  return `<div class="sec-title">
+    <div class="badge">${esc(num)}</div>
+    <div><h1>${esc(title)}</h1>${desc?`<p>${esc(desc)}</p>`:''}</div>
+    ${actions?`<div class="actions">${actions}</div>`:''}
+  </div>`;
+}
+function chartOpts(extra){
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Inter',size:11},color:'#6e6e73',boxWidth:12,padding:12}}},
+    scales:{x:{grid:{color:'#eef0f3'},ticks:{font:{family:'Inter',size:10},color:'#6e6e73'}},y:{grid:{color:'#eef0f3'},ticks:{font:{family:'Inter',size:10},color:'#6e6e73'},beginAtZero:true}}};
+  return Object.assign(base,extra||{});
+}
+CRM._charts={};
+function makeChart(id,cfg){ try{ if(CRM._charts[id]){CRM._charts[id].destroy();} const cv=document.getElementById(id); if(!cv) return; CRM._charts[id]=new Chart(cv.getContext('2d'),cfg); }catch(e){ console.warn('chart',id,e); } }
+
+/* --------------------------- STORE --------------------------- */
+CRM.store = (function(){
+  let data=null;
+  function defaults(){
+    return {
+      scout:[], scoutDB:[],
+      roster:{ lines:{}, special:{}, history:[], showSpecial:false },
+      matches:[], opponents:[],
+      playoffBracket:{r8:[],r4:[],r2:[],f:[]},
+      physical:[], psycho:[], practice:[], calendar:[], medical:[],
+      preseason:{ plan:[], details:[], fatigue:[], seasonPlan:'', seasonDetails:'', cal:{start:'',end:'',seasonEnd:''} },
+      notes:[],
+      settings:{ coach:'', team:'Моя команда', league:'', season:'2025/26', norms:defaultNorms() },
+      scoutTarget:{}, scoutPriorities:{},
+      state:{ seedOpp10:false }
+    };
+  }
+  function defaultNorms(){
+    return [
+      {id:'sprint30',name:'Спринт 30м (сек)',lower:true,gold:4.0,silver:4.3,bronze:4.6},
+      {id:'jump',name:'Прыжок в длину (см)',lower:false,gold:260,silver:240,bronze:220},
+      {id:'plank',name:'Планка (сек)',lower:false,gold:180,silver:120,bronze:90},
+      {id:'pullups',name:'Подтягивания',lower:false,gold:15,silver:10,bronze:6},
+      {id:'beep',name:'Beep-test (уровень)',lower:false,gold:12,silver:10,bronze:8}
+    ];
+  }
+  function migrate(d){
+    const def=defaults();
+    for(const k in def){ if(d[k]===undefined) d[k]=def[k]; }
+    // nested defaults (add-only, never overwrite existing)
+    d.roster=Object.assign({lines:{},special:{},history:[],showSpecial:false},d.roster||{});
+    if(!Array.isArray(d.roster.history)) d.roster.history=[];
+    d.settings=Object.assign({coach:'',team:'Моя команда',league:'',season:'2025/26',norms:defaultNorms()},d.settings||{});
+    if(!Array.isArray(d.settings.norms)||!d.settings.norms.length) d.settings.norms=defaultNorms();
+    d.preseason=Object.assign({plan:[],details:[],fatigue:[],seasonPlan:'',seasonDetails:'',cal:{start:'',end:'',seasonEnd:''}},d.preseason||{});
+    d.playoffBracket=Object.assign({r8:[],r4:[],r2:[],f:[]},d.playoffBracket||{});
+    d.state=Object.assign({seedOpp10:false},d.state||{});
+    // ensure scout players carry expected shape (add-only)
+    (d.scout||[]).forEach(normalizePlayer);
+    (d.scoutDB||[]).forEach(normalizePlayer);
+    (d.matches||[]).forEach(m=>{ if(!m.score) m.score={our:null,opp:null}; if(!m.prep) m.prep={tasks:'',oppLines:{}}; });
+    return d;
+  }
+  function normalizePlayer(p){
+    if(!p) return;
+    if(p.skills===undefined) p.skills={skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0};
+    if(p.status===undefined) p.status='active';
+    if(!p.name) p.name=((p.surname||'')+' '+(p.firstName||'')).trim();
+  }
+  function load(){
+    try{ const raw=localStorage.getItem(CRM.LSKEY); data = raw? migrate(JSON.parse(raw)) : defaults(); }
+    catch(e){ console.warn('load failed',e); data=defaults(); }
+    return data;
+  }
+  function persist(){ try{ localStorage.setItem(CRM.LSKEY,JSON.stringify(data)); }catch(e){ CRM.toast('Ошибка сохранения: '+e.message); } }
+  function get(path){
+    if(!data) load();
+    if(!path) return data;
+    return path.split('.').reduce((o,k)=> (o==null?undefined:o[k]), data);
+  }
+  function set(path,value){
+    if(!data) load();
+    const keys=path.split('.'); let o=data;
+    for(let i=0;i<keys.length-1;i++){ if(o[keys[i]]==null||typeof o[keys[i]]!=='object') o[keys[i]]={}; o=o[keys[i]]; }
+    o[keys[keys.length-1]]=value;
+    persist();
+    return value;
+  }
+  function save(){ persist(); }
+  function exportJson(){ return JSON.stringify(data,null,2); }
+  function importJson(str){ const obj=JSON.parse(str); data=migrate(obj); persist(); }
+  function resetAll(){ data=defaults(); persist(); }
+  return { load,get,set,save,defaults,defaultNorms,exportJson,importJson,resetAll };
+})();
+
+/* --------------------------- TOAST --------------------------- */
+CRM.toast=function(msg){
+  const host=document.getElementById('toasts'); if(!host) return;
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; host.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); },2600);
+};
+
+/* --------------------------- MODAL --------------------------- */
+CRM.modal=(function(){
+  function open(html){
+    const m=document.getElementById('modal'), b=document.getElementById('modalBody');
+    b.innerHTML=html; m.classList.add('open');
+    // NOTE: inline <script> in html is NOT executed; all events via onclick attrs
+    m.onclick=(e)=>{ if(e.target===m) close(); };
+    document.onkeydown=(e)=>{ if(e.key==='Escape') close(); };
+    return b;
+  }
+  function close(){ const m=document.getElementById('modal'); m.classList.remove('open'); document.getElementById('modalBody').innerHTML=''; document.onkeydown=null; CRM.modalNav&&CRM.modalNav.reset(); }
+  function frame(title,bodyHtml,headExtra){
+    return `<div class="modal-head">${CRM.modalNav&&CRM.modalNav.stack.length>1?`<button class="btn sm ghost" onclick="CRM.modalNav.back()">‹ Назад</button>`:''}
+      <h2>${esc(title)}</h2>${headExtra||''}<button class="x" onclick="CRM.modal.close()">×</button></div>
+      <div class="modal-body">${bodyHtml}</div>`;
+  }
+  return { open, close, frame };
+})();
+
+/* --------------------------- MODAL NAV (back stack) --------------------------- */
+CRM.modalNav=(function(){
+  const stack=[];
+  function register(fn){ if(stack.length>=12) stack.shift(); stack.push(fn); }
+  function back(){ if(stack.length>1){ stack.pop(); const fn=stack[stack.length-1]; fn&&fn(); } else { CRM.modal.close(); } }
+  function reset(){ stack.length=0; }
+  function wrap(fn){
+    return function(...args){
+      register(()=>fn.apply(this,args));
+      return fn.apply(this,args);
+    };
+  }
+  return { stack, register, back, reset, wrap };
+})();
+
+/* --------------------------- ROUTER --------------------------- */
+CRM.router=(function(){
+  function parse(){
+    const h=(location.hash||'#dashboard').replace(/^#/,'');
+    const [name,...rest]=h.split('/');
+    const params={}; rest.forEach((seg,i)=>{ if(i===0)params._=seg; const kv=seg.split('='); if(kv.length===2)params[kv[0]]=decodeURIComponent(kv[1]); });
+    return { name: name||'dashboard', params, raw:rest };
+  }
+  function go(name,params){
+    let h='#'+name;
+    if(params){ for(const k in params) h+='/'+k+'='+encodeURIComponent(params[k]); }
+    if(location.hash===h) render(); else location.hash=h;
+  }
+  function render(){
+    const {name,params}=parse();
+    const mod=CRM.modules[name]||CRM.modules.dashboard;
+    buildTabs(name);
+    const el=document.getElementById('appRoot'); el.innerHTML='';
+    try{ mod.render(el,params); }
+    catch(e){ el.innerHTML=`<div class="card"><b>Ошибка модуля «${esc(name)}»</b><pre style="white-space:pre-wrap;color:#e24b4a;margin-top:8px;font-size:12px">${esc(e.stack||e.message)}</pre></div>`; console.error(e); }
+    window.scrollTo(0,0);
+  }
+  return { parse, go, render };
+})();
+
+function buildTabs(active){
+  const nav=document.getElementById('tabs');
+  nav.innerHTML=CRM.TABS.map(([name,n,label])=>
+    `<button class="tab ${name===active?'active':''}" title="${esc(label)}" onclick="CRM.router.go('${name}')">
+      <span class="ic">${CRM.ICONS[name]||''}</span><span>${esc(label)}</span><span class="num">${n}</span>
+    </button>`).join('');
+}
+
+/* --------------------------- BOOT --------------------------- */
+CRM.boot=function(){
+  CRM.store.load();
+  const st=CRM.store.get('settings');
+  const sub=document.getElementById('brandSub'); if(sub&&st) sub.textContent=(st.team||'Команда')+' · '+(st.season||'');
+  window.addEventListener('hashchange',CRM.router.render);
+  if(!location.hash) location.hash='#dashboard';
+  CRM.router.render();
+};
+
+/* ===================================================================
+   01 — DASHBOARD
+   =================================================================== */
+CRM.modules.dashboard={
+  render(el){
+    const scout=CRM.store.get('scout')||[];
+    const matches=CRM.store.get('matches')||[];
+    const finished=matches.filter(m=>m.result&&m.result.finished);
+    const wins=finished.filter(m=>m.score&&m.score.our>m.score.opp).length;
+    const losses=finished.filter(m=>m.score&&m.score.our<m.score.opp).length;
+    const ties=finished.filter(m=>m.score&&m.score.our===m.score.opp).length;
+    const injured=scout.filter(p=>p.status==='injured'||p.status==='limited');
+    const goalsFor=finished.reduce((s,m)=>s+num(m.score&&m.score.our),0);
+    const goalsAgainst=finished.reduce((s,m)=>s+num(m.score&&m.score.opp),0);
+    const upcoming=matches.filter(m=>!(m.result&&m.result.finished)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const lines=CRM.store.get('roster.lines')||{};
+    const onIce=Object.values(lines).filter(Boolean).length;
+
+    el.innerHTML=sectionTitle('01','Дашборд','Оперативная сводка по команде',
+      `<button class="btn primary" onclick="CRM.router.go('matches')">К матчам</button>`)+
+    `<div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="v">${finished.length}</div><div class="l">Сыграно матчей</div><div class="s pill good">${wins}П ${ties}Н ${losses}П</div></div>
+      <div class="kpi"><div class="v">${goalsFor}:${goalsAgainst}</div><div class="l">Шайбы за / против</div><div class="s ${goalsFor>=goalsAgainst?'pill good':'pill bad'}">${goalsFor-goalsAgainst>=0?'+':''}${goalsFor-goalsAgainst}</div></div>
+      <div class="kpi"><div class="v">${scout.length}</div><div class="l">Игроков в команде</div><div class="s muted">${onIce} в составе</div></div>
+      <div class="kpi"><div class="v" style="color:${injured.length?'var(--bad)':'var(--good)'}">${injured.length}</div><div class="l">Лазарет</div><div class="s muted">травмы / ограничения</div></div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div style="display:flex;align-items:center;margin-bottom:12px"><b>Форма команды</b><span class="muted" style="margin-left:auto;font-size:12px">последние матчи</span></div>
+        <div class="chartbox sm"><canvas id="dashForm"></canvas></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;margin-bottom:12px"><b>Ближайшие матчи</b><a style="margin-left:auto;font-size:12px" onclick="CRM.router.go('calendar')">календарь →</a></div>
+        ${upcoming.length?`<table><tbody>${upcoming.slice(0,5).map(m=>`<tr onclick="CRM.modules.matches.open('${m.id}')" style="cursor:pointer">
+          <td style="width:70px"><span class="muted">${fmtDateShort(m.date)}</span></td>
+          <td><b>${esc(m.opp||'Соперник')}</b> ${m.home?'<span class="pill accent">дома</span>':'<span class="pill">в гостях</span>'}</td>
+          <td class="num">${m.playoff?'<span class="pill bad">плей-офф</span>':m.preseason?'<span class="pill warn">предсезон</span>':'<span class="pill">сезон</span>'}</td></tr>`).join('')}</tbody></table>`
+          :'<div class="empty">Нет запланированных матчей</div>'}
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <div style="margin-bottom:12px"><b>Лазарет</b></div>
+        ${injured.length?injured.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)">
+          <span class="pill ${STATUS_CLASS[p.status]}">${STATUS_LABEL[p.status]}</span>
+          <b>${esc(playerName(p))}</b><span class="muted">${POS_LABEL[p.pos]||''}</span>
+          <span class="muted" style="margin-left:auto;font-size:12px">${esc(p.statusNote||'')}</span></div>`).join('')
+          :'<div class="empty">Все здоровы 💪</div>'}
+      </div>
+      <div class="card">
+        <div style="margin-bottom:12px"><b>Бомбардиры</b></div>
+        ${(()=>{const ag=CRM.modules.matches.teamLeaders(); return ag.length?`<table><thead><tr><th>Игрок</th><th class="num">И</th><th class="num">Г</th><th class="num">А</th><th class="num">О</th></tr></thead><tbody>${ag.slice(0,6).map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.gp}</td><td class="num">${r.g}</td><td class="num">${r.a}</td><td class="num"><b>${r.pts}</b></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Нет статистики</div>';})()}
+      </div>
+    </div>`;
+
+    // form chart: cumulative goal differential per finished match
+    const fm=finished.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    let cum=0; const labels=[],vals=[];
+    fm.forEach((m,i)=>{ cum+=num(m.score.our)-num(m.score.opp); labels.push(fmtDateShort(m.date)||('М'+(i+1))); vals.push(cum); });
+    if(!fm.length){ labels.push('—'); vals.push(0); }
+    makeChart('dashForm',{type:'line',data:{labels,datasets:[{label:'Разница шайб (накопл.)',data:vals,borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.1)',fill:true,tension:.3,pointRadius:3}]},options:chartOpts({scales:{x:{grid:{color:'#eef0f3'},ticks:{font:{family:'Inter',size:10}}},y:{grid:{color:'#eef0f3'},beginAtZero:false}}})});
+  }
+};
+
+/* ===================================================================
+   02 — SCOUTING (scoutDB = candidate database, NOT the team)
+   =================================================================== */
+CRM.modules.scouting={
+  esc:esc,
+  render(el,params){
+    const db=CRM.store.get('scoutDB')||[];
+    const pr=CRM.store.get('scoutPriorities')||{};
+    const fpos=params.pos||'';
+    let list=db.slice();
+    if(fpos) list=list.filter(p=>p.pos===fpos);
+    list.sort((a,b)=>(b.rating||0)-(a.rating||0));
+    el.innerHTML=sectionTitle('02','Скаутинг','База кандидатов на просмотр — отдельно от основной команды',
+      `<button class="btn" onclick="CRM.modules.scouting.priorities()">Приоритеты</button>
+       <button class="btn primary" onclick="CRM.modules.scouting.edit()">+ Кандидат</button>`)+
+    `<div class="seg" style="margin-bottom:14px">
+      ${['','C','LW','RW','D','G'].map(p=>`<button class="${fpos===p?'active':''}" onclick="CRM.router.go('scouting',${p?`{pos:'${p}'}`:'null'})">${p?POS_LABEL[p]:'Все'}</button>`).join('')}
+    </div>
+    <div class="grid g3">
+    ${list.length?list.map(p=>`
+      <div class="card" style="cursor:pointer" onclick="CRM.modules.scouting.open('${p.id}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="grade" style="background:${gradeColor(p.grade)}">${esc(p.grade||'?')}</span>
+          <div style="min-width:0"><b>${esc(playerName(p))}</b><div class="muted" style="font-size:12px">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' л.':''}</div></div>
+          ${pr[p.id]?`<span class="pill accent" style="margin-left:auto">приоритет</span>`:''}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;font-size:11px">
+          ${p.shot?`<span class="pill">хват ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h}см</span>`:''}${p.w?`<span class="pill">${p.w}кг</span>`:''}${p.team?`<span class="pill">${esc(p.team)}</span>`:''}
+        </div>
+        ${p.note?`<p class="muted" style="margin-top:8px;font-size:12px">${esc(p.note).slice(0,90)}</p>`:''}
+      </div>`).join(''):'<div class="empty card" style="grid-column:1/-1">База пуста. Добавьте кандидата.</div>'}
+    </div>`;
+  },
+  open(id){
+    const p=scoutById(id); if(!p) return;
+    const sk=p.skills||{}; const order=[['skating','Катание'],['size','Габариты'],['iq','Хоккейный IQ'],['puck','Владение'],['shot','Бросок'],['offense','Атака'],['defense','Оборона']];
+    const pr=CRM.store.get('scoutPriorities')||{};
+    CRM.modal.open(CRM.modal.frame('Скаут-отчёт',`
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <span class="grade" style="background:${gradeColor(p.grade)};width:48px;height:48px;font-size:18px">${esc(p.grade||'?')}</span>
+        <div style="flex:1;min-width:200px">
+          <h2 style="font-size:20px">${esc(playerName(p))}</h2>
+          <div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.team?'· '+esc(p.team):''}</div>
+          <div class="row" style="margin-top:8px;gap:6px">
+            ${p.shot?`<span class="pill">Хват ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h} см</span>`:''}${p.w?`<span class="pill">${p.w} кг</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn ${pr[p.id]?'primary':''} sm" onclick="CRM.modules.scouting.togglePriority('${p.id}')">${pr[p.id]?'★ В приоритете':'☆ В приоритет'}</button>
+          <button class="btn sm" onclick="CRM.modules.scouting.toTeam('${p.id}')">→ В команду</button>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="card"><b>Профиль навыков</b><div class="chartbox sm" style="margin-top:8px"><canvas id="scRadar"></canvas></div></div>
+        <div class="card"><b>Оценки</b><div style="margin-top:10px">
+          ${order.map(([k,l])=>`<div style="margin-bottom:8px"><div style="display:flex;font-size:12px"><span>${l}</span><b style="margin-left:auto">${num(sk[k])}/10</b></div><div class="bar"><i style="width:${num(sk[k])*10}%"></i></div></div>`).join('')}
+        </div></div>
+      </div>
+      ${p.gkNotes?`<div class="card" style="margin-top:14px"><b>Вратарские заметки</b><p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(p.gkNotes)}</p></div>`:''}
+      ${p.note?`<div class="card" style="margin-top:14px"><b>Заключение скаута</b><p style="margin-top:6px;white-space:pre-wrap">${esc(p.note)}</p></div>`:''}
+      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.scouting.edit('${p.id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.scouting.del('${p.id}')">Удалить</button></div>
+    `));
+    const vals=order.map(([k])=>num(sk[k]));
+    makeChart('scRadar',{type:'radar',data:{labels:order.map(o=>o[1]),datasets:[{data:vals,borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.15)',pointBackgroundColor:'#0071e3'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{family:'Inter',size:10}}}}}});
+  },
+  togglePriority(id){ const pr=CRM.store.get('scoutPriorities')||{}; if(pr[id]) delete pr[id]; else pr[id]=true; CRM.store.set('scoutPriorities',pr); CRM.toast('Приоритеты обновлены'); this.open(id); },
+  toTeam(id){
+    const p=scoutById(id); if(!p) return;
+    const scout=CRM.store.get('scout')||[];
+    const np=Object.assign({},p,{id:uuid(),status:'active'}); scout.push(np); CRM.store.set('scout',scout);
+    CRM.toast(playerName(p)+' добавлен(а) в команду'); CRM.modal.close();
+  },
+  edit(id){
+    const p=id?scoutById(id):{};
+    const sk=(p&&p.skills)||{};
+    const f=(n,l,v,t)=>`<div style="flex:1;min-width:120px"><label class="fld">${l}</label><input id="sc_${n}" value="${esc(v==null?'':v)}" ${t?'type="'+t+'"':''}></div>`;
+    const sf=(n,l)=>`<div style="flex:1;min-width:90px"><label class="fld">${l}</label><input id="sk_${n}" type="number" min="0" max="10" value="${num(sk[n])}"></div>`;
+    CRM.modal.open(CRM.modal.frame(id?'Редактировать кандидата':'Новый кандидат',`
+      <div class="row">${f('surname','Фамилия',p&&p.surname)}${f('firstName','Имя',p&&p.firstName)}${f('number','Номер',p&&p.number,'number')}</div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1"><label class="fld">Позиция</label><select id="sc_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Хват</label><select id="sc_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Левый</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Правый</option></select></div>
+        ${f('age','Возраст',p&&p.age,'number')}${f('grade','Грейд (A/B/C/D)',p&&p.grade)}
+      </div>
+      <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}${f('team','Текущий клуб',p&&p.team)}${f('agent','Агент',p&&p.agent)}</div>
+      <div style="margin-top:14px"><b>Оценки навыков (0–10)</b><div class="row" style="margin-top:8px">${sf('skating','Катание')}${sf('size','Габариты')}${sf('iq','IQ')}${sf('puck','Владение')}</div>
+      <div class="row" style="margin-top:8px">${sf('shot','Бросок')}${sf('offense','Атака')}${sf('defense','Оборона')}</div></div>
+      <div style="margin-top:12px"><label class="fld">Заключение скаута</label><textarea id="sc_note" rows="3">${esc(p&&p.note||'')}</textarea></div>
+      ${(p&&p.pos==='G')||!id?`<div style="margin-top:10px"><label class="fld">Вратарские заметки</label><textarea id="sc_gkNotes" rows="2">${esc(p&&p.gkNotes||'')}</textarea></div>`:''}
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.scouting.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
+    `));
+  },
+  save(id){
+    const v=(n)=>{const e=document.getElementById('sc_'+n);return e?e.value.trim():'';};
+    const sv=(n)=>num((document.getElementById('sk_'+n)||{}).value);
+    const db=CRM.store.get('scoutDB')||[];
+    let p=id?db.find(x=>x.id===id):null;
+    const data={ surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),
+      age:v('age'),grade:v('grade').toUpperCase(),h:v('h'),w:v('w'),team:v('team'),agent:v('agent'),note:v('note'),
+      gkNotes:(document.getElementById('sc_gkNotes')||{}).value||'',
+      skills:{skating:sv('skating'),size:sv('size'),iq:sv('iq'),puck:sv('puck'),shot:sv('shot'),offense:sv('offense'),defense:sv('defense')} };
+    data.name=(data.surname+' '+data.firstName).trim();
+    data.rating=round1(avg(Object.values(data.skills)));
+    if(!data.surname&&!data.firstName){ CRM.toast('Укажите имя'); return; }
+    if(p){ Object.assign(p,data); } else { p=Object.assign({id:'sd_'+uuid().slice(3)},data); db.push(p); }
+    CRM.store.set('scoutDB',db); CRM.modal.close(); CRM.router.render(); CRM.toast('Кандидат сохранён');
+  },
+  del(id){ if(!confirm('Удалить кандидата из базы?'))return; let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; delete pr[id]; CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); },
+  priorities(){
+    const pr=CRM.store.get('scoutPriorities')||{}; const ids=Object.keys(pr);
+    const list=ids.map(scoutById).filter(Boolean).sort((a,b)=>(b.rating||0)-(a.rating||0));
+    CRM.modal.open(CRM.modal.frame('Приоритетные цели скаутинга',
+      list.length?`<table><thead><tr><th>Грейд</th><th>Игрок</th><th>Поз.</th><th class="num">Рейтинг</th><th></th></tr></thead><tbody>
+      ${list.map(p=>`<tr><td><span class="grade" style="background:${gradeColor(p.grade)}">${esc(p.grade||'?')}</span></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td><td class="num">${p.rating||0}</td><td><button class="btn sm" onclick="CRM.modules.scouting.open('${p.id}')">Открыть</button></td></tr>`).join('')}
+      </tbody></table>`:'<div class="empty">Нет приоритетных целей. Отметьте кандидатов звёздочкой.</div>'));
+  }
+};
+
+/* ===================================================================
+   03 — PROFILES (team players; scout[] array)
+   =================================================================== */
+CRM.modules.profiles={
+  render(el,params){
+    const scout=CRM.store.get('scout')||[];
+    const fpos=params.pos||'';
+    let list=scout.slice();
+    if(fpos) list=list.filter(p=>p.pos===fpos);
+    list.sort((a,b)=>{ const pa=['G','D','C','LW','RW'].indexOf(a.pos),pb=['G','D','C','LW','RW'].indexOf(b.pos); if(pa!==pb)return pa-pb; return playerSurname(a).localeCompare(playerSurname(b)); });
+    el.innerHTML=sectionTitle('03','Игроки команды','Профили, статистика и медкарта',
+      `<button class="btn primary" onclick="CRM.modules.profiles.edit()">+ Игрок</button>`)+
+    `<div class="seg" style="margin-bottom:14px">${['','G','D','C','LW','RW'].map(p=>`<button class="${fpos===p?'active':''}" onclick="CRM.router.go('profiles',${p?`{pos:'${p}'}`:'null'})">${p?POS_LABEL[p]:'Все'}</button>`).join('')}</div>
+    <div class="card" style="padding:0">${list.length?`<table><thead><tr><th>#</th><th>Игрок</th><th>Поз.</th><th class="num">Возр.</th><th>Хват</th><th class="num">И</th><th class="num">О</th><th>Статус</th></tr></thead><tbody>
+      ${list.map(p=>{const ag=CRM.modules.matches.playerAgg(p.id);return `<tr style="cursor:pointer" onclick="CRM.modules.profiles.open('${p.id}')">
+        <td><b>${esc(p.number||'')}</b></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td>
+        <td class="num">${esc(p.age||'')}</td><td>${p.shot||''}</td><td class="num">${ag.gp}</td><td class="num"><b>${ag.pts}</b></td>
+        <td><span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span></td></tr>`;}).join('')}
+    </tbody></table>`:'<div class="empty">Команда пуста. Добавьте игроков или перенесите из скаутинга.</div>'}</div>`;
+  },
+  open(id,tab){
+    const p=playerById(id); if(!p) return;
+    tab=tab||'overview';
+    const ag=CRM.modules.matches.playerAgg(id);
+    const head=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${esc(p.number||'#')}</div>
+      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· хват '+p.shot:''}</div></div>
+      <span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span>
+    </div>
+    <div class="tabsrow">
+      <button class="${tab==='overview'?'active':''}" onclick="CRM.modules.profiles.open('${id}','overview')">Обзор</button>
+      <button class="${tab==='matches'?'active':''}" onclick="CRM.modules.profiles.open('${id}','matches')">Матчи</button>
+      <button class="${tab==='med'?'active':''}" onclick="CRM.modules.profiles.open('${id}','med')">Медицина и тесты</button>
+    </div>`;
+    let body='';
+    if(tab==='overview'){
+      body=`<div class="grid g3" style="margin-bottom:14px">
+        <div class="kpi"><div class="v">${ag.gp}</div><div class="l">Игр всего</div></div>
+        <div class="kpi"><div class="v">${ag.gpPre}</div><div class="l">Предсезонка</div></div>
+        <div class="kpi"><div class="v">${ag.gpSeason}</div><div class="l">Сезон</div></div>
+        <div class="kpi"><div class="v">${ag.gpPlayoff}</div><div class="l">Плей-офф</div></div>
+        <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Ср. оценка</div></div>
+        <div class="kpi"><div class="v" style="color:${ag.misses?'var(--bad)':'var(--ink)'}">${ag.misses}</div><div class="l">Пропуски</div></div>
+      </div>
+      <div class="card"><b>Сводная статистика</b>
+        <div class="grid g4" style="margin-top:10px;gap:8px">
+          <div class="kpi"><div class="v">${ag.g}</div><div class="l">Голы</div></div>
+          <div class="kpi"><div class="v">${ag.a}</div><div class="l">Передачи</div></div>
+          <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Очки</div></div>
+          <div class="kpi"><div class="v">${ag.pm>=0?'+':''}${ag.pm}</div><div class="l">+/−</div></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.profiles.edit('${id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.profiles.del('${id}')">Удалить из команды</button></div>`;
+    } else if(tab==='matches'){
+      body=CRM.modules.matches.profilePane(id);
+    } else {
+      const phys=(CRM.store.get('physical')||[]).filter(r=>r.playerId===id);
+      const psy=(CRM.store.get('psycho')||[]).filter(r=>r.playerId===id);
+      const med=(CRM.store.get('medical')||[]).filter(r=>r.playerId===id);
+      body=`<div class="card"><b>Травмы и статус</b>
+        ${med.length?`<table style="margin-top:8px"><tbody>${med.map(m=>`<tr><td>${fmtDate(m.date)}</td><td><b>${esc(m.diagnosis||m.type||'—')}</b></td><td><span class="pill ${STATUS_CLASS[m.status]||''}">${STATUS_LABEL[m.status]||''}</span></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Записей нет</p>'}
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="card"><b>Физические тесты</b>${phys.length?`<table style="margin-top:8px"><tbody>${phys.slice(-5).reverse().map(r=>`<tr><td>${fmtDateShort(r.date)}</td><td class="muted">${esc((r.results&&Object.keys(r.results).length)||0)} показателей</td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Нет данных</p>'}</div>
+        <div class="card"><b>Психотесты</b>${psy.length?`<table style="margin-top:8px"><tbody>${psy.slice(-5).reverse().map(r=>`<tr><td>${fmtDateShort(r.date)}</td><td class="muted">${esc(r.note||'')||'—'}</td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Нет данных</p>'}</div>
+      </div>`;
+    }
+    CRM.modal.open(CRM.modal.frame('Профиль игрока',head+body));
+  },
+  edit(id){
+    const p=id?playerById(id):{};
+    const f=(n,l,v,t)=>`<div style="flex:1;min-width:110px"><label class="fld">${l}</label><input id="pf_${n}" value="${esc(v==null?'':v)}" ${t?'type="'+t+'"':''}></div>`;
+    CRM.modal.open(CRM.modal.frame(id?'Редактировать игрока':'Новый игрок',`
+      <div class="row">${f('surname','Фамилия',p&&p.surname)}${f('firstName','Имя',p&&p.firstName)}${f('number','Номер',p&&p.number,'number')}</div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1"><label class="fld">Позиция</label><select id="pf_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Хват</label><select id="pf_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Левый</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Правый</option></select></div>
+        ${f('age','Возраст',p&&p.age,'number')}
+      </div>
+      <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}
+        <div style="flex:1"><label class="fld">Статус</label><select id="pf_status">${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${p&&p.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>
+      </div>
+      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="pf_note" rows="2">${esc(p&&p.note||'')}</textarea></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.profiles.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
+    `));
+  },
+  save(id){
+    const v=(n)=>{const e=document.getElementById('pf_'+n);return e?e.value.trim():'';};
+    const scout=CRM.store.get('scout')||[];
+    let p=id?scout.find(x=>x.id===id):null;
+    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),age:v('age'),h:v('h'),w:v('w'),status:v('status'),note:v('note')};
+    data.name=(data.surname+' '+data.firstName).trim();
+    if(!data.surname&&!data.firstName){ CRM.toast('Укажите имя'); return; }
+    if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0}},data); scout.push(p); }
+    CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  del(id){ if(!confirm('Удалить игрока из команды?'))return; let scout=CRM.store.get('scout')||[]; scout=scout.filter(p=>p.id!==id); CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалён'); }
+};
+
+/* --------------------------- ROSTER SLOTS --------------------------- */
+const ROSTER_SLOTS={
+  fwdLines:[1,2,3,4], fwdPos:['L','C','R'],
+  defLines:[1,2,3,4], defPos:['L','R'],
+  gk:['g1','g2','g3'],
+  fwdKeys(){ const a=[]; this.fwdLines.forEach(n=>this.fwdPos.forEach(p=>a.push('f'+n+p))); return a; },
+  defKeys(){ const a=[]; this.defLines.forEach(n=>this.defPos.forEach(p=>a.push('d'+n+p))); return a; },
+  allKeys(){ return [].concat(this.fwdKeys(),this.defKeys(),this.gk); },
+  label(key){
+    if(key[0]==='g') return 'Вратарь '+key[1];
+    const line=key[1], pos=key[2];
+    const posL={L:'ЛК',C:'Ц',R:'ПК'}[pos]||{L:'ЛЗ',R:'ПЗ'}[pos]||pos;
+    return (key[0]==='f'?'Зв.'+line+' ':'Пара'+line+' ')+posL;
+  }
+};
+const SPECIAL_KEYS=['pp54','pp53','pk45','pk35','ee65','ee56'];
+const SPECIAL_LABEL={pp54:'ПП 5×4',pp53:'ПП 5×3',pk45:'ПК 4×5',pk35:'ПК 3×5',ee65:'6×5 (пустые)',ee56:'5×6 (пустые)'};
+
+/* ===================================================================
+   05 — MATCHES (core module)
+   =================================================================== */
+CRM.modules.matches={
+  esc:esc,
+  /* ---- data helpers ---- */
+  _md(id){ return (CRM.store.get('matches')||[]).find(m=>m.id===id)||null; },
+  ensureExt(m){
+    if(!m) return m;
+    if(!m.score) m.score={our:null,opp:null};
+    if(!m.prep) m.prep={tasks:'',oppLines:{}};
+    if(!m.prep.oppLines) m.prep.oppLines={};
+    if(!m.result) m.result={finished:false,ppGoals:0,ppAttempts:0,pkGoalsAgainst:0,pkTimes:0,gk:{startId:'',backupId:'',changed:false},playerStats:{},comboRatings:{}};
+    if(!m.result.playerStats) m.result.playerStats={};
+    if(!m.result.comboRatings) m.result.comboRatings={};
+    if(!m.result.gk) m.result.gk={startId:'',backupId:'',changed:false};
+    return m;
+  },
+  tournLabel(m){ return m.playoff?'плей-офф':m.preseason?'предсезон':'сезон'; },
+  tournPill(m){ return m.playoff?'<span class="pill bad">плей-офф</span>':m.preseason?'<span class="pill warn">предсезон</span>':'<span class="pill">сезон</span>'; },
+
+  playerMatchHistory(pid){
+    const out=[];
+    (CRM.store.get('matches')||[]).forEach(m=>{
+      if(!(m.result&&m.result.finished)) return;
+      const st=m.result.playerStats&&m.result.playerStats[pid];
+      if(st) out.push({m,st});
+    });
+    out.sort((a,b)=>(a.m.date||'').localeCompare(b.m.date||''));
+    return out;
+  },
+  playerAgg(pid){
+    const hist=this.playerMatchHistory(pid);
+    const a={gp:0,gpPre:0,gpSeason:0,gpPlayoff:0,g:0,a:0,pts:0,pm:0,pim:0,ppG:0,ppA:0,ratings:[]};
+    hist.forEach(({m,st})=>{
+      a.gp++; if(m.preseason)a.gpPre++; else if(m.playoff)a.gpPlayoff++; else a.gpSeason++;
+      a.g+=num(st.g); a.a+=num(st.a); a.pm+=num(st.pm); a.pim+=num(st.pim); a.ppG+=num(st.ppG); a.ppA+=num(st.ppA);
+      if(st.rating) a.ratings.push(num(st.rating));
+    });
+    a.pts=a.g+a.a;
+    a.avgRating=a.ratings.length?round1(avg(a.ratings)):0;
+    const finishedTotal=(CRM.store.get('matches')||[]).filter(m=>m.result&&m.result.finished).length;
+    a.misses=Math.max(0,finishedTotal-a.gp);
+    return a;
+  },
+  teamLeaders(){
+    const map={};
+    (CRM.store.get('matches')||[]).forEach(m=>{
+      if(!(m.result&&m.result.finished))return;
+      const ps=m.result.playerStats||{};
+      for(const pid in ps){ const st=ps[pid]; if(!map[pid])map[pid]={pid,gp:0,g:0,a:0}; map[pid].gp++; map[pid].g+=num(st.g); map[pid].a+=num(st.a); }
+    });
+    return Object.values(map).map(r=>{const p=playerById(r.pid);r.name=p?playerName(p):'—';r.pts=r.g+r.a;return r;}).filter(r=>r.name!=='—').sort((a,b)=>b.pts-a.pts||b.g-a.g);
+  },
+
+  /* ---- list view ---- */
+  render(el){
+    const matches=(CRM.store.get('matches')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    el.innerHTML=sectionTitle('05','Матчи','Подготовка · день матча · итоги · отчёт',
+      `<button class="btn primary" onclick="CRM.modules.matches.add()">+ Матч</button>`)+
+    `<div class="card" style="padding:0">${matches.length?`<table><thead><tr><th>Дата</th><th>Соперник</th><th>Турнир</th><th class="num">Счёт</th><th>Статус</th><th></th></tr></thead><tbody>
+      ${matches.map(m=>`<tr style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}')">
+        <td>${fmtDate(m.date)}</td>
+        <td><b>${esc(m.opp||'Соперник')}</b> ${m.home?'<span class="pill accent">дома</span>':'<span class="pill">гости</span>'}</td>
+        <td>${this.tournPill(m)}</td>
+        <td class="num">${m.result&&m.result.finished?`<b>${num(m.score.our)}:${num(m.score.opp)}</b>`:'—'}</td>
+        <td>${m.result&&m.result.finished?'<span class="pill good">завершён</span>':m.lineupId?'<span class="pill accent">готов</span>':'<span class="pill warn">подготовка</span>'}</td>
+        <td><button class="btn sm" onclick="event.stopPropagation();CRM.modules.matches.open('${m.id}')">Открыть</button></td></tr>`).join('')}
+    </tbody></table>`:'<div class="empty">Матчей нет. Создайте первый матч или сгенерируйте через раздел «Соперники».</div>'}</div>`;
+  },
+  add(){
+    const ops=CRM.store.get('opponents')||[];
+    CRM.modal.open(CRM.modal.frame('Новый матч',`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="m_date" type="date" value="${localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Соперник</label><input id="m_opp" list="m_opplist" placeholder="Название"><datalist id="m_opplist">${ops.map(o=>`<option value="${esc(o.name)}">`).join('')}</datalist></div></div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1"><label class="fld">Площадка</label><select id="m_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
+        <div style="flex:1"><label class="fld">Турнир</label><select id="m_tourn"><option value="season">Сезон</option><option value="preseason">Предсезонка</option><option value="playoff">Плей-офф</option></select></div>
+      </div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.matches.saveNew()">Создать</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  saveNew(){
+    const date=document.getElementById('m_date').value;
+    const opp=document.getElementById('m_opp').value.trim();
+    const home=document.getElementById('m_home').value==='1';
+    const t=document.getElementById('m_tourn').value;
+    if(!opp){ CRM.toast('Укажите соперника'); return; }
+    const ops=CRM.store.get('opponents')||[]; const opObj=ops.find(o=>o.name.toLowerCase()===opp.toLowerCase());
+    const m={id:uuid(),date,opp,oppId:opObj?opObj.id:'',home,playoff:t==='playoff',preseason:t==='preseason',
+      score:{our:null,opp:null},rating:0,notes:'',lineupId:'',
+      prep:{tasks:'',oppLines:{}},
+      result:{finished:false,ppGoals:0,ppAttempts:0,pkGoalsAgainst:0,pkTimes:0,gk:{startId:'',backupId:'',changed:false},playerStats:{},comboRatings:{}}};
+    const matches=CRM.store.get('matches')||[]; matches.push(m); CRM.store.set('matches',matches);
+    CRM.modal.close(); CRM.modules.matches.open(m.id); CRM.toast('Матч создан');
+  },
+
+  /* ---- match detail ---- */
+  open(id,tab){
+    const m=this.ensureExt(this._md(id)); if(!m) return;
+    tab=tab||(m.result.finished?'report':'prep');
+    const head=`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">vs ${esc(m.opp||'Соперник')}</h2>
+        <div class="muted">${fmtDate(m.date)} · ${m.home?'дома':'в гостях'} · ${this.tournLabel(m)}</div></div>
+      ${m.result.finished?`<div style="font-size:26px;font-weight:800">${num(m.score.our)}:${num(m.score.opp)}</div>`:''}
+    </div>
+    <div class="tabsrow">
+      <button class="${tab==='prep'?'active':''}" onclick="CRM.modules.matches.open('${id}','prep')">Подготовка</button>
+      <button class="${tab==='day'?'active':''}" onclick="CRM.modules.matches.matchDay('${id}')">Матч-день</button>
+      <button class="${tab==='result'?'active':''}" onclick="CRM.modules.matches.open('${id}','result')">Итоги</button>
+      <button class="${tab==='report'?'active':''}" onclick="CRM.modules.matches.matchReport('${id}')">Отчёт</button>
+    </div>`;
+    let body='';
+    if(tab==='prep') body=this._prepPane(m);
+    else if(tab==='day') body=this._dayPane(m);
+    else if(tab==='result') body=this._resultPane(m);
+    else body=this._reportPane(m);
+    CRM.modal.open(CRM.modal.frame('Матч',head+body));
+  },
+  matchDay(id){ this.open(id,'day'); },
+  matchReport(id){ this.open(id,'report'); },
+
+  _prepPane(m){
+    const hist=CRM.store.get('roster.history')||[];
+    const lu=m.lineupId?hist.find(h=>h.id===m.lineupId):null;
+    const op=m.oppId?(CRM.store.get('opponents')||[]).find(o=>o.id===m.oppId):null;
+    return `<div class="card">
+      <div style="display:flex;align-items:center"><b>Состав на матч</b>
+        <button class="btn sm" style="margin-left:auto" onclick="CRM.modules.matches.attachLineup('${m.id}')">${lu?'Сменить состав':'Прикрепить состав'}</button></div>
+      ${lu?`<p class="muted" style="margin-top:8px">${esc(lu.gameLabel||'Состав')} · ${fmtDate(lu.dateStr||lu.date)}</p>${this._lineupMini(lu)}`:'<p class="muted" style="margin-top:8px">Состав не прикреплён.</p>'}
+    </div>
+    <div class="card" style="margin-top:14px"><b>Установка на игру</b>
+      <textarea id="prep_tasks" rows="4" style="margin-top:8px" placeholder="Задачи, акценты, спецбригады...">${esc(m.prep.tasks||'')}</textarea>
+      <button class="btn sm primary" style="margin-top:8px" onclick="CRM.modules.matches.savePrep('${m.id}')">Сохранить установку</button>
+    </div>
+    ${op&&op.roster&&op.roster.length?`<div class="card" style="margin-top:14px"><b>Соперник: персональная опека</b>
+      <p class="muted" style="font-size:12px;margin:6px 0">Назначьте наших игроков на ключевых игроков соперника.</p>
+      ${op.roster.filter(r=>r.leader).map(r=>this._oppSlotRow(m,r)).join('')||'<p class="muted">У соперника не отмечены лидеры.</p>'}
+    </div>`:''}`;
+  },
+  _oppSlotRow(m,r){
+    const scout=CRM.store.get('scout')||[];
+    const cur=m.prep.oppLines[r.id]||'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)">
+      <b style="min-width:160px">#${esc(r.num||'')} ${esc(r.name)}</b><span class="muted">${esc(r.pos||'')}</span>
+      <select style="margin-left:auto;max-width:220px" onchange="CRM.modules.matches.updOppSlot('${m.id}','${r.id}',this.value)">
+        <option value="">— опекун —</option>
+        ${scout.map(p=>`<option value="${p.id}" ${cur===p.id?'selected':''}>${esc(playerLabel(p))}</option>`).join('')}
+      </select></div>`;
+  },
+  updOppSlot(mid,rid,pid){ const m=this.ensureExt(this._md(mid)); if(pid)m.prep.oppLines[rid]=pid; else delete m.prep.oppLines[rid]; CRM.store.save(); this.syncOppLineup(m); },
+  syncOppLineup(m){ /* keep prep mapping consistent; placeholder for cross-sync */ CRM.store.save(); },
+  savePrep(id){ const m=this.ensureExt(this._md(id)); m.prep.tasks=(document.getElementById('prep_tasks')||{}).value||''; CRM.store.save(); CRM.toast('Установка сохранена'); },
+
+  attachLineup(mid){
+    const hist=(CRM.store.get('roster.history')||[]).slice().sort((a,b)=>(b.dateStr||b.date||'').localeCompare(a.dateStr||a.date||''));
+    CRM.modal.open(CRM.modal.frame('Выбор состава',
+      `<p class="muted" style="margin-bottom:10px">Выберите сохранённый состав из истории звеньев.</p>
+      ${hist.length?hist.map(h=>`<div class="card" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="CRM.modules.matches.attachPick('${mid}','${h.id}')">
+        <div><b>${esc(h.gameLabel||(h.type==='match'?'Состав на матч':'Тренировочный состав'))}</b><div class="muted" style="font-size:12px">${fmtDate(h.dateStr||h.date)}</div></div>
+        <span class="pill" style="margin-left:auto">${Object.values(h.lines||{}).filter(Boolean).length} игроков</span></div>`).join('')
+      :'<div class="empty">Нет сохранённых составов. Создайте в разделе «Состав».</div>'}
+      <div style="margin-top:10px"><button class="btn" onclick="CRM.router.go('roster');CRM.modal.close()">→ К составам</button></div>`));
+  },
+  attachPick(mid,hid){
+    const m=this._md(mid); const hist=CRM.store.get('roster.history')||[];
+    // unlink previous (two-way)
+    if(m.lineupId){ const prev=hist.find(h=>h.id===m.lineupId); if(prev&&prev.matchId===mid) prev.matchId=''; }
+    const h=hist.find(x=>x.id===hid); if(!h) return;
+    // unlink any match previously bound to this lineup
+    if(h.matchId&&h.matchId!==mid){ const om=this._md(h.matchId); if(om&&om.lineupId===hid) om.lineupId=''; }
+    m.lineupId=hid; h.matchId=mid;
+    CRM.store.save(); CRM.modal.close(); this.open(mid,'prep'); CRM.toast('Состав прикреплён');
+  },
+  _lineupMini(lu){
+    const lines=lu.lines||{};
+    const rowF=(n)=>{const k=['f'+n+'L','f'+n+'C','f'+n+'R'];if(!k.some(x=>lines[x]))return '';return `<div style="display:flex;gap:6px;margin-bottom:5px">${k.map(x=>{const p=playerById(lines[x]);return `<div class="slot ${p?'filled':''}" style="flex:1"><div class="pos">${ROSTER_SLOTS.label(x)}</div><div class="nm">${p?esc(playerSurname(p)):'—'}</div></div>`;}).join('')}</div>`;};
+    const rowD=(n)=>{const k=['d'+n+'L','d'+n+'R'];if(!k.some(x=>lines[x]))return '';return `<div style="display:flex;gap:6px;margin-bottom:5px">${k.map(x=>{const p=playerById(lines[x]);return `<div class="slot ${p?'filled':''}" style="flex:1"><div class="pos">${ROSTER_SLOTS.label(x)}</div><div class="nm">${p?esc(playerSurname(p)):'—'}</div></div>`;}).join('')}</div>`;};
+    const gk=ROSTER_SLOTS.gk.map(g=>{const p=playerById(lines[g]);return p?`<span class="pill accent">${esc(playerSurname(p))}</span>`:'';}).filter(Boolean).join(' ');
+    return `<div class="ice" style="margin-top:8px"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:6px">НАПАДЕНИЕ</div>${[1,2,3,4].map(rowF).join('')}
+      <div class="muted" style="font-size:11px;font-weight:700;margin:8px 0 6px">ЗАЩИТА</div>${[1,2,3,4].map(rowD).join('')}
+      ${gk?`<div class="muted" style="font-size:11px;font-weight:700;margin:8px 0 6px">ВРАТАРИ</div>${gk}`:''}</div>`;
+  },
+
+  _dayPane(m){
+    const hist=CRM.store.get('roster.history')||[];
+    const lu=m.lineupId?hist.find(h=>h.id===m.lineupId):null;
+    return `<div class="card"><b>Состав в день матча</b>${lu?this._lineupMini(lu):'<p class="muted" style="margin-top:8px">Состав не прикреплён — вернитесь на вкладку «Подготовка».</p>'}</div>
+    ${m.prep.tasks?`<div class="card" style="margin-top:14px"><b>Установка</b><p style="white-space:pre-wrap;margin-top:6px">${esc(m.prep.tasks)}</p></div>`:''}
+    <div class="card" style="margin-top:14px"><b>Готовность</b><p class="muted" style="margin-top:6px">Когда матч сыгран — перейдите на «Итоги» для ввода статистики.</p>
+      <button class="btn primary" style="margin-top:8px" onclick="CRM.modules.matches.open('${m.id}','result')">Ввести итоги →</button></div>`;
+  },
+
+  _resultPane(m){
+    const lu=m.lineupId?(CRM.store.get('roster.history')||[]).find(h=>h.id===m.lineupId):null;
+    const onIce=lu?Object.values(lu.lines||{}).filter(Boolean):[];
+    const scout=CRM.store.get('scout')||[];
+    const players=onIce.length?onIce.map(playerById).filter(Boolean):scout;
+    const gks=scout.filter(p=>p.pos==='G');
+    const ps=m.result.playerStats;
+    return `<div class="card">
+      <div class="row"><div style="flex:1"><label class="fld">Наши шайбы</label><input id="r_our" type="number" min="0" value="${m.score.our==null?'':m.score.our}"></div>
+      <div style="flex:1"><label class="fld">Шайбы соперника</label><input id="r_opp" type="number" min="0" value="${m.score.opp==null?'':m.score.opp}"></div>
+      <div style="flex:1"><label class="fld">Оценка матча (1–10)</label><input id="r_rating" type="number" min="0" max="10" value="${m.rating||''}"></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><b>Спецбригады</b>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:1"><label class="fld">Голы в большинстве</label><input id="r_ppGoals" type="number" min="0" value="${num(m.result.ppGoals)}"></div>
+        <div style="flex:1"><label class="fld">Попыток ПП</label><input id="r_ppAttempts" type="number" min="0" value="${num(m.result.ppAttempts)}"></div>
+        <div style="flex:1"><label class="fld">Пропущ. в меньш.</label><input id="r_pkGA" type="number" min="0" value="${num(m.result.pkGoalsAgainst)}"></div>
+        <div style="flex:1"><label class="fld">Раз в меньшинстве</label><input id="r_pkTimes" type="number" min="0" value="${num(m.result.pkTimes)}"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px"><b>Вратари</b>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:1"><label class="fld">Стартовый</label><select id="r_gkStart"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.startId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Сменщик</label><select id="r_gkBackup"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.backupId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
+        <div style="flex:1;display:flex;align-items:flex-end"><label class="fld" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="r_gkChanged" style="width:auto" ${m.result.gk.changed?'checked':''}> Была замена вратаря</label></div>
+      </div>
+      <p class="muted" style="font-size:11px;margin-top:6px">Система оценки вратарей заморожена — фиксируем только факт участия и замены.</p>
+    </div>
+    <div class="card" style="margin-top:14px"><b>Статистика полевых игроков</b>
+      <div style="overflow:auto;margin-top:8px"><table><thead><tr><th>Игрок</th><th class="num">Г</th><th class="num">А</th><th class="num">+/−</th><th class="num">Штр</th><th class="num">Оц.</th><th class="num">ПП-Г</th><th class="num">ПП-А</th></tr></thead><tbody>
+      ${players.filter(p=>p.pos!=='G').map(p=>{const s=ps[p.id]||{};return `<tr><td><b>${esc(playerName(p))}</b></td>
+        <td><input data-pid="${p.id}" data-f="g" type="number" min="0" value="${num(s.g)}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="a" type="number" min="0" value="${num(s.a)}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="pm" type="number" value="${num(s.pm)}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="pim" type="number" min="0" value="${num(s.pim)}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="rating" type="number" min="0" max="10" value="${s.rating||''}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="ppG" type="number" min="0" value="${num(s.ppG)}" style="width:48px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="ppA" type="number" min="0" value="${num(s.ppA)}" style="width:48px;text-align:center;padding:4px"></td></tr>`;}).join('')}
+      </tbody></table></div>
+      ${!players.length?'<p class="muted" style="margin-top:8px">Нет игроков. Прикрепите состав или добавьте игроков в команду.</p>':''}
+    </div>
+    <div class="card" style="margin-top:14px"><label class="fld">Заметки по матчу</label><textarea id="r_notes" rows="3">${esc(m.notes||'')}</textarea></div>
+    <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.saveResult('${m.id}')">Сохранить</button><button class="btn primary" onclick="CRM.modules.matches.finishMatch('${m.id}')">Сохранить и завершить</button></div>`;
+  },
+  _collectResult(m){
+    const gv=(id)=>{const e=document.getElementById(id);return e?e.value:'';};
+    m.score.our=gv('r_our')===''?null:num(gv('r_our'));
+    m.score.opp=gv('r_opp')===''?null:num(gv('r_opp'));
+    m.rating=num(gv('r_rating'));
+    m.result.ppGoals=num(gv('r_ppGoals')); m.result.ppAttempts=num(gv('r_ppAttempts'));
+    m.result.pkGoalsAgainst=num(gv('r_pkGA')); m.result.pkTimes=num(gv('r_pkTimes'));
+    m.result.gk.startId=gv('r_gkStart'); m.result.gk.backupId=gv('r_gkBackup');
+    m.result.gk.changed=!!(document.getElementById('r_gkChanged')||{}).checked;
+    m.notes=gv('r_notes');
+    const ps={};
+    document.querySelectorAll('input[data-pid]').forEach(inp=>{
+      const pid=inp.getAttribute('data-pid'), f=inp.getAttribute('data-f');
+      if(!ps[pid]) ps[pid]={g:0,a:0,pm:0,pim:0,rating:0,ppG:0,ppA:0,ppPos:'',pkOn:false};
+      ps[pid][f]= f==='rating'?num(inp.value): num(inp.value);
+    });
+    // drop empty stat rows (no contribution and no rating)
+    Object.keys(ps).forEach(pid=>{const s=ps[pid]; if(!s.g&&!s.a&&!s.pm&&!s.pim&&!s.rating&&!s.ppG&&!s.ppA) delete ps[pid];});
+    m.result.playerStats=ps;
+  },
+  saveResult(id){ const m=this.ensureExt(this._md(id)); this._collectResult(m); CRM.store.save(); CRM.toast('Итоги сохранены'); },
+  finishMatch(id){
+    const m=this.ensureExt(this._md(id)); this._collectResult(m);
+    if(m.score.our==null||m.score.opp==null){ CRM.toast('Укажите счёт матча'); return; }
+    m.result.finished=true; CRM.store.save();
+    this.open(id,'report'); CRM.toast('Матч завершён ✓');
+  },
+
+  _reportPane(m){
+    if(!m.result.finished) return '<div class="empty">Матч ещё не завершён. Заполните «Итоги».</div>';
+    const ps=m.result.playerStats||{};
+    const rows=Object.keys(ps).map(pid=>({p:playerById(pid),s:ps[pid]})).filter(r=>r.p).sort((a,b)=>(num(b.s.g)+num(b.s.a))-(num(a.s.g)+num(a.s.a)));
+    const ppPct=m.result.ppAttempts?Math.round(num(m.result.ppGoals)/num(m.result.ppAttempts)*100):0;
+    const pkPct=m.result.pkTimes?Math.round((1-num(m.result.pkGoalsAgainst)/num(m.result.pkTimes))*100):0;
+    const gkS=playerById(m.result.gk.startId);
+    const res=m.score.our>m.score.opp?'<span class="pill good">Победа</span>':m.score.our<m.score.opp?'<span class="pill bad">Поражение</span>':'<span class="pill warn">Ничья</span>';
+    return `<div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="v">${num(m.score.our)}:${num(m.score.opp)}</div><div class="l">Счёт</div><div class="s">${res}</div></div>
+      <div class="kpi"><div class="v">${m.rating||'—'}</div><div class="l">Оценка матча</div></div>
+      <div class="kpi"><div class="v">${ppPct}%</div><div class="l">Реализация ПП</div><div class="s muted">${num(m.result.ppGoals)}/${num(m.result.ppAttempts)}</div></div>
+      <div class="kpi"><div class="v">${pkPct}%</div><div class="l">Нейтрализация ПК</div><div class="s muted">${num(m.result.pkTimes)} мен.</div></div>
+    </div>
+    ${gkS?`<div class="card" style="margin-bottom:14px"><b>Вратарь:</b> ${esc(playerName(gkS))} ${m.result.gk.changed?'<span class="pill warn">была замена</span>':''}</div>`:''}
+    <div class="card"><b>Статистика игроков</b>
+      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">Г</th><th class="num">А</th><th class="num">О</th><th class="num">+/−</th><th class="num">Штр</th><th class="num">Оц.</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td><b>${esc(playerName(r.p))}</b></td><td class="num">${num(r.s.g)}</td><td class="num">${num(r.s.a)}</td><td class="num"><b>${num(r.s.g)+num(r.s.a)}</b></td><td class="num">${num(r.s.pm)>=0?'+':''}${num(r.s.pm)}</td><td class="num">${num(r.s.pim)}</td><td class="num">${r.s.rating||'—'}</td></tr>`).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">Нет индивидуальной статистики.</p>'}
+    </div>
+    ${m.notes?`<div class="card" style="margin-top:14px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(m.notes)}</p></div>`:''}
+    <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.open('${m.id}','result')">Изменить итоги</button><button class="btn" onclick="window.print()">Печать</button><button class="btn danger" onclick="CRM.modules.matches.del('${m.id}')">Удалить матч</button></div>`;
+  },
+  del(id){ if(!confirm('Удалить матч?'))return; const m=this._md(id); if(m&&m.lineupId){const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===m.lineupId);if(h&&h.matchId===id)h.matchId='';} let matches=CRM.store.get('matches')||[]; matches=matches.filter(x=>x.id!==id); CRM.store.set('matches',matches); CRM.modal.close(); CRM.router.render(); CRM.toast('Матч удалён'); },
+
+  /* ---- panes embedded in profiles ---- */
+  profilePane(pid){
+    const hist=this.playerMatchHistory(pid);
+    if(!hist.length) return '<div class="empty">Нет сыгранных матчей.</div>';
+    const ag=this.playerAgg(pid);
+    return `<div class="grid g4" style="margin-bottom:12px">
+      <div class="kpi"><div class="v">${ag.g}</div><div class="l">Голы</div></div>
+      <div class="kpi"><div class="v">${ag.a}</div><div class="l">Передачи</div></div>
+      <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Очки</div></div>
+      <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Ср. оценка</div></div>
+    </div>
+    <div class="card" style="padding:0"><table><thead><tr><th>Дата</th><th>Соперник</th><th class="num">Г</th><th class="num">А</th><th class="num">+/−</th><th class="num">Оц.</th></tr></thead><tbody>
+    ${hist.slice().reverse().map(({m,st})=>`<tr style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}','report')"><td>${fmtDateShort(m.date)}</td><td>${esc(m.opp)}</td><td class="num">${num(st.g)}</td><td class="num">${num(st.a)}</td><td class="num">${num(st.pm)>=0?'+':''}${num(st.pm)}</td><td class="num">${st.rating||'—'}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  }
+};
+
+/* ===================================================================
+   04 — ROSTER (lines 5×5, special teams, history)
+   =================================================================== */
+CRM.modules.roster={
+  render(el){
+    const showSpecial=!!CRM.store.get('roster.showSpecial');
+    el.innerHTML=sectionTitle('04','Состав','Звенья 5×5, спецбригады и история',
+      `<button class="btn" onclick="CRM.modules.roster.toggleSpecial()">${showSpecial?'Скрыть спецбригады':'Спецбригады'}</button>
+       <button class="btn" onclick="CRM.modules.roster.clearLineup()">Очистить</button>
+       <button class="btn primary" onclick="CRM.modules.roster.createLineupForm()">Сохранить состав</button>`)+
+    `<div class="grid g2">${this.viewHome()}</div>
+     ${showSpecial?this.viewSpecial():''}
+     <div class="grid g2" style="margin-top:14px">
+       <div class="card"><b>Подсказки большинства (ПП)</b><div style="margin-top:8px">${this.ppHints()}</div></div>
+       <div class="card"><b>Подсказки меньшинства (ПК)</b><div style="margin-top:8px">${this.pkHints()}</div></div>
+     </div>
+     ${this.historyView()}
+     ${this.bestCombosView()}`;
+  },
+  _opts(sel,filter){
+    const scout=(CRM.store.get('scout')||[]).filter(p=>p.status!=='injured'&&p.status!=='suspended');
+    let list=scout; if(filter) list=scout.filter(filter);
+    return `<option value="">—</option>`+list.map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(playerLabel(p))}</option>`).join('');
+  },
+  _slot(key){
+    const lines=CRM.store.get('roster.lines')||{};
+    const isG=key[0]==='g';
+    const filt=isG?(p=>p.pos==='G'):(key[0]==='d'?(p=>p.pos==='D'):null);
+    return `<div style="margin-bottom:6px"><label class="fld" style="margin-bottom:3px">${ROSTER_SLOTS.label(key)}</label>
+      <select onchange="CRM.modules.roster.setSlot('${key}',this.value)">${this._opts(lines[key],filt)}</select></div>`;
+  },
+  viewHome(){
+    const fwd=`<div class="card"><b>Нападение</b><div class="ice" style="margin-top:10px">
+      ${[1,2,3,4].map(n=>`<div style="margin-bottom:10px"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ЗВЕНО ${n}</div>
+        <div class="row">${['L','C','R'].map(p=>`<div style="flex:1">${this._slot('f'+n+p)}</div>`).join('')}</div></div>`).join('')}
+    </div></div>`;
+    const def=`<div class="card"><b>Защита и вратари</b><div class="ice" style="margin-top:10px">
+      ${[1,2,3,4].map(n=>`<div style="margin-bottom:10px"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ПАРА ${n}</div>
+        <div class="row">${['L','R'].map(p=>`<div style="flex:1">${this._slot('d'+n+p)}</div>`).join('')}</div></div>`).join('')}
+      <div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ВРАТАРИ</div>
+      <div class="row">${ROSTER_SLOTS.gk.map(g=>`<div style="flex:1">${this._slot(g)}</div>`).join('')}</div>
+    </div></div>`;
+    return fwd+def;
+  },
+  viewSpecial(){
+    const sp=CRM.store.get('roster.special')||{};
+    const unit=(key)=>{const u=sp[key]||{};return `<div class="card"><b>${SPECIAL_LABEL[key]}</b><div style="margin-top:8px">
+      <label class="fld">Бригада 1</label><textarea rows="2" placeholder="Игроки бригады 1" onchange="CRM.modules.roster.setSpecial('${key}','b1',this.value)">${esc(u.b1||'')}</textarea>
+      <label class="fld" style="margin-top:8px">Бригада 2</label><textarea rows="2" placeholder="Игроки бригады 2" onchange="CRM.modules.roster.setSpecial('${key}','b2',this.value)">${esc(u.b2||'')}</textarea></div></div>`;};
+    return `<div style="margin-top:14px"><h2 style="font-size:15px;margin-bottom:10px">Спецбригады</h2><div class="grid g3">${SPECIAL_KEYS.map(unit).join('')}</div></div>`;
+  },
+  setSlot(key,pid){
+    const lines=CRM.store.get('roster.lines')||{};
+    // prevent duplicate placement
+    if(pid){ for(const k in lines){ if(lines[k]===pid&&k!==key) lines[k]=''; } }
+    lines[key]=pid; CRM.store.set('roster.lines',lines);
+    if(pid){ const p=playerById(pid); CRM.router.render(); }
+  },
+  setSpecial(key,slot,val){ const sp=CRM.store.get('roster.special')||{}; if(!sp[key])sp[key]={}; sp[key][slot]=val; CRM.store.set('roster.special',sp); },
+  toggleSpecial(){ CRM.store.set('roster.showSpecial',!CRM.store.get('roster.showSpecial')); CRM.router.render(); },
+  clearLineup(){ if(!confirm('Очистить текущий рабочий состав?'))return; CRM.store.set('roster.lines',{}); CRM.router.render(); CRM.toast('Состав очищен'); },
+
+  ppHints(){
+    const scout=CRM.store.get('scout')||[];
+    const shooters=scout.filter(p=>p.pos!=='G').map(p=>({p,sh:num(p.skills&&p.skills.shot),of:num(p.skills&&p.skills.offense)})).sort((a,b)=>(b.sh+b.of)-(a.sh+a.of)).slice(0,5);
+    if(!shooters.some(s=>s.sh||s.of)) return '<p class="muted" style="font-size:12px">Заполните навыки игроков (бросок, атака) для подсказок.</p>';
+    return shooters.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill accent">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">бросок ${s.sh} · атака ${s.of}</span></div>`).join('');
+  },
+  pkHints(){
+    const scout=CRM.store.get('scout')||[];
+    const def=scout.filter(p=>p.pos!=='G').map(p=>({p,d:num(p.skills&&p.skills.defense),iq:num(p.skills&&p.skills.iq)})).sort((a,b)=>(b.d+b.iq)-(a.d+a.iq)).slice(0,5);
+    if(!def.some(s=>s.d||s.iq)) return '<p class="muted" style="font-size:12px">Заполните навыки (оборона, IQ) для подсказок.</p>';
+    return def.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill good">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">оборона ${s.d} · IQ ${s.iq}</span></div>`).join('');
+  },
+
+  createLineupForm(){
+    const lines=CRM.store.get('roster.lines')||{};
+    if(!Object.values(lines).filter(Boolean).length){ CRM.toast('Сначала заполните состав'); return; }
+    const matches=(CRM.store.get('matches')||[]).filter(m=>!(m.result&&m.result.finished)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    CRM.modal.open(CRM.modal.frame('Сохранить состав',`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="ls_date" type="date" value="${localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Тип</label><select id="ls_type"><option value="match">На матч</option><option value="practice">Тренировка</option></select></div></div>
+      <div style="margin-top:10px"><label class="fld">Название/метка</label><input id="ls_label" placeholder="Напр. vs Соперник, 1-й период"></div>
+      <div style="margin-top:10px"><label class="fld">Привязать к матчу (необязательно)</label><select id="ls_match"><option value="">— без привязки —</option>${matches.map(m=>`<option value="${m.id}">${fmtDateShort(m.date)} vs ${esc(m.opp)}</option>`).join('')}</select></div>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Оценка состава (1–10)</label><input id="ls_rating" type="number" min="0" max="10"></div></div>
+      <div style="margin-top:10px"><label class="fld">Заметки</label><textarea id="ls_notes" rows="2"></textarea></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.roster.savePending()">Сохранить в историю</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  startPending(){ /* working lineup already lives in roster.lines */ return CRM.store.get('roster.lines')||{}; },
+  savePending(){
+    const lines=Object.assign({},CRM.store.get('roster.lines')||{});
+    const special=JSON.parse(JSON.stringify(CRM.store.get('roster.special')||{}));
+    const date=document.getElementById('ls_date').value;
+    const type=document.getElementById('ls_type').value;
+    const label=document.getElementById('ls_label').value.trim();
+    const matchId=document.getElementById('ls_match').value;
+    const rating=num(document.getElementById('ls_rating').value);
+    const notes=document.getElementById('ls_notes').value.trim();
+    const hist=CRM.store.get('roster.history')||[];
+    const entry={id:uuid(),type,date,dateStr:date,groupIdx:0,groupTotal:1,gameLabel:label||(type==='match'?'Состав на матч':'Тренировочный состав'),lines,special,rating,notes,matchId:''};
+    hist.push(entry);
+    CRM.store.set('roster.history',hist);
+    if(matchId){ // two-way link
+      const m=CRM.modules.matches._md(matchId);
+      if(m){ if(m.lineupId){const old=hist.find(h=>h.id===m.lineupId);if(old&&old.matchId===matchId)old.matchId='';} m.lineupId=entry.id; entry.matchId=matchId; CRM.store.save(); }
+    }
+    CRM.store.save(); CRM.modal.close(); CRM.router.render(); CRM.toast('Состав сохранён в историю');
+  },
+  historyView(){
+    const hist=(CRM.store.get('roster.history')||[]).slice().sort((a,b)=>(b.dateStr||b.date||'').localeCompare(a.dateStr||a.date||''));
+    return `<div class="card" style="margin-top:14px"><b>История составов</b>
+      ${hist.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Метка</th><th>Тип</th><th class="num">Игроков</th><th>Матч</th><th></th></tr></thead><tbody>
+      ${hist.map(h=>{const m=h.matchId?CRM.modules.matches._md(h.matchId):null;return `<tr><td>${fmtDate(h.dateStr||h.date)}</td><td><b>${esc(h.gameLabel||'')}</b></td><td>${h.type==='match'?'Матч':'Тренировка'}</td><td class="num">${Object.values(h.lines||{}).filter(Boolean).length}</td><td>${m?'<span class="pill accent">vs '+esc(m.opp)+'</span>':'<span class="muted">—</span>'}</td><td><button class="btn sm" onclick="CRM.modules.roster.openHistory('${h.id}')">Открыть</button></td></tr>`;}).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">История пуста.</p>'}</div>`;
+  },
+  openHistory(id){
+    const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h) return;
+    const m=h.matchId?CRM.modules.matches._md(h.matchId):null;
+    CRM.modal.open(CRM.modal.frame('Состав: '+(h.gameLabel||''),`
+      <div class="muted" style="margin-bottom:8px">${fmtDate(h.dateStr||h.date)} · ${h.type==='match'?'на матч':'тренировка'} ${m?'· привязан к матчу vs '+esc(m.opp):''} ${h.rating?'· оценка '+h.rating:''}</div>
+      ${CRM.modules.matches._lineupMini(h)}
+      ${h.notes?`<div class="card" style="margin-top:12px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(h.notes)}</p></div>`:''}
+      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.roster.loadHistory('${h.id}')">Загрузить в рабочий состав</button><button class="btn danger" onclick="CRM.modules.roster.delFromModal('${h.id}')">Удалить</button></div>`));
+  },
+  loadHistory(id){ const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h)return; CRM.store.set('roster.lines',Object.assign({},h.lines)); CRM.store.set('roster.special',JSON.parse(JSON.stringify(h.special||{}))); CRM.modal.close(); CRM.router.render(); CRM.toast('Состав загружен'); },
+  delFromModal(id){
+    if(!confirm('Удалить состав из истории?'))return;
+    const hist=CRM.store.get('roster.history')||[]; const h=hist.find(x=>x.id===id);
+    if(h&&h.matchId){ const m=CRM.modules.matches._md(h.matchId); if(m&&m.lineupId===id) m.lineupId=''; } // unlink lineupId both sides
+    CRM.store.set('roster.history',hist.filter(x=>x.id!==id)); CRM.store.save();
+    CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено');
+  },
+  bestCombosView(){
+    const map={};
+    (CRM.store.get('matches')||[]).forEach(m=>{ const cr=m.result&&m.result.comboRatings; if(!cr)return; for(const k in cr){const c=cr[k]; if(!map[k])map[k]={label:c.label,type:c.type,ratings:[]}; if(c.rating)map[k].ratings.push(num(c.rating));} });
+    const rows=Object.values(map).map(c=>({label:c.label,type:c.type,avg:round1(avg(c.ratings)),n:c.ratings.length})).sort((a,b)=>b.avg-a.avg);
+    return `<div class="card" style="margin-top:14px"><b>Лучшие сочетания</b>
+      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Сочетание</th><th>Тип</th><th class="num">Игр</th><th class="num">Ср. оценка</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc(r.type||'')}</td><td class="num">${r.n}</td><td class="num"><b>${r.avg}</b></td></tr>`).join('')}</tbody></table>`
+      :'<p class="muted" style="margin-top:8px">Нет данных по сочетаниям. Они накапливаются по мере оценки звеньев в матчах.</p>'}</div>`;
+  }
+};
+
+/* ===================================================================
+   06 — STATS
+   =================================================================== */
+CRM.modules.stats={
+  _sort:{key:'pts',dir:-1}, _mode:'all',
+  collect(){
+    const scout=CRM.store.get('scout')||[];
+    return scout.map(p=>{
+      const hist=CRM.modules.matches.playerMatchHistory(p.id);
+      const r={p,id:p.id,name:playerName(p),pos:p.pos,gp:0,g:0,a:0,pts:0,pm:0,pim:0,ppG:0,ppA:0,pkOn:0,ratings:[]};
+      hist.forEach(({st})=>{ r.gp++; r.g+=num(st.g);r.a+=num(st.a);r.pm+=num(st.pm);r.pim+=num(st.pim);r.ppG+=num(st.ppG);r.ppA+=num(st.ppA); if(st.pkOn)r.pkOn++; if(st.rating)r.ratings.push(num(st.rating)); });
+      r.pts=r.g+r.a;
+      r.gpg=r.gp?round1(r.g/r.gp):0; r.apg=r.gp?round1(r.a/r.gp):0; r.ppg=r.gp?round1(r.pts/r.gp):0;
+      r.avg=r.ratings.length?round1(avg(r.ratings)):0;
+      return r;
+    }).filter(r=>r.gp>0);
+  },
+  render(el){
+    const all=this.collect();
+    const field=all.filter(r=>r.pos!=='G');
+    const gks=all.filter(r=>r.pos==='G');
+    const cols=[['gp','И'],['g','Г'],['a','А'],['pts','О'],['pm','+−'],['pim','ШТР'],['ppG','Г-БОЛ'],['ppA','П-БОЛ'],['pkOn','ПР-МЕН'],['gpg','Г/И'],['apg','А/И'],['ppg','О/И'],['avg','СР.ОЦ']];
+    let rows=field.slice();
+    const s=this._sort; rows.sort((a,b)=>{const d=(a[s.key]>b[s.key]?1:a[s.key]<b[s.key]?-1:0);return d*s.dir;});
+    if(this._mode==='best') rows=rows.slice().sort((a,b)=>b.ppg-a.ppg).slice(0,Math.ceil(rows.length/2));
+    else if(this._mode==='worst') rows=rows.slice().sort((a,b)=>a.ppg-b.ppg).slice(0,Math.ceil(rows.length/2));
+    // team averages
+    const teamAvg={}; cols.forEach(([k])=>teamAvg[k]=field.length?round1(avg(field.map(r=>r[k]))):0);
+    el.innerHTML=sectionTitle('06','Статистика','Индивидуальные показатели игроков',
+      `<div class="seg">${[['all','Все'],['best','Лучшие'],['avg','Средние'],['worst','Худшие']].map(([k,l])=>`<button class="${this._mode===k?'active':''}" onclick="CRM.modules.stats.setMode('${k}')">${l}</button>`).join('')}</div>`)+
+    `<div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>Игрок</th><th>Поз</th>
+      ${cols.map(([k,l])=>`<th class="num sortable" onclick="CRM.modules.stats.sort('${k}')">${l}${s.key===k?(s.dir<0?' ▾':' ▴'):''}</th>`).join('')}</tr></thead><tbody>
+      ${this._mode==='avg'?'':rows.map(r=>`<tr style="cursor:pointer" onclick="CRM.modules.profiles.open('${r.id}','matches')"><td><b>${esc(r.name)}</b></td><td>${POS_LABEL[r.pos]||''}</td>
+        ${cols.map(([k])=>`<td class="num">${k==='pm'?(r[k]>=0?'+':'')+r[k]:r[k]}</td>`).join('')}</tr>`).join('')}
+      ${this._mode==='avg'?`<tr><td colspan="${2+cols.length}" class="muted" style="text-align:center;padding:14px">Режим «Средние» показывает средние значения по команде ниже.</td></tr>`:''}
+      </tbody>
+      <tfoot><tr style="background:var(--panel2);font-weight:700"><td>Среднее по команде</td><td></td>${cols.map(([k])=>`<td class="num">${teamAvg[k]}</td>`).join('')}</tr></tfoot>
+    </table></div>
+    ${field.length?'':'<div class="empty card">Нет сыгранных матчей со статистикой.</div>'}
+    <div class="card" style="margin-top:14px;padding:0"><div style="padding:14px 14px 0"><b>Вратари</b></div>
+      ${gks.length?`<table style="margin-top:8px"><thead><tr><th>Вратарь</th><th class="num">Игр</th><th class="num">Ср.оц.</th></tr></thead><tbody>
+      ${gks.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.gp}</td><td class="num">${r.avg||'—'}</td></tr>`).join('')}</tbody></table>`
+      :'<div class="empty">Нет вратарской статистики. Система оценки вратарей заморожена.</div>'}
+    </div>`;
+  },
+  sort(k){ if(this._sort.key===k)this._sort.dir*=-1; else{this._sort.key=k;this._sort.dir=-1;} CRM.router.render(); },
+  setMode(m){ this._mode=m; CRM.router.render(); }
+};
+
+/* ===================================================================
+   07 — OPPONENTS
+   =================================================================== */
+CRM.modules.opponents={
+  esc:esc,
+  findByName(name){ return (CRM.store.get('opponents')||[]).find(o=>o.name.toLowerCase()===String(name||'').toLowerCase())||null; },
+  render(el,params){
+    if(params.id){ this.open(params.id,params.tab); return; }
+    if(params.view==='bracket'){ this.playoffBracket(el); return; }
+    const ops=(CRM.store.get('opponents')||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    el.innerHTML=sectionTitle('07','Соперники','Ростеры, тактика и история встреч',
+      `<button class="btn" onclick="CRM.router.go('opponents',{view:'bracket'})">Сетка плей-офф</button>
+       <button class="btn primary" onclick="CRM.modules.opponents.edit()">+ Соперник</button>`)+
+    `<div class="grid g3">${ops.length?ops.map(o=>{
+      const games=(o.games||[]); const played=games.filter(g=>g.score);
+      return `<div class="card" style="cursor:pointer" onclick="CRM.modules.opponents.open('${o.id}')">
+        <div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">${esc(o.name)}</b>${o.city?`<span class="muted">${esc(o.city)}</span>`:''}</div>
+        <div class="row" style="margin-top:8px;gap:6px;font-size:11px">
+          <span class="pill">${(o.roster||[]).length} игроков</span><span class="pill">${games.length} игр</span>
+          ${o.strengths?'<span class="pill good">есть сильные</span>':''}${o.weaknesses?'<span class="pill bad">есть слабые</span>':''}
+        </div></div>`;}).join(''):'<div class="empty card" style="grid-column:1/-1">Список соперников пуст.</div>'}</div>`;
+  },
+  open(id,tab){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id); if(!o) return;
+    tab=tab||'roster';
+    const head=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <h2 style="font-size:20px">${esc(o.name)}</h2>${o.city?`<span class="muted">${esc(o.city)}</span>`:''}
+      <button class="btn sm" style="margin-left:auto" onclick="CRM.modules.opponents.edit('${o.id}')">Редактировать</button></div>
+    <div class="tabsrow">
+      ${[['roster','Ростер'],['leaders','Лидеры'],['tactics','Тактика'],['games','Наши игры'],['lineups','Составы'],['preseason','Предсезонка']].map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="CRM.modules.opponents.open('${id}','${k}')">${l}</button>`).join('')}
+    </div>`;
+    let body='';
+    if(tab==='roster') body=this.paneRoster(o);
+    else if(tab==='leaders') body=this.paneLeaders(o);
+    else if(tab==='tactics') body=this.paneTactics(o);
+    else if(tab==='games') body=this.paneGames(o);
+    else if(tab==='lineups') body=this.paneLineups(o);
+    else body=this.renderPreseason(o);
+    CRM.modal.open(CRM.modal.frame('Соперник',head+body));
+  },
+  paneRoster(o){
+    const ros=o.roster||[];
+    return `<div class="card"><div style="display:flex;align-items:center"><b>Ростер</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.opponents.addPlayer('${o.id}')">+ Игрок</button></div>
+      ${ros.length?`<table style="margin-top:8px"><thead><tr><th>#</th><th>Игрок</th><th>Поз</th><th>Лидер</th><th></th></tr></thead><tbody>
+      ${ros.map(r=>`<tr><td>${esc(r.num||'')}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.pos||'')}</td><td>${r.leader?'<span class="pill bad">★</span>':''}</td>
+        <td><button class="btn sm ghost" onclick="CRM.modules.opponents.toggleLeader('${o.id}','${r.id}')">${r.leader?'снять':'лидер'}</button> <button class="btn sm ghost danger" onclick="CRM.modules.opponents.delPlayer('${o.id}','${r.id}')">×</button></td></tr>`).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">Ростер пуст.</p>'}</div>`;
+  },
+  paneLeaders(o){
+    const leaders=(o.roster||[]).filter(r=>r.leader);
+    return `<div class="card"><b>Ключевые игроки</b>
+      ${leaders.length?leaders.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span class="pill bad">★</span><b>#${esc(r.num||'')} ${esc(r.name)}</b><span class="muted">${esc(r.pos||'')}</span></div>`).join('')
+      :'<p class="muted" style="margin-top:8px">Лидеры не отмечены. Отметьте их во вкладке «Ростер».</p>'}</div>
+      <p class="muted" style="font-size:12px;margin-top:10px">Отмеченные лидеры доступны для персональной опеки на вкладке «Подготовка» матча.</p>`;
+  },
+  paneTactics(o){
+    return `<div class="grid g2">
+      <div class="card"><b>Сильные стороны</b><textarea rows="5" style="margin-top:8px" onchange="CRM.modules.opponents.setField('${o.id}','strengths',this.value)">${esc(o.strengths||'')}</textarea></div>
+      <div class="card"><b>Слабые стороны</b><textarea rows="5" style="margin-top:8px" onchange="CRM.modules.opponents.setField('${o.id}','weaknesses',this.value)">${esc(o.weaknesses||'')}</textarea></div>
+    </div>
+    <div class="card" style="margin-top:14px"><b>Тактические заметки</b><textarea rows="5" style="margin-top:8px" onchange="CRM.modules.opponents.setField('${o.id}','tactics',this.value)">${esc(o.tactics||'')}</textarea></div>`;
+  },
+  paneGames(o){
+    const games=(o.games||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    return `<div class="card"><div style="display:flex;align-items:center"><b>История встреч</b><button class="btn sm primary" style="margin-left:auto" onclick="CRM.modules.opponents.createGameForm('${o.id}')">+ Матч с соперником</button></div>
+      ${games.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Где</th><th class="num">Счёт</th><th>Турнир</th><th></th></tr></thead><tbody>
+      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'дома':'гости'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td>${g.playoff?'плей-офф':g.preseason?'предсезон':'сезон'} ${g.roundNote?'· '+esc(g.roundNote):''}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">Встреч нет.</p>'}</div>`;
+  },
+  paneLineups(o){
+    const lus=o.lineups||[];
+    // frequency analysis: count appearances of each opponent player across recorded lineups
+    const freq={};
+    lus.forEach(l=>{ const ids=[]; (l.lines||[]).forEach(name=>{ if(name){freq[name]=(freq[name]||0)+1;} }); });
+    const freqRows=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+    return `<div class="card"><b>Зафиксированные составы соперника</b>
+      ${lus.length?lus.slice().reverse().map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="muted" style="font-size:12px">${fmtDate(l.date)}</div><div>${(l.lines||[]).map(x=>esc(x)).join(', ')||'—'}</div></div>`).join('')
+      :'<p class="muted" style="margin-top:8px">Составы соперника не фиксировались.</p>'}</div>
+    ${freqRows.length?`<div class="card" style="margin-top:14px"><b>Частотный анализ выходов</b><table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">Появлений</th></tr></thead><tbody>${freqRows.map(([n,c])=>`<tr><td>${esc(n)}</td><td class="num">${c}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+  },
+  renderPreseason(o){
+    const games=(o.games||[]).filter(g=>g.preseason).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    return `<div class="card"><div style="display:flex;align-items:center"><b>Предсезонные встречи</b><button class="btn sm primary" style="margin-left:auto" onclick="CRM.modules.opponents.addPreseasonGame('${o.id}')">+ Предсезонный матч</button></div>
+      ${games.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Где</th><th class="num">Счёт</th><th></th></tr></thead><tbody>
+      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'дома':'гости'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">Предсезонных встреч нет.</p>'}</div>`;
+  },
+
+  edit(id){
+    const o=id?(CRM.store.get('opponents')||[]).find(x=>x.id===id):{};
+    CRM.modal.open(CRM.modal.frame(id?'Редактировать соперника':'Новый соперник',`
+      <div class="row"><div style="flex:2"><label class="fld">Название</label><input id="op_name" value="${esc(o&&o.name||'')}"></div>
+      <div style="flex:1"><label class="fld">Город</label><input id="op_city" value="${esc(o&&o.city||'')}"></div></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.opponents.save('${id||''}')">Сохранить</button>${id?`<button class="btn danger" onclick="CRM.modules.opponents.del('${id}')">Удалить</button>`:''}<button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  save(id){
+    const name=document.getElementById('op_name').value.trim(); const city=document.getElementById('op_city').value.trim();
+    if(!name){ CRM.toast('Укажите название'); return; }
+    const ops=CRM.store.get('opponents')||[]; let o=id?ops.find(x=>x.id===id):null;
+    if(o){ o.name=name; o.city=city; } else { o={id:uuid(),name,city,roster:[],strengths:'',weaknesses:'',tactics:'',games:[],lineups:[]}; ops.push(o); }
+    CRM.store.set('opponents',ops); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  del(id){ if(!confirm('Удалить соперника? Связанные матчи останутся.'))return; let ops=CRM.store.get('opponents')||[]; ops=ops.filter(o=>o.id!==id); CRM.store.set('opponents',ops); CRM.modal.close(); CRM.router.go('opponents'); CRM.toast('Удалён'); },
+  setField(id,field,val){ const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id); if(o){o[field]=val;CRM.store.save();CRM.toast('Сохранено');} },
+
+  addPlayer(id){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    CRM.modal.open(CRM.modal.frame('Игрок соперника',`
+      <div class="row"><div style="flex:1"><label class="fld">Номер</label><input id="rp_num"></div>
+      <div style="flex:2"><label class="fld">Имя</label><input id="rp_name"></div>
+      <div style="flex:1"><label class="fld">Позиция</label><input id="rp_pos" placeholder="C/LW/RW/D/G"></div></div>
+      <label class="fld" style="margin-top:10px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="rp_leader" style="width:auto"> Лидер команды</label>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.opponents.savePlayer('${id}')">Добавить</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','roster')">Отмена</button></div>`));
+  },
+  savePlayer(id){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    const name=document.getElementById('rp_name').value.trim(); if(!name){CRM.toast('Укажите имя');return;}
+    o.roster=o.roster||[]; o.roster.push({id:'opl_'+uuid().slice(3),name,num:document.getElementById('rp_num').value.trim(),pos:document.getElementById('rp_pos').value.trim().toUpperCase(),leader:document.getElementById('rp_leader').checked});
+    CRM.store.save(); this.open(id,'roster'); CRM.toast('Добавлен');
+  },
+  toggleLeader(id,rid){ const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id); const r=(o.roster||[]).find(x=>x.id===rid); if(r){r.leader=!r.leader;CRM.store.save();this.open(id,'roster');} },
+  delPlayer(id,rid){ const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id); o.roster=(o.roster||[]).filter(x=>x.id!==rid); CRM.store.save(); this.open(id,'roster'); },
+
+  createGameForm(id){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    CRM.modal.open(CRM.modal.frame('Матч с '+esc(o.name),`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cg_date" type="date" value="${localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Площадка</label><select id="cg_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
+      <div style="flex:1"><label class="fld">Турнир</label><select id="cg_tourn"><option value="season">Сезон</option><option value="preseason">Предсезонка</option><option value="playoff">Плей-офф</option></select></div></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">Будет создана запись игры у соперника и связанный матч в разделе «Матчи».</p>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.opponents.createGamePair('${id}')">Создать</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','games')">Отмена</button></div>`));
+  },
+  createGamePair(id,opts){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    const date=opts?opts.date:document.getElementById('cg_date').value;
+    const home=opts?!!opts.home:document.getElementById('cg_home').value==='1';
+    const t=opts?opts.tourn:document.getElementById('cg_tourn').value;
+    const gameId='g_'+uuid().slice(3);
+    o.games=o.games||[];
+    o.games.push({id:gameId,date,home,score:'',playoff:t==='playoff',preseason:t==='preseason',roundNote:''});
+    // create the match simultaneously
+    const m={id:uuid(),date,opp:o.name,oppId:o.id,home,playoff:t==='playoff',preseason:t==='preseason',
+      score:{our:null,opp:null},rating:0,notes:'',lineupId:'',gameId,
+      prep:{tasks:'',oppLines:{}},
+      result:{finished:false,ppGoals:0,ppAttempts:0,pkGoalsAgainst:0,pkTimes:0,gk:{startId:'',backupId:'',changed:false},playerStats:{},comboRatings:{}}};
+    const matches=CRM.store.get('matches')||[]; matches.push(m);
+    CRM.store.set('matches',matches); CRM.store.save();
+    CRM.toast('Игра и матч созданы'); if(!opts) this.open(id,'games');
+    return {gameId,matchId:m.id};
+  },
+  addPreseasonGame(id){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    CRM.modal.open(CRM.modal.frame('Предсезонный матч',`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="pg_date" type="date" value="${localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Площадка</label><select id="pg_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
+      <div style="flex:1"><label class="fld">Счёт</label><input id="pg_score" placeholder="3:2"></div></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.opponents.savePreseasonGame('${id}')">Добавить</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','preseason')">Отмена</button></div>`));
+  },
+  savePreseasonGame(id){
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
+    o.games=o.games||[]; o.games.push({id:'g_'+uuid().slice(3),date:document.getElementById('pg_date').value,home:document.getElementById('pg_home').value==='1',score:document.getElementById('pg_score').value.trim(),playoff:false,preseason:true,roundNote:''});
+    CRM.store.save(); this.open(id,'preseason'); CRM.toast('Добавлено');
+  },
+  delGame(opId,gameId,stayInList){
+    if(!confirm('Удалить игру? Связанный матч также будет удалён.'))return;
+    const o=(CRM.store.get('opponents')||[]).find(x=>x.id===opId);
+    o.games=(o.games||[]).filter(g=>g.id!==gameId);
+    // remove linked match
+    let matches=CRM.store.get('matches')||[];
+    const linked=matches.find(m=>m.gameId===gameId);
+    if(linked){ if(linked.lineupId){const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===linked.lineupId);if(h&&h.matchId===linked.id)h.matchId='';} matches=matches.filter(m=>m.id!==linked.id); CRM.store.set('matches',matches); }
+    CRM.store.save();
+    if(stayInList) this.open(opId,'games'); else CRM.router.render();
+    CRM.toast('Удалено');
+  },
+  playoffBracket(el){
+    const b=CRM.store.get('playoffBracket')||{r8:[],r4:[],r2:[],f:[]};
+    const rounds=[['r8','1/4 финала',8],['r4','1/2 финала',4],['r2','Финал',2]];
+    el.innerHTML=sectionTitle('07','Сетка плей-офф','Турнирная сетка',
+      `<button class="btn" onclick="CRM.router.go('opponents')">‹ К соперникам</button>`)+
+    `<div class="grid g3">${rounds.map(([k,l,n])=>`<div class="card"><b>${l}</b><div style="margin-top:8px">
+      ${Array.from({length:n}).map((_,i)=>`<input style="margin-bottom:6px" placeholder="Участник ${i+1}" value="${esc((b[k]||[])[i]||'')}" onchange="CRM.modules.opponents.setBracket('${k}',${i},this.value)">`).join('')}
+    </div></div>`).join('')}</div>
+    <div class="card" style="margin-top:14px"><b>Чемпион</b><input style="margin-top:8px;max-width:300px" placeholder="Победитель" value="${esc((b.f||[])[0]||'')}" onchange="CRM.modules.opponents.setBracket('f',0,this.value)"></div>`;
+  },
+  setBracket(round,idx,val){ const b=CRM.store.get('playoffBracket')||{r8:[],r4:[],r2:[],f:[]}; if(!b[round])b[round]=[]; b[round][idx]=val; CRM.store.set('playoffBracket',b); CRM.toast('Сохранено'); }
+};
+
+/* ===================================================================
+   08 — PHYSICAL
+   =================================================================== */
+CRM.modules.physical={
+  medal(norm,val){
+    if(val===''||val==null||isNaN(val)) return '';
+    val=num(val);
+    const better=(a,b)=>norm.lower?a<=b:a>=b;
+    if(better(val,norm.gold))return 'gold'; if(better(val,norm.silver))return 'silver'; if(better(val,norm.bronze))return 'bronze'; return 'none';
+  },
+  medalPill(m){ const map={gold:['good','Золото'],silver:['accent','Серебро'],bronze:['warn','Бронза'],none:['bad','Ниже норм']}; return m&&map[m]?`<span class="pill ${map[m][0]}">${map[m][1]}</span>`:''; },
+  render(el){
+    const norms=CRM.store.get('settings.norms')||[];
+    const recs=(CRM.store.get('physical')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    el.innerHTML=sectionTitle('08','Физическая подготовка','Тестирование и нормативы',
+      `<button class="btn" onclick="CRM.router.go('settings')">Нормативы</button>
+       <button class="btn primary" onclick="CRM.modules.physical.addTest()">+ Тестирование</button>`)+
+    `<div class="card" style="margin-bottom:14px"><b>Нормативы</b><table style="margin-top:8px"><thead><tr><th>Показатель</th><th class="num">🥇</th><th class="num">🥈</th><th class="num">🥉</th></tr></thead><tbody>
+      ${norms.map(n=>`<tr><td>${esc(n.name)}</td><td class="num">${n.gold}</td><td class="num">${n.silver}</td><td class="num">${n.bronze}</td></tr>`).join('')}</tbody></table></div>
+    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th>${norms.map(n=>`<th class="num">${esc(n.name.split(' ')[0])}</th>`).join('')}<th></th></tr></thead><tbody>
+      ${recs.map(r=>{const p=playerById(r.playerId);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td>
+        ${norms.map(n=>{const v=(r.results||{})[n.id];const md=this.medal(n,v);return `<td class="num">${v==null||v===''?'—':esc(v)} ${md?this.medalPill(md):''}</td>`;}).join('')}
+        <td><button class="btn sm ghost danger" onclick="CRM.modules.physical.del('${r.id}')">×</button></td></tr>`;}).join('')}
+    </tbody></table>`:'<div class="empty">Нет данных тестирования.</div>'}</div>`;
+  },
+  addTest(){
+    const scout=CRM.store.get('scout')||[]; const norms=CRM.store.get('settings.norms')||[];
+    CRM.modal.open(CRM.modal.frame('Тестирование',`
+      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ph_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
+      <div style="flex:1"><label class="fld">Дата</label><input id="ph_date" type="date" value="${localYmd()}"></div></div>
+      <div style="margin-top:12px">${norms.map(n=>`<div class="row" style="margin-bottom:8px"><div style="flex:2"><label class="fld">${esc(n.name)}</label></div><div style="flex:1"><input data-norm="${n.id}" type="number" step="0.01"></div></div>`).join('')}</div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.physical.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  save(){
+    const results={}; document.querySelectorAll('input[data-norm]').forEach(i=>{ if(i.value!=='')results[i.getAttribute('data-norm')]=num(i.value); });
+    const recs=CRM.store.get('physical')||[]; recs.push({id:uuid(),playerId:document.getElementById('ph_pid').value,date:document.getElementById('ph_date').value,results});
+    CRM.store.set('physical',recs); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  del(id){ if(!confirm('Удалить запись?'))return; CRM.store.set('physical',(CRM.store.get('physical')||[]).filter(r=>r.id!==id)); CRM.router.render(); }
+};
+
+/* ===================================================================
+   09 — PSYCHO
+   =================================================================== */
+CRM.modules.psycho={
+  PARAMS:[['motivation','Мотивация'],['focus','Концентрация'],['stress','Стрессоустойчивость'],['team','Командность'],['lead','Лидерство']],
+  render(el){
+    const recs=(CRM.store.get('psycho')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    el.innerHTML=sectionTitle('09','Психология','Психологическое тестирование',
+      `<button class="btn primary" onclick="CRM.modules.psycho.addTest()">+ Тест</button>`)+
+    `<div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th>${this.PARAMS.map(p=>`<th class="num">${esc(p[1].slice(0,4))}.</th>`).join('')}<th class="num">Σ</th><th></th></tr></thead><tbody>
+      ${recs.map(r=>{const p=playerById(r.playerId);const sc=r.scores||{};const sum=this.PARAMS.reduce((s,[k])=>s+num(sc[k]),0);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td>${this.PARAMS.map(([k])=>`<td class="num">${num(sc[k])}</td>`).join('')}<td class="num"><b>${sum}</b></td><td><button class="btn sm ghost danger" onclick="CRM.modules.psycho.del('${r.id}')">×</button></td></tr>`;}).join('')}
+    </tbody></table>`:'<div class="empty">Нет психотестов.</div>'}</div>`;
+  },
+  addTest(){
+    const scout=CRM.store.get('scout')||[];
+    CRM.modal.open(CRM.modal.frame('Психотест',`
+      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ps_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
+      <div style="flex:1"><label class="fld">Дата</label><input id="ps_date" type="date" value="${localYmd()}"></div></div>
+      <div style="margin-top:12px">${this.PARAMS.map(([k,l])=>`<div class="row" style="margin-bottom:8px"><div style="flex:2"><label class="fld">${l} (1–10)</label></div><div style="flex:1"><input data-p="${k}" type="number" min="1" max="10" value="5"></div></div>`).join('')}</div>
+      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="ps_note" rows="2"></textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.psycho.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  save(){
+    const scores={}; document.querySelectorAll('input[data-p]').forEach(i=>scores[i.getAttribute('data-p')]=num(i.value));
+    const recs=CRM.store.get('psycho')||[]; recs.push({id:uuid(),playerId:document.getElementById('ps_pid').value,date:document.getElementById('ps_date').value,scores,note:document.getElementById('ps_note').value.trim()});
+    CRM.store.set('psycho',recs); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  del(id){ if(!confirm('Удалить?'))return; CRM.store.set('psycho',(CRM.store.get('psycho')||[]).filter(r=>r.id!==id)); CRM.router.render(); }
+};
+
+/* ===================================================================
+   12 — MEDICAL (syncs scout[].status)
+   =================================================================== */
+CRM.modules.medical={
+  render(el){
+    const recs=(CRM.store.get('medical')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const scout=CRM.store.get('scout')||[];
+    const inj=scout.filter(p=>p.status==='injured'||p.status==='limited');
+    el.innerHTML=sectionTitle('12','Медицина','Травмы, статусы и восстановление',
+      `<button class="btn primary" onclick="CRM.modules.medical.add()">+ Запись</button>`)+
+    `<div class="grid g3" style="margin-bottom:14px">
+      <div class="kpi"><div class="v" style="color:var(--bad)">${scout.filter(p=>p.status==='injured').length}</div><div class="l">Травмированы</div></div>
+      <div class="kpi"><div class="v" style="color:var(--warn)">${scout.filter(p=>p.status==='limited').length}</div><div class="l">Ограничены</div></div>
+      <div class="kpi"><div class="v" style="color:var(--good)">${scout.filter(p=>p.status==='active').length}</div><div class="l">Здоровы</div></div>
+    </div>
+    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th><th>Диагноз</th><th>Статус</th><th>Возврат</th><th></th></tr></thead><tbody>
+      ${recs.map(r=>{const p=playerById(r.playerId);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td><td>${esc(r.diagnosis||'—')}</td><td><span class="pill ${STATUS_CLASS[r.status]||''}">${STATUS_LABEL[r.status]||''}</span></td><td>${r.returnDate?fmtDateShort(r.returnDate):'—'}</td><td><button class="btn sm ghost" onclick="CRM.modules.medical.edit('${r.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.medical.del('${r.id}')">×</button></td></tr>`;}).join('')}
+    </tbody></table>`:'<div class="empty">Нет медицинских записей.</div>'}</div>`;
+  },
+  add(id){
+    const r=id?(CRM.store.get('medical')||[]).find(x=>x.id===id):{};
+    const scout=CRM.store.get('scout')||[];
+    CRM.modal.open(CRM.modal.frame(id?'Изменить запись':'Медзапись',`
+      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="md_pid">${scout.map(p=>`<option value="${p.id}" ${r&&r.playerId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div>
+      <div style="flex:1"><label class="fld">Дата</label><input id="md_date" type="date" value="${r&&r.date||localYmd()}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Диагноз</label><input id="md_diag" value="${esc(r&&r.diagnosis||'')}"></div>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Статус</label><select id="md_status">${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${r&&r.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>
+      <div style="flex:1"><label class="fld">Ожид. возврат</label><input id="md_return" type="date" value="${r&&r.returnDate||''}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Примечание</label><textarea id="md_note" rows="2">${esc(r&&r.statusNote||'')}</textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.medical.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  edit(id){ this.add(id); },
+  save(id){
+    const recs=CRM.store.get('medical')||[];
+    const data={playerId:document.getElementById('md_pid').value,date:document.getElementById('md_date').value,diagnosis:document.getElementById('md_diag').value.trim(),status:document.getElementById('md_status').value,returnDate:document.getElementById('md_return').value,statusNote:document.getElementById('md_note').value.trim()};
+    let r=id?recs.find(x=>x.id===id):null;
+    if(r)Object.assign(r,data); else {r=Object.assign({id:uuid()},data);recs.push(r);}
+    CRM.store.set('medical',recs);
+    // sync player status to latest record for that player
+    this.syncStatus(data.playerId);
+    CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  syncStatus(pid){
+    const recs=(CRM.store.get('medical')||[]).filter(r=>r.playerId===pid).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const scout=CRM.store.get('scout')||[]; const p=scout.find(x=>x.id===pid);
+    if(p&&recs.length){ const last=recs[recs.length-1]; p.status=last.status; p.statusNote=last.statusNote||''; CRM.store.set('scout',scout); }
+  },
+  del(id){ if(!confirm('Удалить запись?'))return; const rec=(CRM.store.get('medical')||[]).find(r=>r.id===id); CRM.store.set('medical',(CRM.store.get('medical')||[]).filter(r=>r.id!==id)); if(rec)this.syncStatus(rec.playerId); CRM.router.render(); CRM.toast('Удалено'); }
+};
+
+/* ===================================================================
+   10 — PRESEASON (Bompa periodization)
+   =================================================================== */
+CRM.modules.preseason={
+  WEEKS:7, DAYS:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+  PHASES:[
+    {key:'aerobic',name:'Аэробная база',color:'#1D9E75'},
+    {key:'transition',name:'Переход',color:'#BA7517'},
+    {key:'gcap',name:'G-cap (ёмкость)',color:'#D85A30'},
+    {key:'gpower',name:'G-power (мощность)',color:'#E24B4A'},
+    {key:'taper',name:'Подводка (Taper)',color:'#888780'}
+  ],
+  phaseObj(k){ return this.PHASES.find(p=>p.key===k)||null; },
+  ensure(){
+    const ps=CRM.store.get('preseason')||{};
+    if(!Array.isArray(ps.plan)||ps.plan.length!==this.WEEKS){ const old=ps.plan||[]; ps.plan=[]; for(let w=0;w<this.WEEKS;w++){ ps.plan[w]=[]; for(let d=0;d<7;d++){ ps.plan[w][d]=(old[w]&&old[w][d])||{phase:'',intensity:0,minutes:0}; } } }
+    if(!Array.isArray(ps.details)||ps.details.length!==this.WEEKS){ const old=ps.details||[]; ps.details=[]; for(let w=0;w<this.WEEKS;w++){ ps.details[w]=[]; for(let d=0;d<7;d++){ ps.details[w][d]=(old[w]&&old[w][d])||''; } } }
+    if(!Array.isArray(ps.fatigue)||ps.fatigue.length!==this.WEEKS){ const old=ps.fatigue||[]; ps.fatigue=[]; for(let w=0;w<this.WEEKS;w++)ps.fatigue[w]=old[w]||0; }
+    if(!ps.cal)ps.cal={start:'',end:'',seasonEnd:''};
+    if(ps.seasonPlan==null)ps.seasonPlan=''; if(ps.seasonDetails==null)ps.seasonDetails='';
+    CRM.store.set('preseason',ps); return ps;
+  },
+  dayCat(load){ if(load<=0)return 0; if(load<=420)return 1; if(load<=840)return 2; if(load<=1260)return 3; return 4; }
+  ,catLabel(c){ return ['Отдых','Лёгкий','Средний','Высокий','Пиковый'][c]; }
+  ,catColor(c){ return ['#f0f0f3','#e3f3ec','#fdf2e0','#fbe7df','#f8d4d4'][c]; },
+  load(cell){ return num(cell&&cell.intensity)*num(cell&&cell.minutes); },
+  render(el){
+    const ps=this.ensure();
+    el.innerHTML=sectionTitle('10','Предсезонная подготовка','Периодизация по Бомпе · 7 недель',
+      `<button class="btn" onclick="CRM.modules.preseason.fatigueTest()">Тест усталости</button>
+      <button class="btn" onclick="CRM.modules.preseason.autobuild()">Автопостроение</button>
+      <button class="btn" onclick="window.print()">Печать</button>`)+
+    `<div class="card" style="margin-bottom:14px"><div class="row">
+      <div style="flex:1"><label class="fld">Начало предсезонки</label><input type="date" value="${ps.cal.start||''}" onchange="CRM.modules.preseason.setCal('start',this.value)"></div>
+      <div style="flex:1"><label class="fld">Конец предсезонки</label><input type="date" value="${ps.cal.end||''}" onchange="CRM.modules.preseason.setCal('end',this.value)"></div>
+      <div style="flex:1"><label class="fld">Конец сезона</label><input type="date" value="${ps.cal.seasonEnd||''}" onchange="CRM.modules.preseason.setCal('seasonEnd',this.value)"></div>
+    </div></div>
+    <div class="card" style="margin-bottom:14px"><b>Фазы Бомпы</b><div class="row" style="margin-top:8px;gap:8px">
+      ${this.PHASES.map(p=>`<span class="pill" style="background:${p.color}1a;color:${p.color};border-color:transparent">● ${p.name}</span>`).join('')}
+    </div></div>
+    <div class="card" style="padding:0;overflow:auto"><table style="min-width:760px"><thead><tr><th>Неделя</th>${this.DAYS.map(d=>`<th class="num">${d}</th>`).join('')}<th class="num">Σ нагр.</th><th class="num">Уст.</th></tr></thead><tbody>
+      ${ps.plan.map((week,w)=>{
+        const weekLoad=week.reduce((s,c)=>s+this.load(c),0);
+        return `<tr><td><b>${w+1}</b></td>${week.map((cell,d)=>{
+          const ld=this.load(cell); const cat=this.dayCat(ld); const ph=this.phaseObj(cell.phase);
+          return `<td class="num" style="cursor:pointer;background:${this.catColor(cat)};border-left:3px solid ${ph?ph.color:'transparent'}" onclick="CRM.modules.preseason.editCell(${w},${d})" title="${ph?ph.name:''} · ${this.catLabel(cat)}">
+            ${ld?`<div style="font-weight:700">${ld}</div><div style="font-size:10px;color:var(--ink2)">${num(cell.intensity)}×${num(cell.minutes)}</div>`:'<span class="muted">+</span>'}</td>`;
+        }).join('')}<td class="num"><b>${weekLoad}</b></td><td class="num">${ps.fatigue[w]||'—'}</td></tr>`;
+      }).join('')}
+    </tbody></table></div>
+    ${this.conflictsView(ps)}
+    ${this.statsView(ps)}
+    <div class="card" style="margin-top:14px"><b>План на сезон (поддержание)</b>
+      <textarea rows="4" style="margin-top:8px" onchange="CRM.modules.preseason.setSeason('seasonPlan',this.value)">${esc(ps.seasonPlan||'')}</textarea></div>`;
+  },
+  setCal(k,v){ const ps=this.ensure(); ps.cal[k]=v; CRM.store.set('preseason',ps); },
+  setSeason(k,v){ const ps=this.ensure(); ps[k]=v; CRM.store.set('preseason',ps); CRM.toast('Сохранено'); },
+  editCell(w,d){
+    const ps=this.ensure(); const cell=ps.plan[w][d]; const note=ps.details[w][d]||'';
+    CRM.modal.open(CRM.modal.frame(`Неделя ${w+1}, ${this.DAYS[d]}`,`
+      <div><label class="fld">Фаза</label><select id="pc_phase"><option value="">— нет —</option>${this.PHASES.map(p=>`<option value="${p.key}" ${cell.phase===p.key?'selected':''}>${p.name}</option>`).join('')}</select></div>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Интенсивность (1–10)</label><input id="pc_int" type="number" min="0" max="10" value="${num(cell.intensity)}"></div>
+      <div style="flex:1"><label class="fld">Минуты</label><input id="pc_min" type="number" min="0" value="${num(cell.minutes)}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Содержание тренировки</label><textarea id="pc_note" rows="3">${esc(note)}</textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.saveCell(${w},${d})">Сохранить</button><button class="btn danger" onclick="CRM.modules.preseason.clearCell(${w},${d})">Очистить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  saveCell(w,d){
+    const ps=this.ensure();
+    ps.plan[w][d]={phase:document.getElementById('pc_phase').value,intensity:num(document.getElementById('pc_int').value),minutes:num(document.getElementById('pc_min').value)};
+    ps.details[w][d]=document.getElementById('pc_note').value;
+    CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  clearCell(w,d){ const ps=this.ensure(); ps.plan[w][d]={phase:'',intensity:0,minutes:0}; ps.details[w][d]=''; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); },
+  autobuild(){
+    if(!confirm('Построить стандартный 7-недельный микроцикл? Текущий план будет перезаписан.'))return;
+    const ps=this.ensure();
+    const weekPhase=['aerobic','aerobic','transition','gcap','gpower','gpower','taper'];
+    // microcycle intensity template (Mon..Sun)
+    const tmpl=[ {i:5,m:75},{i:8,m:60},{i:3,m:50},{i:8,m:60},{i:6,m:70},{i:9,m:55},{i:0,m:0} ];
+    const taperScale=0.5;
+    for(let w=0;w<this.WEEKS;w++){ const phase=weekPhase[w]; const isTaper=phase==='taper';
+      for(let d=0;d<7;d++){ const t=tmpl[d]; const intensity=isTaper?Math.max(0,Math.round(t.i*0.7)):t.i; const minutes=isTaper?Math.round(t.m*taperScale):t.m;
+        ps.plan[w][d]={phase:t.i===0?'':phase,intensity:t.i===0?0:intensity,minutes:t.i===0?0:minutes}; }
+    }
+    CRM.store.set('preseason',ps); CRM.router.render(); CRM.toast('План построен');
+  },
+  conflictsView(ps){
+    const warns=[];
+    // flatten with positions
+    const seq=[]; ps.plan.forEach((wk,w)=>wk.forEach((c,d)=>seq.push({w,d,c,load:this.load(c),cat:this.dayCat(this.load(c)),phase:c.phase})));
+    // 1) two+ consecutive peak/high days
+    for(let i=1;i<seq.length;i++){ if(seq[i].cat>=3&&seq[i-1].cat>=3&&!(seq[i].d===0)){ warns.push(`Перегрузка: подряд высокие нагрузки — нед.${seq[i-1].w+1}/${this.DAYS[seq[i-1].d]} и нед.${seq[i].w+1}/${this.DAYS[seq[i].d]}`); } }
+    // 2) phase ordering (G-power before G-cap)
+    const firstOf={}; this.PHASES.forEach(p=>{const idx=seq.findIndex(s=>s.phase===p.key);firstOf[p.key]=idx;});
+    if(firstOf.gpower>=0&&firstOf.gcap>=0&&firstOf.gpower<firstOf.gcap) warns.push('Нарушение Бомпы: фаза G-power начинается раньше G-cap.');
+    if(firstOf.taper>=0&&firstOf.gpower>=0&&firstOf.taper<firstOf.gpower) warns.push('Подводка (Taper) стоит раньше фазы мощности.');
+    // 3) taper should be in last week
+    const lastWeekPhases=(ps.plan[this.WEEKS-1]||[]).map(c=>c.phase).filter(Boolean);
+    if(lastWeekPhases.length&&!lastWeekPhases.includes('taper')) warns.push('В последней неделе нет фазы подводки (Taper).');
+    // 4) peak day without adjacent recovery
+    for(let i=0;i<seq.length;i++){ if(seq[i].cat===4){ const prev=seq[i-1],next=seq[i+1]; const rec=(prev&&prev.cat<=1)||(next&&next.cat<=1); if(!rec) warns.push(`Пиковый день нед.${seq[i].w+1}/${this.DAYS[seq[i].d]} без дня восстановления рядом.`); } }
+    return `<div class="card" style="margin-top:14px"><b>Детектор конфликтов (Бомпа)</b>
+      ${warns.length?`<div style="margin-top:8px">${warns.map(w=>`<div class="pill warn" style="display:block;margin-bottom:6px;text-align:left">⚠ ${esc(w)}</div>`).join('')}</div>`:'<p class="pill good" style="margin-top:8px;display:inline-block">✓ Конфликтов не обнаружено</p>'}</div>`;
+  },
+  statsView(ps){
+    const weekLoads=ps.plan.map(wk=>wk.reduce((s,c)=>s+this.load(c),0));
+    const totalLoad=weekLoads.reduce((s,x)=>s+x,0);
+    const totalMin=ps.plan.reduce((s,wk)=>s+wk.reduce((a,c)=>a+num(c.minutes),0),0);
+    const peak=Math.max(0,...weekLoads); const peakWeek=weekLoads.indexOf(peak)+1;
+    return `<div class="grid g4" style="margin-top:14px">
+      <div class="kpi"><div class="v">${totalLoad}</div><div class="l">Суммарная нагрузка</div></div>
+      <div class="kpi"><div class="v">${Math.round(totalMin/60)} ч</div><div class="l">Объём (часы)</div></div>
+      <div class="kpi"><div class="v">${Math.round(totalLoad/this.WEEKS)}</div><div class="l">Ср. нагр./неделя</div></div>
+      <div class="kpi"><div class="v">${peak}</div><div class="l">Пик (неделя ${peak?peakWeek:'—'})</div></div>
+    </div>`;
+  },
+  fatigueTest(){
+    const params=[['sleep','Сон'],['soreness','Мышечная боль'],['mood','Настроение'],['energy','Энергия'],['stress','Стресс']];
+    CRM.modal.open(CRM.modal.frame('Тест усталости + sPRE',`
+      <div><label class="fld">Неделя</label><select id="ft_week">${Array.from({length:this.WEEKS}).map((_,w)=>`<option value="${w}">Неделя ${w+1}</option>`).join('')}</select></div>
+      <div style="margin-top:12px"><b>sPRE (Borg 1–10)</b><div style="margin-top:6px"><input id="ft_borg" type="number" min="1" max="10" value="5"></div></div>
+      <div style="margin-top:12px"><b>Параметры усталости (1–5)</b>${params.map(([k,l])=>`<div class="row" style="margin:8px 0"><div style="flex:2"><label class="fld">${l}</label></div><div style="flex:1"><input data-ft="${k}" type="number" min="1" max="5" value="3"></div></div>`).join('')}</div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.saveFatigue()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  saveFatigue(){
+    const ps=this.ensure(); const w=num(document.getElementById('ft_week').value);
+    const borg=num(document.getElementById('ft_borg').value);
+    let sum=0,n=0; document.querySelectorAll('input[data-ft]').forEach(i=>{sum+=num(i.value);n++;});
+    const idx=Math.round((borg*2 + (sum/n)*2));
+    ps.fatigue[w]=idx; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); CRM.toast('Индекс усталости: '+idx);
+  }
+};
+
+/* ===================================================================
+   11 — CALENDAR
+   =================================================================== */
+CRM.modules.calendar={
+  events(){
+    const out=[];
+    (CRM.store.get('matches')||[]).forEach(m=>out.push({date:m.date,type:'match',id:m.id,title:'Матч vs '+(m.opp||''),meta:(m.home?'дома':'гости')+' · '+CRM.modules.matches.tournLabel(m),done:!!(m.result&&m.result.finished)}));
+    (CRM.store.get('calendar')||[]).forEach(e=>out.push({date:e.date,type:'event',id:e.id,title:e.title,meta:e.note||'',kind:e.kind}));
+    return out.filter(e=>e.date).sort((a,b)=>a.date.localeCompare(b.date));
+  },
+  render(el){
+    const evs=this.events();
+    const groups={};
+    evs.forEach(e=>{ const d=parseLocalDate(e.date); const key=d?d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}):'—'; (groups[key]=groups[key]||[]).push(e); });
+    const today=localYmd();
+    el.innerHTML=sectionTitle('11','Календарь','События сезона',
+      `<button class="btn primary" onclick="CRM.modules.calendar.add()">+ Событие</button>`)+
+    `${Object.keys(groups).length?Object.entries(groups).map(([month,list])=>`<div class="card" style="margin-bottom:14px"><b style="text-transform:capitalize">${esc(month)}</b>
+      <div style="margin-top:8px">${list.map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)${e.date<today?';opacity:.55':''}">
+        <div style="width:46px;text-align:center"><div style="font-weight:800;font-size:16px">${parseLocalDate(e.date).getDate()}</div><div class="muted" style="font-size:10px">${parseLocalDate(e.date).toLocaleDateString('ru-RU',{weekday:'short'})}</div></div>
+        <div style="flex:1;cursor:${e.type==='match'?'pointer':'default'}" ${e.type==='match'?`onclick="CRM.modules.matches.open('${e.id}')"`:''}><b>${esc(e.title)}</b><div class="muted" style="font-size:12px">${esc(e.meta)}</div></div>
+        ${e.type==='match'?(e.done?'<span class="pill good">сыгран</span>':'<span class="pill accent">матч</span>'):'<span class="pill">'+esc(e.kind||'событие')+'</span>'}
+        ${e.type==='event'?`<button class="btn sm ghost danger" onclick="CRM.modules.calendar.del('${e.id}')">×</button>`:''}
+      </div>`).join('')}</div></div>`).join(''):'<div class="empty card">Нет событий. Матчи и события появятся здесь.</div>'}`;
+  },
+  add(){
+    CRM.modal.open(CRM.modal.frame('Событие',`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cv_date" type="date" value="${localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Тип</label><select id="cv_kind"><option>тренировка</option><option>сбор</option><option>собрание</option><option>выходной</option><option>прочее</option></select></div></div>
+      <div style="margin-top:10px"><label class="fld">Название</label><input id="cv_title"></div>
+      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="cv_note" rows="2"></textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.calendar.save()">Добавить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  save(){
+    const title=document.getElementById('cv_title').value.trim(); if(!title){CRM.toast('Укажите название');return;}
+    const cal=CRM.store.get('calendar')||[]; cal.push({id:uuid(),date:document.getElementById('cv_date').value,title,kind:document.getElementById('cv_kind').value,note:document.getElementById('cv_note').value.trim()});
+    CRM.store.set('calendar',cal); CRM.modal.close(); CRM.router.render(); CRM.toast('Добавлено');
+  },
+  del(id){ if(!confirm('Удалить событие?'))return; CRM.store.set('calendar',(CRM.store.get('calendar')||[]).filter(e=>e.id!==id)); CRM.router.render(); }
+};
+
+/* ===================================================================
+   13 — ANALYTICS
+   =================================================================== */
+CRM.modules.analytics={
+  render(el){
+    el.innerHTML=sectionTitle('13','Аналитика','Графики и тренды по реальным данным')+
+    `<div class="grid g2">
+      <div class="card"><b>Голы: за / против</b><div class="chartbox" style="margin-top:8px"><canvas id="anGoals"></canvas></div></div>
+      <div class="card"><b>Спецбригады (эффективность, %)</b><div class="chartbox" style="margin-top:8px"><canvas id="anSpec"></canvas></div></div>
+      <div class="card"><b>Бомбардиры (очки)</b><div class="chartbox" style="margin-top:8px"><canvas id="anScorers"></canvas></div></div>
+      <div class="card"><b>Состояние состава</b><div class="chartbox" style="margin-top:8px"><canvas id="anHealth"></canvas></div></div>
+    </div>`;
+    const finished=(CRM.store.get('matches')||[]).filter(m=>m.result&&m.result.finished).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const labels=finished.map(m=>fmtDateShort(m.date)+' '+(m.opp||'').slice(0,6));
+    makeChart('anGoals',{type:'bar',data:{labels:labels.length?labels:['—'],datasets:[
+      {label:'Забито',data:finished.map(m=>num(m.score.our)),backgroundColor:'#0071e3'},
+      {label:'Пропущено',data:finished.map(m=>num(m.score.opp)),backgroundColor:'#e24b4a'}]},options:chartOpts()});
+    makeChart('anSpec',{type:'line',data:{labels:labels.length?labels:['—'],datasets:[
+      {label:'ПП %',data:finished.map(m=>m.result.ppAttempts?Math.round(num(m.result.ppGoals)/num(m.result.ppAttempts)*100):0),borderColor:'#1d9e75',tension:.3},
+      {label:'ПК %',data:finished.map(m=>m.result.pkTimes?Math.round((1-num(m.result.pkGoalsAgainst)/num(m.result.pkTimes))*100):0),borderColor:'#ba7517',tension:.3}]},options:chartOpts({scales:{y:{beginAtZero:true,max:100,grid:{color:'#eef0f3'}},x:{grid:{color:'#eef0f3'}}}})});
+    const lead=CRM.modules.matches.teamLeaders().slice(0,8);
+    makeChart('anScorers',{type:'bar',data:{labels:lead.length?lead.map(l=>l.name.split(' ')[0]):['—'],datasets:[{label:'Очки',data:lead.map(l=>l.pts),backgroundColor:'#0a84ff'}]},options:Object.assign(chartOpts({plugins:{legend:{display:false}}}),{indexAxis:'y'})});
+    const scout=CRM.store.get('scout')||[]; const cnt={active:0,limited:0,injured:0,suspended:0}; scout.forEach(p=>cnt[p.status]=(cnt[p.status]||0)+1);
+    makeChart('anHealth',{type:'doughnut',data:{labels:['Здоров','Ограничен','Травма','Дисквал.'],datasets:[{data:[cnt.active,cnt.limited,cnt.injured,cnt.suspended],backgroundColor:['#1d9e75','#ba7517','#e24b4a','#888780']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:11}}}}}});
+  }
+};
+
+/* ===================================================================
+   14 — NOTES
+   =================================================================== */
+CRM.modules.notes={
+  render(el){
+    const notes=(CRM.store.get('notes')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    el.innerHTML=sectionTitle('14','Заметки','Записи и идеи тренера',
+      `<button class="btn primary" onclick="CRM.modules.notes.edit()">+ Заметка</button>`)+
+    `<div class="grid g3">${notes.length?notes.map(n=>`<div class="card" style="cursor:pointer" onclick="CRM.modules.notes.edit('${n.id}')">
+      <div style="display:flex;align-items:center;gap:8px"><b>${esc(n.title||'Без названия')}</b>${n.tag?`<span class="pill accent" style="margin-left:auto">${esc(n.tag)}</span>`:''}</div>
+      <p class="muted" style="margin-top:8px;font-size:13px;white-space:pre-wrap">${esc((n.body||'').slice(0,160))}</p>
+      <div class="muted" style="font-size:11px;margin-top:8px">${fmtDate(n.date)}</div></div>`).join(''):'<div class="empty card" style="grid-column:1/-1">Заметок нет.</div>'}</div>`;
+  },
+  edit(id){
+    const n=id?(CRM.store.get('notes')||[]).find(x=>x.id===id):{};
+    CRM.modal.open(CRM.modal.frame(id?'Заметка':'Новая заметка',`
+      <div class="row"><div style="flex:2"><label class="fld">Заголовок</label><input id="nt_title" value="${esc(n&&n.title||'')}"></div>
+      <div style="flex:1"><label class="fld">Тег</label><input id="nt_tag" value="${esc(n&&n.tag||'')}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Текст</label><textarea id="nt_body" rows="8">${esc(n&&n.body||'')}</textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.notes.save('${id||''}')">Сохранить</button>${id?`<button class="btn danger" onclick="CRM.modules.notes.del('${id}')">Удалить</button>`:''}<button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  save(id){
+    const notes=CRM.store.get('notes')||[];
+    const data={title:document.getElementById('nt_title').value.trim(),tag:document.getElementById('nt_tag').value.trim(),body:document.getElementById('nt_body').value};
+    let n=id?notes.find(x=>x.id===id):null;
+    if(n){Object.assign(n,data);} else {n=Object.assign({id:uuid(),date:localYmd()},data);notes.push(n);}
+    CRM.store.set('notes',notes); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  del(id){ if(!confirm('Удалить заметку?'))return; CRM.store.set('notes',(CRM.store.get('notes')||[]).filter(n=>n.id!==id)); CRM.modal.close(); CRM.router.render(); }
+};
+
+/* ===================================================================
+   15 — SETTINGS
+   =================================================================== */
+CRM.modules.settings={
+  render(el){
+    const s=CRM.store.get('settings')||{};
+    const norms=s.norms||[];
+    el.innerHTML=sectionTitle('15','Настройки','Команда, нормативы и данные')+
+    `<div class="card" style="margin-bottom:14px"><b>Команда</b>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Тренер</label><input id="st_coach" value="${esc(s.coach||'')}"></div>
+      <div style="flex:1"><label class="fld">Команда</label><input id="st_team" value="${esc(s.team||'')}"></div></div>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Лига</label><input id="st_league" value="${esc(s.league||'')}"></div>
+      <div style="flex:1"><label class="fld">Сезон</label><input id="st_season" value="${esc(s.season||'')}"></div></div>
+      <button class="btn primary sm" style="margin-top:10px" onclick="CRM.modules.settings.saveTeam()">Сохранить</button>
+    </div>
+    <div class="card" style="margin-bottom:14px"><div style="display:flex;align-items:center"><b>Нормативы физподготовки</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.settings.editNorm()">+ Норматив</button></div>
+      <table style="margin-top:8px"><thead><tr><th>Показатель</th><th>Меньше=лучше</th><th class="num">🥇</th><th class="num">🥈</th><th class="num">🥉</th><th></th></tr></thead><tbody>
+      ${norms.map(n=>`<tr><td>${esc(n.name)}</td><td>${n.lower?'да':'нет'}</td><td class="num">${n.gold}</td><td class="num">${n.silver}</td><td class="num">${n.bronze}</td><td><button class="btn sm ghost" onclick="CRM.modules.settings.editNorm('${n.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.settings.delNorm('${n.id}')">×</button></td></tr>`).join('')}
+      </tbody></table></div>
+    <div class="card"><b>Данные</b><p class="muted" style="font-size:12px;margin:6px 0">Резервное копирование и восстановление (localStorage: ${CRM.LSKEY}).</p>
+      <div class="row" style="margin-top:8px;gap:8px">
+        <button class="btn" onclick="CRM.modules.settings.exportFile()">⬇ Экспорт JSON</button>
+        <button class="btn" onclick="document.getElementById('st_import').click()">⬆ Импорт JSON</button>
+        <button class="btn danger" onclick="CRM.modules.settings.reset()">Сбросить всё</button>
+        <input type="file" id="st_import" accept="application/json" style="display:none" onchange="CRM.modules.settings.importFile(this)">
+      </div></div>`;
+  },
+  saveTeam(){
+    const s=CRM.store.get('settings')||{};
+    s.coach=document.getElementById('st_coach').value.trim(); s.team=document.getElementById('st_team').value.trim();
+    s.league=document.getElementById('st_league').value.trim(); s.season=document.getElementById('st_season').value.trim();
+    CRM.store.set('settings',s);
+    const sub=document.getElementById('brandSub'); if(sub)sub.textContent=(s.team||'Команда')+' · '+(s.season||'');
+    CRM.toast('Настройки сохранены');
+  },
+  editNorm(id){
+    const norms=CRM.store.get('settings.norms')||[]; const n=id?norms.find(x=>x.id===id):{};
+    CRM.modal.open(CRM.modal.frame(id?'Норматив':'Новый норматив',`
+      <div><label class="fld">Название</label><input id="nm_name" value="${esc(n&&n.name||'')}"></div>
+      <label class="fld" style="margin-top:10px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="nm_lower" style="width:auto" ${n&&n.lower?'checked':''}> Меньше = лучше (время)</label>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Золото</label><input id="nm_gold" type="number" step="0.01" value="${n&&n.gold!=null?n.gold:''}"></div>
+      <div style="flex:1"><label class="fld">Серебро</label><input id="nm_silver" type="number" step="0.01" value="${n&&n.silver!=null?n.silver:''}"></div>
+      <div style="flex:1"><label class="fld">Бронза</label><input id="nm_bronze" type="number" step="0.01" value="${n&&n.bronze!=null?n.bronze:''}"></div></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.settings.saveNorm('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  saveNorm(id){
+    const norms=CRM.store.get('settings.norms')||[];
+    const data={name:document.getElementById('nm_name').value.trim(),lower:document.getElementById('nm_lower').checked,gold:num(document.getElementById('nm_gold').value),silver:num(document.getElementById('nm_silver').value),bronze:num(document.getElementById('nm_bronze').value)};
+    if(!data.name){CRM.toast('Укажите название');return;}
+    let n=id?norms.find(x=>x.id===id):null;
+    if(n)Object.assign(n,data); else {n=Object.assign({id:'norm_'+uuid().slice(3)},data);norms.push(n);}
+    CRM.store.set('settings.norms',norms); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
+  },
+  delNorm(id){ if(!confirm('Удалить норматив?'))return; CRM.store.set('settings.norms',(CRM.store.get('settings.norms')||[]).filter(n=>n.id!==id)); CRM.router.render(); },
+  exportFile(){
+    const blob=new Blob([CRM.store.exportJson()],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='crm_hockey_'+localYmd()+'.json'; a.click(); URL.revokeObjectURL(a.href);
+    CRM.toast('Экспортировано');
+  },
+  importFile(inp){
+    const f=inp.files[0]; if(!f)return;
+    const r=new FileReader(); r.onload=()=>{ try{ CRM.store.importJson(r.result); CRM.toast('Импортировано'); CRM.boot(); }catch(e){ CRM.toast('Ошибка импорта: '+e.message); } }; r.readAsText(f);
+  },
+  reset(){ if(!confirm('Удалить ВСЕ данные? Действие необратимо.'))return; if(!confirm('Точно? Рекомендуется сначала сделать экспорт.'))return; CRM.store.resetAll(); CRM.boot(); CRM.toast('Данные сброшены'); }
+};
+
+/* --------------------------- MODAL NAV MONKEY-PATCH --------------------------- */
+(function(){
+  const wrap=CRM.modalNav.wrap;
+  ['profiles.open','matches.open','matches.matchDay','matches.matchReport','opponents.open','roster.openHistory'].forEach(path=>{
+    const [mod,fn]=path.split('.');
+    if(CRM.modules[mod]&&typeof CRM.modules[mod][fn]==='function'){
+      CRM.modules[mod][fn]=wrap(CRM.modules[mod][fn].bind(CRM.modules[mod]));
+    }
+  });
+})();
+
+/* === MODULES ANCHOR === */
+
+window.addEventListener('DOMContentLoaded',CRM.boot);
+</script>
+</body>
+</html>
