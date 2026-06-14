@@ -2001,41 +2001,82 @@ CRM.modules.preseason={
    11 — CALENDAR
    =================================================================== */
 CRM.modules.calendar={
+  _cal:null,
+  kindColor(k){ const m={'тренировка':'#0071e3','сбор':'#8b5cf6','собрание':'#8b5cf6','выходной':'#6b7280','оргплан':'#0ea5a3','прочее':'#0071e3'}; return m[k]||'#0071e3'; },
   events(){
     const out=[];
-    (CRM.store.get('matches')||[]).forEach(m=>out.push({date:m.date,type:'match',id:m.id,title:'Game vs '+(m.opp||''),meta:(m.home?'home':'away')+' · '+CRM.modules.matches.tournLabel(m),done:!!(m.result&&m.result.finished)}));
+    (CRM.store.get('matches')||[]).forEach(m=>out.push({date:m.date,type:'match',id:m.id,title:'vs '+(m.opp||''),meta:(m.home?'home':'away')+' · '+CRM.modules.matches.tournLabel(m),done:!!(m.result&&m.result.finished)}));
     (CRM.store.get('calendar')||[]).forEach(e=>out.push({date:e.date,type:'event',id:e.id,title:e.title,meta:e.note||'',kind:e.kind}));
     return out.filter(e=>e.date).sort((a,b)=>a.date.localeCompare(b.date));
   },
-  render(el){
-    const evs=this.events();
-    const groups={};
+  eventsByDate(){ const by={}; this.events().forEach(e=>{ (by[e.date]=by[e.date]||[]).push(e); }); return by; },
+  render(el,params){
+    const view=(params&&params.view)||'month';
+    const tabs=[['month','Месяц'],['list','Список'],['org','Оргплан']];
+    const nav=`<div class="seg" style="margin-bottom:14px">${tabs.map(t=>`<button class="${view===t[0]?'active':''}" onclick="CRM.router.go('calendar',{view:'${t[0]}'})">${t[1]}</button>`).join('')}</div>`;
+    el.innerHTML=sectionTitle('11','Календарь','Расписание сезона',
+      `<button class="btn primary" onclick="CRM.modules.calendar.add()">+ Событие</button>`)+nav+
+      (view==='list'?this.paneList():view==='org'?this.paneOrg():this.paneMonth());
+  },
+  paneMonth(){
+    const now=new Date(); const c=this._cal||{y:now.getFullYear(),m:now.getMonth()};
+    const by=this.eventsByDate(); const marks={};
+    Object.keys(by).forEach(d=>{ marks[d]={tags:by[d].slice(0,3).map(e=>{const col=e.type==='match'?'#ef4444':this.kindColor(e.kind);return {text:(e.type==='match'?'🏒 ':'')+(e.title||e.kind||'событие'),bg:col,fg:'#fff'};})}; });
+    return `<div class="card"><div style="display:flex;align-items:center;gap:8px"><b>${MONTHS_RU[c.m]} ${c.y}</b><div style="margin-left:auto;display:flex;gap:6px"><button class="btn sm" onclick="CRM.modules.calendar.calNav(-1)">‹</button><button class="btn sm" onclick="CRM.modules.calendar.today()">Сегодня</button><button class="btn sm" onclick="CRM.modules.calendar.calNav(1)">›</button></div></div>
+      <div style="margin-top:10px">${monthGridHtml(c.y,c.m,marks,{onDay:'CRM.modules.calendar.dayView'})}</div>
+      <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px" class="muted"><span><span class="gdot" style="background:#ef4444"></span> матч</span><span><span class="gdot" style="background:#0071e3"></span> тренировка</span><span><span class="gdot" style="background:#6b7280"></span> выходной</span><span><span class="gdot" style="background:#0ea5a3"></span> оргплан</span></div>
+    </div>`;
+  },
+  calNav(d){ const now=new Date(); const c=this._cal||{y:now.getFullYear(),m:now.getMonth()}; let m=c.m+d,y=c.y; if(m<0){m=11;y--;}if(m>11){m=0;y++;} this._cal={y:y,m:m}; CRM.router.render(); },
+  today(){ const n=new Date(); this._cal={y:n.getFullYear(),m:n.getMonth()}; CRM.router.render(); },
+  dayView(ymd){
+    const list=this.eventsByDate()[ymd]||[];
+    const body=`<div class="muted" style="margin-bottom:10px">${fmtDate(ymd)}</div>
+      ${list.length?list.map(e=>`<div class="card" style="margin-bottom:8px;border-left:3px solid ${e.type==='match'?'#ef4444':this.kindColor(e.kind)}"><div style="display:flex;align-items:center;gap:8px"><b>${esc(e.title)}</b>${e.type==='match'?'<span class="pill accent" style="margin-left:auto">матч</span>':`<span class="pill" style="margin-left:auto">${esc(e.kind||'событие')}</span>`}</div>${e.meta?`<div class="muted" style="font-size:12px;margin-top:4px;white-space:pre-wrap">${esc(e.meta)}</div>`:''}<div class="row" style="margin-top:8px">${e.type==='match'?`<button class="btn sm" onclick="CRM.modules.matches.open('${e.id}')">Открыть матч</button>`:`<button class="btn sm" onclick="CRM.modules.calendar.edit('${e.id}')">Изменить</button><button class="btn sm ghost danger" onclick="CRM.modules.calendar.del('${e.id}')">Удалить</button>`}</div></div>`).join(''):'<p class="muted">Нет событий в этот день.</p>'}
+      <div class="row" style="margin-top:12px"><button class="btn primary" onclick="CRM.modules.calendar.add('${ymd}')">+ Событие</button><button class="btn" onclick="CRM.modules.calendar.add('${ymd}','оргплан')">+ Оргплан</button><button class="btn" onclick="window.print()">Печать</button></div>`;
+    CRM.modal.open(CRM.modal.frame('План на день',body));
+  },
+  paneList(){
+    const evs=this.events(); const groups={}; const today=localYmd();
     evs.forEach(e=>{ const d=parseLocalDate(e.date); const key=d?d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}):'—'; (groups[key]=groups[key]||[]).push(e); });
-    const today=localYmd();
-    el.innerHTML=sectionTitle('11','Календарь','События сезона',
-      `<button class="btn primary" onclick="CRM.modules.calendar.add()">+ Событие</button>`)+
-    `${Object.keys(groups).length?Object.entries(groups).map(([month,list])=>`<div class="card" style="margin-bottom:14px"><b style="text-transform:capitalize">${esc(month)}</b>
+    return Object.keys(groups).length?Object.entries(groups).map(([month,list])=>`<div class="card" style="margin-bottom:14px"><b style="text-transform:capitalize">${esc(month)}</b>
       <div style="margin-top:8px">${list.map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)${e.date<today?';opacity:.55':''}">
         <div style="width:46px;text-align:center"><div style="font-weight:800;font-size:16px">${parseLocalDate(e.date).getDate()}</div><div class="muted" style="font-size:10px">${parseLocalDate(e.date).toLocaleDateString('ru-RU',{weekday:'short'})}</div></div>
         <div style="flex:1;cursor:${e.type==='match'?'pointer':'default'}" ${e.type==='match'?`onclick="CRM.modules.matches.open('${e.id}')"`:''}><b>${esc(e.title)}</b><div class="muted" style="font-size:12px">${esc(e.meta)}</div></div>
         ${e.type==='match'?(e.done?'<span class="pill good">сыгран</span>':'<span class="pill accent">матч</span>'):'<span class="pill">'+esc(e.kind||'событие')+'</span>'}
         ${e.type==='event'?`<button class="btn sm ghost danger" onclick="CRM.modules.calendar.del('${e.id}')">×</button>`:''}
-      </div>`).join('')}</div></div>`).join(''):'<div class="empty card">Нет событий. Матчи и события появятся здесь.</div>'}`;
+      </div>`).join('')}</div></div>`).join(''):'<div class="empty card">Нет событий. Матчи и события появятся здесь.</div>';
   },
-  add(){
-    CRM.modal.open(CRM.modal.frame('Событие',`
-      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cv_date" type="date" value="${localYmd()}"></div>
-      <div style="flex:1"><label class="fld">Тип</label><select id="cv_kind"><option>тренировка</option><option>сбор</option><option>собрание</option><option>выходной</option><option>прочее</option></select></div></div>
-      <div style="margin-top:10px"><label class="fld">Название</label><input id="cv_title"></div>
-      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="cv_note" rows="2"></textarea></div>
-      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.calendar.save()">Добавить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  paneOrg(){
+    const org=(CRM.store.get('calendar')||[]).filter(e=>e.kind==='оргплан').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    return `<p class="muted" style="font-size:13px;margin-bottom:10px">Организационное расписание: режим дня, сборы, переезды — по датам (печатается).</p>
+    <div class="row" style="margin-bottom:12px"><button class="btn primary" onclick="CRM.modules.calendar.add('','оргплан')">+ Оргплан</button></div>
+    ${org.length?org.map(e=>`<div class="card" style="margin-bottom:10px;border-left:3px solid #0ea5a3"><div style="display:flex;align-items:center;gap:8px"><b>${esc(e.title||'Расписание')}</b><span class="muted">${fmtDate(e.date)}</span><div style="margin-left:auto;white-space:nowrap"><button class="btn sm ghost" onclick="CRM.modules.calendar.edit('${e.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.calendar.del('${e.id}')">×</button><button class="btn sm" onclick="window.print()">🖶</button></div></div>${e.note?`<pre style="white-space:pre-wrap;font-family:inherit;margin-top:8px;font-size:13px">${esc(e.note)}</pre>`:''}</div>`).join(''):'<div class="empty card">Нет оргпланов. Добавьте расписание дня/сбора.</div>'}`;
   },
+  add(presetDate,presetKind){
+    const isOrg=presetKind==='оргплан';
+    CRM.modal.open(CRM.modal.frame(isOrg?'Оргплан (расписание)':'Событие',`
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cv_date" type="date" value="${presetDate||localYmd()}"></div>
+      <div style="flex:1"><label class="fld">Тип</label><select id="cv_kind">${['тренировка','сбор','собрание','выходной','оргплан','прочее'].map(k=>`<option ${k===(presetKind||'тренировка')?'selected':''}>${k}</option>`).join('')}</select></div></div>
+      <div style="margin-top:10px"><label class="fld">Название</label><input id="cv_title" value="${isOrg?'Расписание дня':''}"></div>
+      <div style="margin-top:10px"><label class="fld">${isOrg?'Расписание / заметки (по строкам)':'Заметка'}</label><textarea id="cv_note" rows="${isOrg?8:2}" placeholder="${isOrg?'9:45–10:00 завтрак&#10;10:15–10:30 собрание&#10;11:00 лёд...':''}"></textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.calendar.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  edit(id){ const e=(CRM.store.get('calendar')||[]).find(x=>x.id===id); if(!e) return; CRM.modal.open(CRM.modal.frame('Изменить',`
+      <input type="hidden" id="cv_id" value="${e.id}">
+      <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cv_date" type="date" value="${e.date||''}"></div>
+      <div style="flex:1"><label class="fld">Тип</label><select id="cv_kind">${['тренировка','сбор','собрание','выходной','оргплан','прочее'].map(k=>`<option ${k===e.kind?'selected':''}>${k}</option>`).join('')}</select></div></div>
+      <div style="margin-top:10px"><label class="fld">Название</label><input id="cv_title" value="${esc(e.title||'')}"></div>
+      <div style="margin-top:10px"><label class="fld">Заметка / расписание</label><textarea id="cv_note" rows="${e.kind==='оргплан'?8:2}">${esc(e.note||'')}</textarea></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.calendar.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`)); },
   save(){
     const title=document.getElementById('cv_title').value.trim(); if(!title){CRM.toast('Укажите название');return;}
-    const cal=CRM.store.get('calendar')||[]; cal.push({id:uuid(),date:document.getElementById('cv_date').value,title,kind:document.getElementById('cv_kind').value,note:document.getElementById('cv_note').value.trim()});
-    CRM.store.set('calendar',cal); CRM.modal.close(); CRM.router.render(); CRM.toast('Добавлено');
+    const idEl=document.getElementById('cv_id'); const cal=CRM.store.get('calendar')||[];
+    const data={date:document.getElementById('cv_date').value,title,kind:document.getElementById('cv_kind').value,note:document.getElementById('cv_note').value.trim()};
+    if(idEl&&idEl.value){ const e=cal.find(x=>x.id===idEl.value); if(e)Object.assign(e,data); } else { cal.push(Object.assign({id:uuid()},data)); }
+    CRM.store.set('calendar',cal); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить событие?',danger:true,onOk:()=>{ CRM.store.set('calendar',(CRM.store.get('calendar')||[]).filter(e=>e.id!==id)); CRM.router.render(); }}); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить событие?',danger:true,onOk:()=>{ CRM.store.set('calendar',(CRM.store.get('calendar')||[]).filter(e=>e.id!==id)); CRM.modal.close(); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
