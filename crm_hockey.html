@@ -1419,6 +1419,7 @@ CRM.modules.physical={
   },
   addTest(){
     const scout=CRM.store.get('scout')||[]; const norms=CRM.store.get('settings.norms')||[];
+    if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
     CRM.modal.open(CRM.modal.frame('Тестирование',`
       <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ph_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="ph_date" type="date" value="${localYmd()}"></div></div>
@@ -1448,6 +1449,7 @@ CRM.modules.psycho={
   },
   addTest(){
     const scout=CRM.store.get('scout')||[];
+    if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
     CRM.modal.open(CRM.modal.frame('Психотест',`
       <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ps_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="ps_date" type="date" value="${localYmd()}"></div></div>
@@ -1485,6 +1487,7 @@ CRM.modules.medical={
   add(id){
     const r=id?(CRM.store.get('medical')||[]).find(x=>x.id===id):{};
     const scout=CRM.store.get('scout')||[];
+    if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
     CRM.modal.open(CRM.modal.frame(id?'Изменить запись':'Медзапись',`
       <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="md_pid">${scout.map(p=>`<option value="${p.id}" ${r&&r.playerId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="md_date" type="date" value="${r&&r.date||localYmd()}"></div></div>
