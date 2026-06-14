@@ -146,6 +146,22 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 .chartbox{position:relative;height:240px}
 .chartbox.sm{height:180px}
 .chartbox.lg{height:320px}
+
+/* ============================= DIALOG (CRM.ui.confirm / formModal) ============================= */
+#dialog{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:60px 16px;z-index:1100;overflow-y:auto;backdrop-filter:blur(2px)}
+#dialog.open{display:flex}
+#dialogBody{background:var(--panel);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);width:100%;max-width:520px}
+
+/* ============================= ARCHITECTURE MAP (16) ============================= */
+.legend-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.legend-card b{display:block;margin-bottom:5px;font-size:13px}
+.legend-card span{color:var(--ink2);font-size:12px}
+.codeblk{background:#1d1d1f;color:#e6e6e6;border-radius:12px;padding:14px 16px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12px;line-height:1.55;overflow-x:auto;white-space:pre;margin-top:10px}
+.arch-flow{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.9}
+.arch-flow .a-from{font-weight:700;color:var(--accent)}
+.arch-flow .a-to{font-weight:600}
+.tag-own{color:var(--good);font-weight:600;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12px}
+code{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:.92em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
 </head>
 <body>
@@ -158,6 +174,7 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 </aside>
 <main id="appRoot"></main>
 <div id="modal"><div id="modalBody"></div></div>
+<div id="dialog"><div id="dialogBody"></div></div>
 <div id="toasts"></div>
 
 <script>
@@ -260,6 +277,7 @@ CRM.store = (function(){
       physical:[], psycho:[], practice:[], calendar:[], medical:[],
       preseason:{ plan:[], details:[], fatigue:[], seasonPlan:'', seasonDetails:'', cal:{start:'',end:'',seasonEnd:''} },
       notes:[],
+      customBlocks:[], custom:{},
       settings:{ coach:'', team:'Моя команда', league:'', season:'2025/26', norms:defaultNorms() },
       scoutTarget:{}, scoutPriorities:{},
       state:{ seedOpp10:false }
@@ -285,6 +303,8 @@ CRM.store = (function(){
     d.preseason=Object.assign({plan:[],details:[],fatigue:[],seasonPlan:'',seasonDetails:'',cal:{start:'',end:'',seasonEnd:''}},d.preseason||{});
     d.playoffBracket=Object.assign({r8:[],r4:[],r2:[],f:[]},d.playoffBracket||{});
     d.state=Object.assign({seedOpp10:false},d.state||{});
+    if(!Array.isArray(d.customBlocks)) d.customBlocks=[];
+    if(!d.custom||typeof d.custom!=='object') d.custom={};
     // ensure scout players carry expected shape (add-only)
     (d.scout||[]).forEach(normalizePlayer);
     (d.scoutDB||[]).forEach(normalizePlayer);
@@ -400,6 +420,7 @@ function buildTabs(active){
 /* --------------------------- BOOT --------------------------- */
 CRM.boot=function(){
   CRM.store.load();
+  if(CRM.registerCustomBlocks) CRM.registerCustomBlocks();
   const st=CRM.store.get('settings');
   const sub=document.getElementById('brandSub'); if(sub&&st) sub.textContent=(st.team||'Команда')+' · '+(st.season||'');
   window.addEventListener('hashchange',CRM.router.render);
@@ -578,7 +599,7 @@ CRM.modules.scouting={
     if(p){ Object.assign(p,data); } else { p=Object.assign({id:'sd_'+uuid().slice(3)},data); db.push(p); }
     CRM.store.set('scoutDB',db); CRM.modal.close(); CRM.router.render(); CRM.toast('Кандидат сохранён');
   },
-  del(id){ if(!confirm('Удалить кандидата из базы?'))return; let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; delete pr[id]; CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); },
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить кандидата из базы?',danger:true,onOk:()=>{ let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; delete pr[id]; CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); }}); },
   priorities(){
     const pr=CRM.store.get('scoutPriorities')||{}; const ids=Object.keys(pr);
     const list=ids.map(scoutById).filter(Boolean).sort((a,b)=>(b.rating||0)-(a.rating||0));
@@ -685,7 +706,7 @@ CRM.modules.profiles={
     if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0}},data); scout.push(p); }
     CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ if(!confirm('Удалить игрока из команды?'))return; let scout=CRM.store.get('scout')||[]; scout=scout.filter(p=>p.id!==id); CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалён'); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить игрока из команды?',danger:true,onOk:()=>{ let scout=CRM.store.get('scout')||[]; scout=scout.filter(p=>p.id!==id); CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалён'); }}); }
 };
 
 /* --------------------------- ROSTER SLOTS --------------------------- */
@@ -993,7 +1014,7 @@ CRM.modules.matches={
     ${m.notes?`<div class="card" style="margin-top:14px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(m.notes)}</p></div>`:''}
     <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.open('${m.id}','result')">Изменить итоги</button><button class="btn" onclick="window.print()">Печать</button><button class="btn danger" onclick="CRM.modules.matches.del('${m.id}')">Удалить матч</button></div>`;
   },
-  del(id){ if(!confirm('Удалить матч?'))return; const m=this._md(id); if(m&&m.lineupId){const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===m.lineupId);if(h&&h.matchId===id)h.matchId='';} let matches=CRM.store.get('matches')||[]; matches=matches.filter(x=>x.id!==id); CRM.store.set('matches',matches); CRM.modal.close(); CRM.router.render(); CRM.toast('Матч удалён'); },
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить матч?',danger:true,onOk:()=>{ const m=this._md(id); if(m&&m.lineupId){const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===m.lineupId);if(h&&h.matchId===id)h.matchId='';} let matches=CRM.store.get('matches')||[]; matches=matches.filter(x=>x.id!==id); CRM.store.set('matches',matches); CRM.modal.close(); CRM.router.render(); CRM.toast('Матч удалён'); }}); },
 
   /* ---- panes embedded in profiles ---- */
   profilePane(pid){
@@ -1072,7 +1093,7 @@ CRM.modules.roster={
   },
   setSpecial(key,slot,val){ const sp=CRM.store.get('roster.special')||{}; if(!sp[key])sp[key]={}; sp[key][slot]=val; CRM.store.set('roster.special',sp); },
   toggleSpecial(){ CRM.store.set('roster.showSpecial',!CRM.store.get('roster.showSpecial')); CRM.router.render(); },
-  clearLineup(){ if(!confirm('Очистить текущий рабочий состав?'))return; CRM.store.set('roster.lines',{}); CRM.router.render(); CRM.toast('Состав очищен'); },
+  clearLineup(){ CRM.ui.confirm({title:'Очистить состав',message:'Очистить текущий рабочий состав?',danger:true,okLabel:'Очистить',onOk:()=>{ CRM.store.set('roster.lines',{}); CRM.router.render(); CRM.toast('Состав очищен'); }}); },
 
   ppHints(){
     const scout=CRM.store.get('scout')||[];
@@ -1138,11 +1159,12 @@ CRM.modules.roster={
   },
   loadHistory(id){ const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h)return; CRM.store.set('roster.lines',Object.assign({},h.lines)); CRM.store.set('roster.special',JSON.parse(JSON.stringify(h.special||{}))); CRM.modal.close(); CRM.router.render(); CRM.toast('Состав загружен'); },
   delFromModal(id){
-    if(!confirm('Удалить состав из истории?'))return;
-    const hist=CRM.store.get('roster.history')||[]; const h=hist.find(x=>x.id===id);
-    if(h&&h.matchId){ const m=CRM.modules.matches._md(h.matchId); if(m&&m.lineupId===id) m.lineupId=''; } // unlink lineupId both sides
-    CRM.store.set('roster.history',hist.filter(x=>x.id!==id)); CRM.store.save();
-    CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено');
+    CRM.ui.confirm({title:'Удаление',message:'Удалить состав из истории?',danger:true,onOk:()=>{
+      const hist=CRM.store.get('roster.history')||[]; const h=hist.find(x=>x.id===id);
+      if(h&&h.matchId){ const m=CRM.modules.matches._md(h.matchId); if(m&&m.lineupId===id) m.lineupId=''; } // unlink lineupId both sides
+      CRM.store.set('roster.history',hist.filter(x=>x.id!==id)); CRM.store.save();
+      CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено');
+    }});
   },
   bestCombosView(){
     const map={};
@@ -1306,7 +1328,7 @@ CRM.modules.opponents={
     if(o){ o.name=name; o.city=city; } else { o={id:uuid(),name,city,roster:[],strengths:'',weaknesses:'',tactics:'',games:[],lineups:[]}; ops.push(o); }
     CRM.store.set('opponents',ops); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ if(!confirm('Удалить соперника? Связанные матчи останутся.'))return; let ops=CRM.store.get('opponents')||[]; ops=ops.filter(o=>o.id!==id); CRM.store.set('opponents',ops); CRM.modal.close(); CRM.router.go('opponents'); CRM.toast('Удалён'); },
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить соперника? Связанные матчи останутся.',danger:true,onOk:()=>{ let ops=CRM.store.get('opponents')||[]; ops=ops.filter(o=>o.id!==id); CRM.store.set('opponents',ops); CRM.modal.close(); CRM.router.go('opponents'); CRM.toast('Удалён'); }}); },
   setField(id,field,val){ const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id); if(o){o[field]=val;CRM.store.save();CRM.toast('Сохранено');} },
 
   addPlayer(id){
@@ -1368,7 +1390,9 @@ CRM.modules.opponents={
     CRM.store.save(); this.open(id,'preseason'); CRM.toast('Добавлено');
   },
   delGame(opId,gameId,stayInList){
-    if(!confirm('Удалить игру? Связанный матч также будет удалён.'))return;
+    CRM.ui.confirm({title:'Удаление',message:'Удалить игру? Связанный матч также будет удалён.',danger:true,onOk:()=>this._delGame(opId,gameId,stayInList)});
+  },
+  _delGame(opId,gameId,stayInList){
     const o=(CRM.store.get('opponents')||[]).find(x=>x.id===opId);
     o.games=(o.games||[]).filter(g=>g.id!==gameId);
     // remove linked match
@@ -1431,7 +1455,7 @@ CRM.modules.physical={
     const recs=CRM.store.get('physical')||[]; recs.push({id:uuid(),playerId:document.getElementById('ph_pid').value,date:document.getElementById('ph_date').value,results});
     CRM.store.set('physical',recs); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ if(!confirm('Удалить запись?'))return; CRM.store.set('physical',(CRM.store.get('physical')||[]).filter(r=>r.id!==id)); CRM.router.render(); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ CRM.store.set('physical',(CRM.store.get('physical')||[]).filter(r=>r.id!==id)); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
@@ -1462,7 +1486,7 @@ CRM.modules.psycho={
     const recs=CRM.store.get('psycho')||[]; recs.push({id:uuid(),playerId:document.getElementById('ps_pid').value,date:document.getElementById('ps_date').value,scores,note:document.getElementById('ps_note').value.trim()});
     CRM.store.set('psycho',recs); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ if(!confirm('Удалить?'))return; CRM.store.set('psycho',(CRM.store.get('psycho')||[]).filter(r=>r.id!==id)); CRM.router.render(); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ CRM.store.set('psycho',(CRM.store.get('psycho')||[]).filter(r=>r.id!==id)); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
@@ -1513,7 +1537,7 @@ CRM.modules.medical={
     const scout=CRM.store.get('scout')||[]; const p=scout.find(x=>x.id===pid);
     if(p&&recs.length){ const last=recs[recs.length-1]; p.status=last.status; p.statusNote=last.statusNote||''; CRM.store.set('scout',scout); }
   },
-  del(id){ if(!confirm('Удалить запись?'))return; const rec=(CRM.store.get('medical')||[]).find(r=>r.id===id); CRM.store.set('medical',(CRM.store.get('medical')||[]).filter(r=>r.id!==id)); if(rec)this.syncStatus(rec.playerId); CRM.router.render(); CRM.toast('Удалено'); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ const rec=(CRM.store.get('medical')||[]).find(r=>r.id===id); CRM.store.set('medical',(CRM.store.get('medical')||[]).filter(r=>r.id!==id)); if(rec)this.syncStatus(rec.playerId); CRM.router.render(); CRM.toast('Удалено'); }}); }
 };
 
 /* ===================================================================
@@ -1590,7 +1614,9 @@ CRM.modules.preseason={
   },
   clearCell(w,d){ const ps=this.ensure(); ps.plan[w][d]={phase:'',intensity:0,minutes:0}; ps.details[w][d]=''; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); },
   autobuild(){
-    if(!confirm('Построить стандартный 7-недельный микроцикл? Текущий план будет перезаписан.'))return;
+    CRM.ui.confirm({title:'Перестроить план',message:'Построить стандартный 7-недельный микроцикл? Текущий план будет перезаписан.',danger:true,okLabel:'Построить',onOk:()=>this._autobuild()});
+  },
+  _autobuild(){
     const ps=this.ensure();
     const weekPhase=['aerobic','aerobic','transition','gcap','gpower','gpower','taper'];
     // microcycle intensity template (Mon..Sun)
@@ -1687,7 +1713,7 @@ CRM.modules.calendar={
     const cal=CRM.store.get('calendar')||[]; cal.push({id:uuid(),date:document.getElementById('cv_date').value,title,kind:document.getElementById('cv_kind').value,note:document.getElementById('cv_note').value.trim()});
     CRM.store.set('calendar',cal); CRM.modal.close(); CRM.router.render(); CRM.toast('Добавлено');
   },
-  del(id){ if(!confirm('Удалить событие?'))return; CRM.store.set('calendar',(CRM.store.get('calendar')||[]).filter(e=>e.id!==id)); CRM.router.render(); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить событие?',danger:true,onOk:()=>{ CRM.store.set('calendar',(CRM.store.get('calendar')||[]).filter(e=>e.id!==id)); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
@@ -1745,7 +1771,7 @@ CRM.modules.notes={
     if(n){Object.assign(n,data);} else {n=Object.assign({id:uuid(),date:localYmd()},data);notes.push(n);}
     CRM.store.set('notes',notes); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ if(!confirm('Удалить заметку?'))return; CRM.store.set('notes',(CRM.store.get('notes')||[]).filter(n=>n.id!==id)); CRM.modal.close(); CRM.router.render(); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить заметку?',danger:true,onOk:()=>{ CRM.store.set('notes',(CRM.store.get('notes')||[]).filter(n=>n.id!==id)); CRM.modal.close(); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
@@ -1801,7 +1827,7 @@ CRM.modules.settings={
     if(n)Object.assign(n,data); else {n=Object.assign({id:'norm_'+uuid().slice(3)},data);norms.push(n);}
     CRM.store.set('settings.norms',norms); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  delNorm(id){ if(!confirm('Удалить норматив?'))return; CRM.store.set('settings.norms',(CRM.store.get('settings.norms')||[]).filter(n=>n.id!==id)); CRM.router.render(); },
+  delNorm(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить норматив?',danger:true,onOk:()=>{ CRM.store.set('settings.norms',(CRM.store.get('settings.norms')||[]).filter(n=>n.id!==id)); CRM.router.render(); }}); },
   exportFile(){
     const blob=new Blob([CRM.store.exportJson()],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='crm_hockey_'+localYmd()+'.json'; a.click(); URL.revokeObjectURL(a.href);
@@ -1811,7 +1837,7 @@ CRM.modules.settings={
     const f=inp.files[0]; if(!f)return;
     const r=new FileReader(); r.onload=()=>{ try{ CRM.store.importJson(r.result); CRM.toast('Импортировано'); CRM.boot(); }catch(e){ CRM.toast('Ошибка импорта: '+e.message); } }; r.readAsText(f);
   },
-  reset(){ if(!confirm('Удалить ВСЕ данные? Действие необратимо.'))return; if(!confirm('Точно? Рекомендуется сначала сделать экспорт.'))return; CRM.store.resetAll(); CRM.boot(); CRM.toast('Данные сброшены'); }
+  reset(){ CRM.ui.confirm({title:'Сбросить всё',message:'Удалить ВСЕ данные? Действие необратимо.',danger:true,okLabel:'Продолжить',onOk:()=>{ CRM.ui.confirm({title:'Точно?',message:'Рекомендуется сначала сделать экспорт. Удалить все данные?',danger:true,okLabel:'Удалить всё',onOk:()=>{ CRM.store.resetAll(); CRM.boot(); CRM.toast('Данные сброшены'); }}); }}); }
 };
 
 /* --------------------------- MODAL NAV MONKEY-PATCH --------------------------- */
@@ -1826,6 +1852,368 @@ CRM.modules.settings={
 })();
 
 /* === MODULES ANCHOR === */
+/* ===================================================================
+   EXTENSIBILITY LAYER  — safe new blocks + live architecture map.
+   Documented in BLUEPRINT.md §11. Keep this in sync with the map.
+     A) CRM.ui            — modal-based confirm/form (no native confirm/prompt, §8.6)
+     B) CRM.registry +    — single source of truth for the map, with a
+        CRM.registerModule   "one owner per entity" guard (§1, §7).
+     C) custom blocks     — user-defined blocks at runtime; each OWNS only its
+                            own namespace custom.<id>, so it cannot break invariants.
+     D) 16 — Карта        — renders the architecture LIVE from CRM.registry.
+   To add a block: ONE call to CRM.registerModule(...) (no edits in 3 places).
+   =================================================================== */
+
+/* ----------------------- A) CRM.ui : dialogs (§8.6) ----------------------- */
+CRM.ui=(function(){
+  let pendingConfirm=null, pendingForm=null;
+  function openD(html){ const d=document.getElementById('dialog'),b=document.getElementById('dialogBody'); if(!d) return; b.innerHTML=html; d.classList.add('open'); d.onclick=function(e){ if(e.target===d) cancel(); }; }
+  function closeD(){ const d=document.getElementById('dialog'); if(!d) return; d.classList.remove('open'); document.getElementById('dialogBody').innerHTML=''; }
+  function frameD(title,body){ return `<div class="modal-head"><h2>${esc(title)}</h2><button class="x" onclick="CRM.ui.cancel()">×</button></div><div class="modal-body">${body}</div>`; }
+  function confirm(opts){
+    opts=opts||{}; pendingConfirm=opts.onOk||null; pendingForm=null;
+    openD(frameD(opts.title||'Подтверждение',
+      `<p style="font-size:14px;line-height:1.55">${esc(opts.message||'Вы уверены?')}</p>
+       <div class="row" style="margin-top:18px">
+         <button class="btn ${opts.danger?'danger':'primary'}" onclick="CRM.ui.ok()">${esc(opts.okLabel||'Да')}</button>
+         <button class="btn" onclick="CRM.ui.cancel()">${esc(opts.cancelLabel||'Отмена')}</button>
+       </div>`));
+  }
+  function ok(){ const fn=pendingConfirm; pendingConfirm=null; closeD(); if(fn) fn(); }
+  function cancel(){ const f=pendingForm; pendingForm=null; pendingConfirm=null; closeD(); if(f&&f.onCancel) f.onCancel(); }
+  function fieldHtml(f,i){
+    const id='uif_'+i, v=(f.value==null?'':f.value);
+    if(f.type==='checkbox') return `<label class="fld" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="${id}" style="width:auto" ${v?'checked':''}> ${esc(f.label)}</label>`;
+    let inp;
+    if(f.type==='textarea') inp=`<textarea id="${id}" rows="${f.rows||4}">${esc(v)}</textarea>`;
+    else if(f.type==='select') inp=`<select id="${id}">${(f.options||[]).map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(v)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+    else inp=`<input id="${id}" type="${f.type==='number'?'number':(f.type==='date'?'date':'text')}" ${f.type==='number'?'step="any"':''} value="${esc(v)}" placeholder="${esc(f.placeholder||'')}">`;
+    return `<div style="margin-top:12px"><label class="fld">${esc(f.label)}${f.required?' *':''}</label>${inp}${f.hint?`<p class="muted" style="font-size:11px;margin-top:4px">${esc(f.hint)}</p>`:''}</div>`;
+  }
+  function formModal(opts){
+    opts=opts||{}; pendingForm=opts; pendingConfirm=null;
+    const body=(opts.fields||[]).map(fieldHtml).join('')+(opts.note?`<p class="muted" style="font-size:12px;margin-top:12px">${esc(opts.note)}</p>`:'');
+    openD(frameD(opts.title||'Форма',
+      `${body}<div class="row" style="margin-top:18px">
+        <button class="btn primary" onclick="CRM.ui.submit()">${esc(opts.submitLabel||'Сохранить')}</button>
+        <button class="btn" onclick="CRM.ui.cancel()">Отмена</button></div>`));
+  }
+  function submit(){
+    const opts=pendingForm; if(!opts) return;
+    const values={}; let bad=null;
+    (opts.fields||[]).forEach((f,i)=>{
+      const el=document.getElementById('uif_'+i); if(!el){ values[f.key]=f.value; return; }
+      let val;
+      if(f.type==='number') val=(el.value===''?null:num(el.value));
+      else if(f.type==='checkbox') val=el.checked;
+      else val=(typeof el.value==='string'?el.value.trim():el.value);
+      if(f.required && (val===''||val==null) && !bad) bad=f.label;
+      values[f.key]=val;
+    });
+    if(bad){ CRM.toast('Заполните поле: '+bad); return; }
+    const cb=opts.onSubmit; pendingForm=null; closeD(); if(cb) cb(values);
+  }
+  return { confirm, formModal, ok, cancel, submit };
+})();
+
+/* ----------------------- B) registry + registerModule (§1, §7) ----------------------- */
+CRM.registry={};   /* id -> { id,num,label,desc,owns[],creates[],reads[],writes[],readonly,kind } */
+function baseKey(s){ return String(s||'').split('.')[0].replace(/\[\]$/,''); }
+
+/* Metadata of the 15 canonical blocks (BLUEPRINT §1/§3). The map renders FROM this. */
+CRM.CORE_META={
+  dashboard:{owns:[],creates:[],reads:['scout','matches','roster','medical','opponents','calendar','preseason'],writes:[],readonly:true},
+  scouting:{owns:['scoutDB','scoutTarget','scoutPriorities'],creates:['скаут-кандидата'],reads:['scout'],writes:[{to:'profiles',via:'promoteToTeam → scout[]'}]},
+  profiles:{owns:['scout'],creates:['игрока команды'],reads:['matches','physical','psycho','medical'],writes:[]},
+  roster:{owns:['roster'],creates:['состав / звено / историю'],reads:['scout','matches'],writes:[{to:'matches',via:'lineupId (двусторонняя)'}]},
+  matches:{owns:['matches'],creates:['матч (через _create)'],reads:['opponents','roster','scout'],writes:[{to:'opponents',via:'syncOppLineup → lineups'},{to:'roster',via:'history.matchId (двусторонняя)'}]},
+  stats:{owns:[],creates:[],reads:['matches'],writes:[],readonly:true},
+  opponents:{owns:['opponents','playoffBracket'],creates:['соперника / его игру'],reads:['matches'],writes:[{to:'matches',via:'createGamePair → matches._create'}]},
+  physical:{owns:['physical'],creates:['физтест'],reads:['scout','settings'],writes:[]},
+  psycho:{owns:['psycho'],creates:['психотест'],reads:['scout'],writes:[]},
+  preseason:{owns:['preseason'],creates:['план / детали / усталость'],reads:[],writes:[]},
+  calendar:{owns:['calendar'],creates:['событие'],reads:['matches','opponents'],writes:[]},
+  medical:{owns:['medical'],creates:['травму'],reads:['scout'],writes:[{to:'profiles',via:'scout[].status'}]},
+  analytics:{owns:[],creates:[],reads:['matches','physical','medical','psycho'],writes:[],readonly:true},
+  notes:{owns:['notes'],creates:['заметку'],reads:[],writes:[]},
+  settings:{owns:['settings'],creates:[],reads:[],writes:[]}
+};
+
+CRM.ownerOf=function(entity){
+  const b=baseKey(entity);
+  for(const id in CRM.registry){ if((CRM.registry[id].owns||[]).some(o=>baseKey(o)===b)) return id; }
+  return null;
+};
+
+CRM.registerModule=function(def){
+  if(!def||!def.id) throw new Error('registerModule: нужен id');
+  if(!/^[a-z][a-z0-9_]*$/.test(def.id)) throw new Error('registerModule: id должен быть [a-z][a-z0-9_]*');
+  const exists=!!CRM.registry[def.id];
+  if(exists && !def.replace) throw new Error('Блок «'+def.id+'» уже существует');
+  const mod=def.module||(def.render?{render:def.render}:null);
+  if(!mod||typeof mod.render!=='function') throw new Error('registerModule: нужен render()');
+  /* one-owner-per-entity guard (§1, §7) */
+  (def.owns||[]).forEach(o=>{ const cur=CRM.ownerOf(o); if(cur && cur!==def.id) throw new Error('Сущность «'+o+'» уже принадлежит блоку «'+cur+'» — у каждой сущности один владелец'); });
+  /* resolve num (unique, 2-digit) */
+  let num=def.num;
+  if(!num){ let mx=0; CRM.TABS.forEach(t=>{ const n=parseInt(t[1],10); if(n>mx) mx=n; }); num=String(mx+1).padStart(2,'0'); }
+  if(def.icon) CRM.ICONS[def.id]=def.icon;
+  CRM.modules[def.id]=mod;
+  CRM.registry[def.id]={ id:def.id, num:num, label:def.label||def.id, desc:def.desc||'', owns:def.owns||[], creates:def.creates||[], reads:def.reads||[], writes:def.writes||[], readonly:!!def.readonly, kind:def.kind||'core' };
+  const row=[def.id,num,def.label||def.id,def.desc||''];
+  const idx=CRM.TABS.findIndex(t=>t[0]===def.id);
+  if(idx>=0) CRM.TABS[idx]=row; else CRM.TABS.push(row);
+  return CRM.registry[def.id];
+};
+
+CRM.unregisterModule=function(id){
+  const meta=CRM.registry[id];
+  if(!meta) return false;
+  if(meta.kind!=='custom') throw new Error('Системный блок «'+id+'» удалять нельзя');
+  delete CRM.modules[id]; delete CRM.ICONS[id]; delete CRM.registry[id];
+  CRM.TABS=CRM.TABS.filter(t=>t[0]!==id);
+  return true;
+};
+
+/* seed registry for the 15 canonical blocks already defined above */
+(function seedCoreRegistry(){
+  CRM.TABS.forEach(([id,num,label,desc])=>{
+    const meta=CRM.CORE_META[id]; if(!meta) return;
+    CRM.registry[id]={ id, num, label, desc, owns:meta.owns||[], creates:meta.creates||[], reads:meta.reads||[], writes:meta.writes||[], readonly:!!meta.readonly, kind:'core' };
+  });
+})();
+
+/* ----------------------- C) custom (user-defined) blocks ----------------------- */
+CRM.customBlocks=(function(){
+  const PAL={
+    cube:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+    star:'<path d="M12 2l3 6.5 7 .9-5.2 4.8 1.4 7L12 18l-6.6 3.2 1.4-7L1.6 9.4l7-.9Z"/>',
+    folder:'<path d="M4 4h6l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>',
+    flag:'<path d="M4 22V4h13l-2 4 2 4H4"/>',
+    clip:'<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>',
+    bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+    book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>'
+  };
+  function iconSvg(key){ const p=PAL[key]||PAL.cube; return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`; }
+  function iconKeys(){ return Object.keys(PAL); }
+  function fmtCell(v,type){ if(v==null||v==='') return '—'; if(type==='date') return fmtDate(v); return v; }
+  function makeModule(def){
+    const id=def.id, key='custom.'+id;
+    return {
+      _def(){ return (CRM.store.get('customBlocks')||[]).find(b=>b.id===id)||def; },
+      render(el){
+        const d=this._def();
+        const actions=(d.kind==='list')?`<button class="btn primary" onclick="CRM.modules['${id}'].add()">+ Запись</button>`:'';
+        let body;
+        if(d.kind==='text'){
+          const obj=CRM.store.get(key)||{};
+          body=`<div class="card"><label class="fld">Текст блока</label>
+            <textarea id="cbtext_${id}" rows="16" style="font-size:14px">${esc(obj.text||'')}</textarea>
+            <button class="btn primary sm" style="margin-top:10px" onclick="CRM.modules['${id}'].saveText()">Сохранить</button></div>`;
+        } else {
+          const rows=CRM.store.get(key)||[]; const cols=d.fields||[];
+          if(!rows.length){ body=`<div class="card"><div class="empty">Пока нет записей. Нажмите «+ Запись».</div></div>`; }
+          else body=`<div class="card" style="padding:0;overflow:hidden"><table><thead><tr>${cols.map(c=>`<th${c.type==='number'?' class="num"':''}>${esc(c.label)}</th>`).join('')}<th></th></tr></thead><tbody>
+            ${rows.map(r=>`<tr>${cols.map(c=>`<td${c.type==='number'?' class="num"':''}>${esc(fmtCell(r[c.key],c.type))}</td>`).join('')}
+              <td style="text-align:right;white-space:nowrap"><button class="btn sm ghost" onclick="CRM.modules['${id}'].edit('${r.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules['${id}'].del('${r.id}')">×</button></td></tr>`).join('')}
+            </tbody></table></div>`;
+        }
+        el.innerHTML=sectionTitle(d.num,d.label,d.desc||'Пользовательский блок',actions)+body;
+      },
+      add(){ this._form(null); },
+      edit(rowId){ this._form(rowId); },
+      _form(rowId){
+        const d=this._def(); const rows=CRM.store.get(key)||[]; const r=rowId?rows.find(x=>x.id===rowId):null;
+        CRM.ui.formModal({
+          title:(r?'Изменить':'Новая')+' запись · '+d.label,
+          fields:(d.fields||[]).map(c=>({key:c.key,label:c.label,type:c.type,value:r?r[c.key]:''})),
+          onSubmit:(vals)=>this._save(vals,rowId)
+        });
+      },
+      _save(vals,rowId){
+        const rows=CRM.store.get(key)||[];
+        if(rowId){ const r=rows.find(x=>x.id===rowId); if(r) Object.assign(r,vals); }
+        else { vals.id='row_'+uuid().slice(3); rows.push(vals); }
+        CRM.store.set(key,rows); CRM.router.render(); CRM.toast('Сохранено');
+      },
+      del(rowId){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ CRM.store.set(key,(CRM.store.get(key)||[]).filter(x=>x.id!==rowId)); CRM.router.render(); CRM.toast('Удалено'); }}); },
+      saveText(){ const ta=document.getElementById('cbtext_'+id); CRM.store.set(key,{text:ta?ta.value:''}); CRM.toast('Сохранено'); }
+    };
+  }
+  function register(def, replace){
+    const key='custom.'+def.id;
+    if(CRM.store.get(key)==null) CRM.store.set(key, def.kind==='text'?{text:''}:[]);
+    return CRM.registerModule({
+      id:def.id, num:def.num, label:def.label, desc:def.desc||'', icon:iconSvg(def.icon),
+      owns:['custom.'+def.id], creates:(def.kind==='list'?[def.label+' (запись)']:[]), reads:[], writes:[],
+      readonly:false, kind:'custom', module:makeModule(def), replace:!!replace
+    });
+  }
+  return { PAL, iconSvg, iconKeys, makeModule, register, fmtCell };
+})();
+
+/* re-register all stored custom blocks (called from CRM.boot after store.load) */
+CRM.registerCustomBlocks=function(){
+  const list=CRM.store.get('customBlocks')||[];
+  Object.keys(CRM.registry).forEach(id=>{ if(CRM.registry[id].kind==='custom' && !list.some(b=>b.id===id)){ try{ CRM.unregisterModule(id); }catch(e){} } });
+  list.forEach(def=>{ try{ CRM.customBlocks.register(def, true); }catch(e){ console.warn('custom block',def&&def.id,e); } });
+};
+
+/* ----------------------- D) 16 — КАРТА (live architecture) ----------------------- */
+CRM.registerModule({
+  id:'map', num:'16', label:'Карта', desc:'Архитектура и расширение приложения',
+  owns:[], creates:[], reads:[], writes:[], readonly:true, kind:'meta',
+  icon:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg>',
+  module:{
+    render(el){
+      const reg=Object.values(CRM.registry).sort((a,b)=>String(a.num).localeCompare(String(b.num)));
+      const custom=reg.filter(m=>m.kind==='custom');
+      el.innerHTML=
+        sectionTitle('16','Карта приложения','Как устроен CRM и как безопасно добавлять блоки',
+          `<button class="btn primary" onclick="CRM.modules.map.newBlock()">+ Новый блок</button>`)+
+        this._principles()+this._blocksTable(reg)+this._ownershipTable(reg)+
+        this._flow(reg)+this._customSection(custom)+this._howto()+this._invariants();
+    },
+    _principles(){ return `<div class="grid g3" style="margin-bottom:16px">
+      <div class="legend-card"><b>① Один владелец</b><span>У каждой сущности ровно один блок-владелец (CRUD). Остальные — только читатели.</span></div>
+      <div class="legend-card"><b>② Одна точка создания</b><span>Запись создаётся одним конструктором (напр. matches._create). Никаких дублей.</span></div>
+      <div class="legend-card"><b>③ Связи не рвём</b><span>Двусторонние ссылки (roster.history.matchId ⇄ matches.lineupId) чистятся с обеих сторон.</span></div>
+    </div>`; },
+    _blocksTable(reg){
+      return `<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div style="padding:14px 16px;border-bottom:1px solid var(--line)"><b>Блоки (${reg.length})</b> <span class="muted">— живой список из CRM.registry</span></div>
+      <table><thead><tr><th>№</th><th>Блок</th><th>Владеет</th><th>Создаёт</th><th>Читает</th><th>Тип</th></tr></thead><tbody>
+      ${reg.map(m=>`<tr>
+        <td class="num">${esc(m.num)}</td>
+        <td><b>${esc(m.label)}</b><div class="muted" style="font-size:11px">${esc(m.id)}</div></td>
+        <td>${m.owns.length?m.owns.map(o=>`<span class="pill" style="margin:1px">${esc(o)}</span>`).join(' '):'<span class="muted">—</span>'}</td>
+        <td style="font-size:12px">${m.creates.length?m.creates.map(esc).join(', '):'<span class="muted">—</span>'}</td>
+        <td class="muted" style="font-size:12px">${m.reads.length?m.reads.map(esc).join(', '):'—'}</td>
+        <td>${m.readonly?'<span class="pill">read-only</span> ':''}<span class="pill ${m.kind==='custom'?'accent':(m.kind==='meta'?'warn':'')}">${esc(m.kind)}</span></td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+    },
+    _ownershipTable(reg){
+      const ents=[]; reg.forEach(m=>(m.owns||[]).forEach(o=>{ if(!ents.includes(o)) ents.push(o); }));
+      function readersOf(o){ const b=baseKey(o); return reg.filter(m=>(m.reads||[]).some(r=>baseKey(r)===b)).map(m=>m.label); }
+      return `<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div style="padding:14px 16px;border-bottom:1px solid var(--line)"><b>Владение данными</b> <span class="muted">— сущность → владелец → читатели</span></div>
+      <table><thead><tr><th>Сущность (store)</th><th>Владелец</th><th>Читатели</th></tr></thead><tbody>
+      ${ents.sort().map(o=>{ const owner=CRM.ownerOf(o); const om=CRM.registry[owner];
+        return `<tr><td><span class="tag-own">${esc(o)}</span></td><td><b>${esc(om?om.label:owner)}</b></td><td class="muted" style="font-size:12px">${readersOf(o).join(', ')||'—'}</td></tr>`;
+      }).join('')}
+      </tbody></table></div>`;
+    },
+    _flow(reg){
+      const edges=[]; reg.forEach(m=>(m.writes||[]).forEach(w=>{ const tm=CRM.registry[w.to]; edges.push(`<span class="a-from">${esc(m.label)}</span> ──► <span class="a-to">${esc(tm?tm.label:w.to)}</span> <span class="muted">(${esc(w.via||'')})</span>`); }));
+      return `<div class="card" style="margin-bottom:16px"><b>Граф зависимостей</b> <span class="muted">— кто пишет в кого (стрелка = «пишет в»)</span>
+        <div class="arch-flow" style="margin-top:10px">${edges.join('<br>')||'<span class="muted">—</span>'}</div></div>`;
+    },
+    _customSection(custom){
+      return `<div class="card" style="margin-bottom:16px"><div style="display:flex;align-items:center"><b>Пользовательские блоки</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.map.newBlock()">+ Новый</button></div>
+      ${custom.length?`<table style="margin-top:10px"><thead><tr><th>№</th><th>Название</th><th>Тип</th><th>Хранилище</th><th></th></tr></thead><tbody>
+        ${custom.map(m=>`<tr><td class="num">${esc(m.num)}</td><td><b>${esc(m.label)}</b><div class="muted" style="font-size:11px">${esc(m.desc||'')}</div></td><td>${m.creates.length?'список':'текст'}</td><td><code>custom.${esc(m.id)}</code></td>
+          <td style="text-align:right;white-space:nowrap"><button class="btn sm ghost" onclick="CRM.router.go('${m.id}')">Открыть</button><button class="btn sm ghost" onclick="CRM.modules.map.editBlock('${m.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.map.delBlock('${m.id}')">×</button></td></tr>`).join('')}
+        </tbody></table>`:`<p class="muted" style="margin-top:8px;font-size:13px">Пока нет пользовательских блоков. Создайте свой — он появится в меню слева и будет хранить данные в собственном пространстве <code>custom.&lt;id&gt;</code>, не мешая остальным.</p>`}
+      </div>`;
+    },
+    _howto(){
+      const tmpl=
+`CRM.registerModule({
+  id:'training',            // [a-z][a-z0-9_]*, уникальный
+  num:'17',                 // можно не указывать — назначится сам
+  label:'Тренировки',
+  desc:'Журнал тренировок',
+  icon:'<svg ...>...</svg>',
+  owns:['training'],        // что блок ВЛАДЕЕТ (проверка: один владелец)
+  creates:['тренировку'],
+  reads:['scout'],          // что только читает
+  writes:[{to:'scout',via:'load'}],   // куда пишет (для графа)
+  module:{                  // render() обязателен; методы — для onclick
+    render(el){ el.innerHTML = '...'; },
+    add(){ /* ... */ }
+  }
+});`;
+      return `<div class="card" style="margin-bottom:16px"><b>Как добавить новый блок</b>
+        <p class="muted" style="font-size:13px;margin:6px 0 4px"><b>Без кода</b> — кнопка «+ Новый блок» выше: список (таблица) или текст. Данные лягут в своё пространство <code>custom.&lt;id&gt;</code>, поэтому ничего не сломается.</p>
+        <p class="muted" style="font-size:13px;margin:0 0 4px"><b>Кодом</b> — один вызов <code>CRM.registerModule(...)</code>: он сам добавит вкладку, иконку и строку в эту карту и проверит правило «один владелец на сущность». Никаких правок в трёх местах.</p>
+        <div class="codeblk">${esc(tmpl)}</div></div>`;
+    },
+    _invariants(){
+      const inv=[
+        'matches[] пополняется только через matches._create.',
+        'scout[].status пишет только medical.',
+        'scoutDB (кандидаты) и scout (команда) — мост только promoteToTeam.',
+        'Статистика читается только из result.finished === true.',
+        'roster.history[].matchId ⇄ matches[].lineupId — удаление чистит обе стороны.',
+        'Даты YYYY-MM-DD через parseLocalDate; все строки через esc().',
+        'Новый блок-владелец не может забрать чужую сущность (проверка в registerModule).',
+        'Пользовательский блок владеет только custom.<id> — изолирован, не ломает инварианты.'
+      ];
+      return `<div class="card"><b>Инварианты целостности</b> <span class="muted">— не нарушать</span>
+        <ol style="margin:10px 0 0 18px;font-size:13px;line-height:1.75">${inv.map(i=>`<li>${esc(i)}</li>`).join('')}</ol></div>`;
+    },
+    /* ---- create / edit / delete custom blocks ---- */
+    newBlock(){
+      CRM.ui.formModal({
+        title:'Новый блок', submitLabel:'Создать',
+        fields:[
+          {key:'label',label:'Название',type:'text',required:true,placeholder:'Например: Тренировки'},
+          {key:'desc',label:'Описание',type:'text',placeholder:'Короткий подзаголовок'},
+          {key:'icon',label:'Иконка',type:'select',options:CRM.customBlocks.iconKeys().map(k=>({value:k,label:k}))},
+          {key:'kind',label:'Тип блока',type:'select',options:[{value:'list',label:'Список (таблица записей)'},{value:'text',label:'Текст / заметки'}]},
+          {key:'cols',label:'Колонки списка',type:'text',placeholder:'Дата:date, Тема, Очки:number',hint:'Через запятую, формат имя:тип (text, number, date, textarea). Для типа «текст» не нужно.'}
+        ],
+        note:'Блок появится в меню слева. Данные хранятся в custom.<id> — отдельно от остальных.',
+        onSubmit:(v)=>this._createBlock(v)
+      });
+    },
+    _slug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,16)||'blk'; },
+    _parseCols(spec){
+      const self=this;
+      return String(spec||'').split(',').map(s=>s.trim()).filter(Boolean).map((s,i)=>{
+        const parts=s.split(':'); const label=(parts[0]||'').trim(); const type=(parts[1]||'').trim();
+        const t=['text','number','date','textarea'].indexOf(type)>=0?type:'text';
+        return { key:self._slug(label)||('c'+i), label:label||('Колонка '+(i+1)), type:t };
+      });
+    },
+    _createBlock(v){
+      const id='cb_'+this._slug(v.label)+'_'+uuid().slice(-4);
+      const def={ id, label:v.label, desc:v.desc||'', icon:v.icon||'cube', kind:(v.kind==='text'?'text':'list'),
+        fields:(v.kind==='text'?[]:this._parseCols(v.cols)), createdAt:localYmd() };
+      if(def.kind==='list' && !def.fields.length) def.fields=[{key:'title',label:'Название',type:'text'},{key:'note',label:'Заметка',type:'textarea'}];
+      let num; try{ num=CRM.customBlocks.register(def).num; }catch(e){ CRM.toast(e.message); return; }
+      def.num=num;
+      const list=CRM.store.get('customBlocks')||[]; list.push(def); CRM.store.set('customBlocks',list);
+      CRM.toast('Блок создан'); CRM.router.go(id);
+    },
+    editBlock(id){
+      const list=CRM.store.get('customBlocks')||[]; const def=list.find(b=>b.id===id); if(!def) return;
+      CRM.ui.formModal({
+        title:'Изменить блок · '+def.label,
+        fields:[
+          {key:'label',label:'Название',type:'text',required:true,value:def.label},
+          {key:'desc',label:'Описание',type:'text',value:def.desc},
+          {key:'icon',label:'Иконка',type:'select',value:def.icon,options:CRM.customBlocks.iconKeys().map(k=>({value:k,label:k}))}
+        ],
+        note:'Тип и колонки после создания не меняются — чтобы не потерять данные.',
+        onSubmit:(v)=>{ def.label=v.label; def.desc=v.desc; def.icon=v.icon; CRM.store.set('customBlocks',list); CRM.customBlocks.register(def,true); CRM.router.render(); CRM.toast('Сохранено'); }
+      });
+    },
+    delBlock(id){
+      const list=CRM.store.get('customBlocks')||[]; const def=list.find(b=>b.id===id); if(!def) return;
+      CRM.ui.confirm({ title:'Удалить блок', danger:true,
+        message:'Удалить блок «'+def.label+'» вместе со всеми его данными (custom.'+id+')? Действие необратимо.',
+        onOk:()=>{
+          CRM.store.set('customBlocks', list.filter(b=>b.id!==id));
+          const custom=CRM.store.get('custom')||{}; delete custom[id]; CRM.store.set('custom',custom);
+          try{ CRM.unregisterModule(id); }catch(e){}
+          if(location.hash.indexOf('#'+id)===0) CRM.router.go('map'); else CRM.router.render();
+          CRM.toast('Блок удалён');
+        }});
+    }
+  }
+});
 
 window.addEventListener('DOMContentLoaded',CRM.boot);
 </script>
