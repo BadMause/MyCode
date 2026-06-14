@@ -169,6 +169,18 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 .dragrow.dragover{border-color:var(--accent);background:rgba(0,113,227,.07)}
 .dragrow .rank{font-weight:800;color:var(--ink2);width:22px;text-align:center}
 .dragrow .grip{color:var(--ink2);cursor:grab;font-size:15px;line-height:1}
+.rline{display:flex;gap:8px;margin:4px 0}
+.rslot{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:var(--panel);cursor:pointer;position:relative;min-height:50px;display:flex;flex-direction:column;gap:2px}
+.rslot .pos{font-size:10px;font-weight:700;color:var(--ink2)}
+.rslot .pl{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rslot.filled{border-color:var(--accent);background:rgba(0,113,227,.05)}
+.rslot.eligible{outline:2px dashed var(--good);outline-offset:-2px}
+.rslot.picked{outline:2px solid var(--accent);outline-offset:-2px}
+.rslot.dragover{border-color:var(--accent);background:rgba(0,113,227,.12)}
+.rslot .x{position:absolute;top:3px;right:5px;border:none;background:none;color:var(--ink2);cursor:pointer;font-size:14px;line-height:1}
+.pchip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);cursor:grab;font-size:12px;font-weight:600}
+.pchip.sel{border-color:var(--accent);background:rgba(0,113,227,.1);color:var(--accent)}
+.poolzone{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;min-height:34px;padding:4px;border-radius:8px}
 code{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:.92em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
 </head>
@@ -292,7 +304,7 @@ CRM.store = (function(){
   function defaults(){
     return {
       scout:[], scoutDB:[],
-      roster:{ lines:{}, special:{}, history:[], showSpecial:false },
+      roster:{ lines:{}, special:{}, history:[], showSpecial:false, staff:{ g1:{title:'Тренерский штаб',members:[]}, g2:{title:'Сервисная бригада',members:[]} } },
       matches:[], opponents:[],
       playoffBracket:{r8:[],r4:[],r2:[],f:[]},
       physical:[], psycho:[], practice:[], calendar:[], medical:[],
@@ -318,6 +330,8 @@ CRM.store = (function(){
     // nested defaults (add-only, never overwrite existing)
     d.roster=Object.assign({lines:{},special:{},history:[],showSpecial:false},d.roster||{});
     if(!Array.isArray(d.roster.history)) d.roster.history=[];
+    if(!d.roster.staff||typeof d.roster.staff!=='object') d.roster.staff={};
+    ['g1','g2'].forEach((g,i)=>{ if(!d.roster.staff[g]||typeof d.roster.staff[g]!=='object') d.roster.staff[g]={title:i?'Сервисная бригада':'Тренерский штаб',members:[]}; if(!Array.isArray(d.roster.staff[g].members)) d.roster.staff[g].members=[]; });
     d.settings=Object.assign({coach:'',team:'Моя команда',league:'',season:'2025/26',norms:defaultNorms()},d.settings||{});
     if(!Array.isArray(d.settings.norms)||!d.settings.norms.length) d.settings.norms=defaultNorms();
     d.preseason=Object.assign({plan:[],details:[],fatigue:[],seasonPlan:'',seasonDetails:'',cal:{start:'',end:'',seasonEnd:''}},d.preseason||{});
@@ -1163,77 +1177,77 @@ CRM.modules.matches={
    04 — ROSTER (lines 5×5, special teams, history)
    =================================================================== */
 CRM.modules.roster={
-  render(el){
-    const showSpecial=!!CRM.store.get('roster.showSpecial');
-    el.innerHTML=sectionTitle('04','Состав','Звенья 5×5, спецбригады и история',
-      `<button class="btn" onclick="CRM.modules.roster.toggleSpecial()">${showSpecial?'Hide special teams':'Special teams'}</button>
-       <button class="btn" onclick="CRM.modules.roster.clearLineup()">Очистить</button>
-       <button class="btn primary" onclick="CRM.modules.roster.createLineupForm()">Сохранить состав</button>`)+
-    `<div class="grid g2">${this.viewHome()}</div>
-     ${showSpecial?this.viewSpecial():''}
-     <div class="grid g2" style="margin-top:14px">
-       <div class="card"><b>Подсказки большинства (ПП)</b><div style="margin-top:8px">${this.ppHints()}</div></div>
-       <div class="card"><b>Подсказки меньшинства (ПК)</b><div style="margin-top:8px">${this.pkHints()}</div></div>
-     </div>
-     ${this.historyView()}
-     ${this.bestCombosView()}`;
+  _selPool:null, _drag:null,
+  render(el,params){
+    const view=params.view||'lineup';
+    const tabs=[['lineup','Состав'],['tactics','Тактика'],['staff','Штаб'],['history','История']];
+    const nav=`<div class="seg" style="margin-bottom:14px">${tabs.map(t=>`<button class="${view===t[0]?'active':''}" onclick="CRM.router.go('roster',{view:'${t[0]}'})">${t[1]}</button>`).join('')}</div>`;
+    const actions=view==='lineup'?`<button class="btn" onclick="CRM.modules.roster.clearLineup()">Очистить</button><button class="btn primary" onclick="CRM.modules.roster.createLineupForm()">Сохранить состав</button>`:'';
+    el.innerHTML=sectionTitle('04','Состав','Звенья, спецбригады, штаб и история',actions)+nav+
+      (view==='tactics'?this.paneTactics():view==='staff'?this.paneStaff():view==='history'?this.paneHistory():this.paneLineup());
   },
-  _opts(sel,filter){
-    const scout=(CRM.store.get('scout')||[]).filter(p=>p.status!=='injured'&&p.status!=='suspended');
-    let list=scout; if(filter) list=scout.filter(filter);
-    return `<option value="">—</option>`+list.map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(playerLabel(p))}</option>`).join('');
+  /* ---------- LINEUP (interactive drag-drop board + pool) ---------- */
+  _eligible(key,pid){ const p=playerById(pid); if(!p) return false; if(key[0]==='g') return p.pos==='G'; if(key[0]==='d') return p.pos==='D'; return p.pos!=='G'; },
+  _slotBox(key){
+    const lines=CRM.store.get('roster.lines')||{}; const pid=lines[key]; const p=pid?playerById(pid):null;
+    const elig=this._selPool&&!pid&&this._eligible(key,this._selPool); const picked=this._selPool&&pid&&this._selPool===pid;
+    return `<div class="rslot${pid?' filled':''}${elig?' eligible':''}${picked?' picked':''}" ondragover="CRM.modules.roster.slotDragOver(event,this)" ondragleave="this.classList.remove('dragover')" ondrop="CRM.modules.roster.slotDrop(event,'${key}',this)" onclick="CRM.modules.roster.slotClick('${key}')" ${p?`draggable="true" ondragstart="CRM.modules.roster.slotDragStart(event,'${key}')"`:''}><span class="pos">${ROSTER_SLOTS.label(key)}</span>${p?`<span class="pl">${esc(playerName(p))}</span><button class="x" title="Убрать" onclick="event.stopPropagation();CRM.modules.roster.assign('${key}','')">×</button>`:`<span class="pl muted">—</span>`}</div>`;
   },
-  _slot(key){
-    const lines=CRM.store.get('roster.lines')||{};
-    const isG=key[0]==='g';
-    const filt=isG?(p=>p.pos==='G'):(key[0]==='d'?(p=>p.pos==='D'):null);
-    return `<div style="margin-bottom:6px"><label class="fld" style="margin-bottom:3px">${ROSTER_SLOTS.label(key)}</label>
-      <select onchange="CRM.modules.roster.setSlot('${key}',this.value)">${this._opts(lines[key],filt)}</select></div>`;
+  paneLineup(){
+    const fwd=`<div class="card"><b>Нападение</b><div style="margin-top:8px">${[1,2,3,4].map(n=>`<div style="margin-bottom:8px"><div class="muted" style="font-size:10px;font-weight:700;margin-bottom:3px">ЗВЕНО ${n}</div><div class="rline">${['L','C','R'].map(pp=>this._slotBox('f'+n+pp)).join('')}</div></div>`).join('')}</div></div>`;
+    const def=`<div class="card"><b>Защита и вратари</b><div style="margin-top:8px">${[1,2,3,4].map(n=>`<div style="margin-bottom:8px"><div class="muted" style="font-size:10px;font-weight:700;margin-bottom:3px">ПАРА ${n}</div><div class="rline">${['L','R'].map(pp=>this._slotBox('d'+n+pp)).join('')}</div></div>`).join('')}<div class="muted" style="font-size:10px;font-weight:700;margin:6px 0 3px">ВРАТАРИ</div><div class="rline">${ROSTER_SLOTS.gk.map(g=>this._slotBox(g)).join('')}</div></div></div>`;
+    return `<p class="muted" style="font-size:13px;margin-bottom:10px">Перетащите игрока из пула на позицию (или кликните игрока, затем подсветившуюся ячейку). Клик по занятой ячейке — взять для перестановки; × — убрать в пул.</p><div class="grid g2">${fwd}${def}</div>${this._poolView()}`;
   },
-  viewHome(){
-    const fwd=`<div class="card"><b>Нападение</b><div class="ice" style="margin-top:10px">
-      ${[1,2,3,4].map(n=>`<div style="margin-bottom:10px"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ЗВЕНО ${n}</div>
-        <div class="row">${['L','C','R'].map(p=>`<div style="flex:1">${this._slot('f'+n+p)}</div>`).join('')}</div></div>`).join('')}
-    </div></div>`;
-    const def=`<div class="card"><b>Защита и вратари</b><div class="ice" style="margin-top:10px">
-      ${[1,2,3,4].map(n=>`<div style="margin-bottom:10px"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ПАРА ${n}</div>
-        <div class="row">${['L','R'].map(p=>`<div style="flex:1">${this._slot('d'+n+p)}</div>`).join('')}</div></div>`).join('')}
-      <div class="muted" style="font-size:11px;font-weight:700;margin-bottom:4px">ВРАТАРИ</div>
-      <div class="row">${ROSTER_SLOTS.gk.map(g=>`<div style="flex:1">${this._slot(g)}</div>`).join('')}</div>
-    </div></div>`;
-    return fwd+def;
+  _poolView(){
+    const used=Object.values(CRM.store.get('roster.lines')||{}).filter(Boolean);
+    const avail=(CRM.store.get('scout')||[]).filter(p=>p.status!=='injured'&&p.status!=='suspended'&&used.indexOf(p.id)<0);
+    const grp=(title,filt)=>{ const l=avail.filter(filt); return `<div style="margin-bottom:6px"><span class="muted" style="font-size:11px;font-weight:700">${title}</span><div class="poolzone" ondragover="event.preventDefault()" ondrop="CRM.modules.roster.poolDrop(event)">${l.length?l.map(p=>`<span class="pchip${this._selPool===p.id?' sel':''}" draggable="true" ondragstart="CRM.modules.roster.poolDragStart(event,'${p.id}')" onclick="CRM.modules.roster.poolClick('${p.id}')">${esc(playerName(p))} <span class="muted">${POS_LABEL[p.pos]||''}</span></span>`).join(''):'<span class="muted" style="font-size:12px">—</span>'}</div></div>`; };
+    return `<div class="card" style="margin-top:14px"><b>Пул игроков</b> <span class="muted" style="font-size:12px">(не в составе; травмированные/дисквалифицированные скрыты)</span>${grp('Нападающие',p=>p.pos!=='G'&&p.pos!=='D')}${grp('Защитники',p=>p.pos==='D')}${grp('Вратари',p=>p.pos==='G')}</div>`;
+  },
+  assign(key,pid){ const lines=CRM.store.get('roster.lines')||{}; if(pid){ for(const k in lines){ if(lines[k]===pid&&k!==key) lines[k]=''; } } lines[key]=pid; CRM.store.set('roster.lines',lines); CRM.router.render(); },
+  poolClick(pid){ this._selPool=(this._selPool===pid?null:pid); CRM.router.render(); },
+  slotClick(key){ const lines=CRM.store.get('roster.lines')||{}; if(this._selPool){ if(this._selPool===lines[key]){ this._selPool=null; CRM.router.render(); return; } if(this._eligible(key,this._selPool)){ this.assign(key,this._selPool); this._selPool=null; } else CRM.toast('Игрок не подходит на эту позицию'); return; } if(lines[key]){ this._selPool=lines[key]; CRM.router.render(); } },
+  poolDragStart(e,pid){ this._drag={from:'pool',id:pid}; try{e.dataTransfer.setData('text/plain',pid);}catch(_){} },
+  slotDragStart(e,key){ const lines=CRM.store.get('roster.lines')||{}; this._drag={from:key,id:lines[key]}; try{e.dataTransfer.setData('text/plain',lines[key]||'');}catch(_){} },
+  slotDragOver(e,el){ e.preventDefault(); if(el&&el.classList) el.classList.add('dragover'); },
+  slotDrop(e,key,el){ e.preventDefault(); if(el&&el.classList) el.classList.remove('dragover'); const d=this._drag; this._drag=null; this._selPool=null; if(!d||!d.id){ CRM.router.render(); return; } this._placeFromDrag(d,key); },
+  poolDrop(e){ e.preventDefault(); const d=this._drag; this._drag=null; if(!d||d.from==='pool') return; const lines=CRM.store.get('roster.lines')||{}; lines[d.from]=''; CRM.store.set('roster.lines',lines); CRM.router.render(); },
+  _placeFromDrag(d,key){ const lines=CRM.store.get('roster.lines')||{}; const pid=d.id; if(!this._eligible(key,pid)){ CRM.toast('Игрок не подходит на эту позицию'); CRM.router.render(); return; } const occ=lines[key]; if(d.from!=='pool'&&d.from!==key){ lines[d.from]=(occ&&this._eligible(d.from,occ))?occ:''; } for(const k in lines){ if(lines[k]===pid&&k!==key&&k!==d.from) lines[k]=''; } lines[key]=pid; CRM.store.set('roster.lines',lines); CRM.router.render(); },
+  clearLineup(){ CRM.ui.confirm({title:'Очистить состав',message:'Очистить текущий рабочий состав?',danger:true,okLabel:'Очистить',onOk:()=>{ CRM.store.set('roster.lines',{}); this._selPool=null; CRM.router.render(); CRM.toast('Состав очищен'); }}); },
+  /* ---------- TACTICS (special teams + hints + best combos) ---------- */
+  _skill(p,k){ if(p.skills&&p.skills[k]) return num(p.skills[k]); const ev=p.eval||{}; const map={shot:['technique.shot'],offense:['offense.finishing','offense.conversion','offense.net'],defense:['defense.backcheck','defense.posit','defense.battles','defense.blocks'],iq:['iq.vision','iq.decisions','iq.reading','iq.positioning']}; const vals=(map[k]||[]).map(kk=>+ev[kk]||0).filter(Boolean); return vals.length?round1(avg(vals)*2):0; },
+  ppHints(){ const scout=CRM.store.get('scout')||[]; const sh=scout.filter(p=>p.pos!=='G').map(p=>({p,sh:this._skill(p,'shot'),of:this._skill(p,'offense')})).sort((a,b)=>(b.sh+b.of)-(a.sh+a.of)).slice(0,5);
+    if(!sh.some(s=>s.sh||s.of)) return '<p class="muted" style="font-size:12px">Оцените игроков (бросок, атака) — в Скаутинге/профиле — для подсказок.</p>';
+    return sh.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill accent">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">бросок ${s.sh} · атака ${s.of}</span></div>`).join('');
+  },
+  pkHints(){ const scout=CRM.store.get('scout')||[]; const df=scout.filter(p=>p.pos!=='G').map(p=>({p,d:this._skill(p,'defense'),iq:this._skill(p,'iq')})).sort((a,b)=>(b.d+b.iq)-(a.d+a.iq)).slice(0,5);
+    if(!df.some(s=>s.d||s.iq)) return '<p class="muted" style="font-size:12px">Оцените игроков (оборона, IQ) для подсказок.</p>';
+    return df.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill good">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">оборона ${s.d} · IQ ${s.iq}</span></div>`).join('');
   },
   viewSpecial(){
     const sp=CRM.store.get('roster.special')||{};
-    const unit=(key)=>{const u=sp[key]||{};return `<div class="card"><b>${SPECIAL_LABEL[key]}</b><div style="margin-top:8px">
-      <label class="fld">Бригада 1</label><textarea rows="2" placeholder="Игроки бригады 1" onchange="CRM.modules.roster.setSpecial('${key}','b1',this.value)">${esc(u.b1||'')}</textarea>
-      <label class="fld" style="margin-top:8px">Бригада 2</label><textarea rows="2" placeholder="Игроки бригады 2" onchange="CRM.modules.roster.setSpecial('${key}','b2',this.value)">${esc(u.b2||'')}</textarea></div></div>`;};
-    return `<div style="margin-top:14px"><h2 style="font-size:15px;margin-bottom:10px">Special teams</h2><div class="grid g3">${SPECIAL_KEYS.map(unit).join('')}</div></div>`;
-  },
-  setSlot(key,pid){
-    const lines=CRM.store.get('roster.lines')||{};
-    // prevent duplicate placement
-    if(pid){ for(const k in lines){ if(lines[k]===pid&&k!==key) lines[k]=''; } }
-    lines[key]=pid; CRM.store.set('roster.lines',lines);
-    if(pid){ const p=playerById(pid); CRM.router.render(); }
+    const unit=(key)=>{const u=sp[key]||{};return `<div class="card"><b>${SPECIAL_LABEL[key]}</b><div style="margin-top:8px"><label class="fld">Бригада 1</label><textarea rows="2" placeholder="Игроки бригады 1" onchange="CRM.modules.roster.setSpecial('${key}','b1',this.value)">${esc(u.b1||'')}</textarea><label class="fld" style="margin-top:8px">Бригада 2</label><textarea rows="2" placeholder="Игроки бригады 2" onchange="CRM.modules.roster.setSpecial('${key}','b2',this.value)">${esc(u.b2||'')}</textarea></div></div>`;};
+    return `<h2 style="font-size:15px;margin:14px 0 10px">Спецбригады</h2><div class="grid g3">${SPECIAL_KEYS.map(unit).join('')}</div>`;
   },
   setSpecial(key,slot,val){ const sp=CRM.store.get('roster.special')||{}; if(!sp[key])sp[key]={}; sp[key][slot]=val; CRM.store.set('roster.special',sp); },
-  toggleSpecial(){ CRM.store.set('roster.showSpecial',!CRM.store.get('roster.showSpecial')); CRM.router.render(); },
-  clearLineup(){ CRM.ui.confirm({title:'Очистить состав',message:'Очистить текущий рабочий состав?',danger:true,okLabel:'Очистить',onOk:()=>{ CRM.store.set('roster.lines',{}); CRM.router.render(); CRM.toast('Состав очищен'); }}); },
-
-  ppHints(){
-    const scout=CRM.store.get('scout')||[];
-    const shooters=scout.filter(p=>p.pos!=='G').map(p=>({p,sh:num(p.skills&&p.skills.shot),of:num(p.skills&&p.skills.offense)})).sort((a,b)=>(b.sh+b.of)-(a.sh+a.of)).slice(0,5);
-    if(!shooters.some(s=>s.sh||s.of)) return '<p class="muted" style="font-size:12px">Заполните навыки игроков (бросок, атака) для подсказок.</p>';
-    return shooters.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill accent">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">бросок ${s.sh} · атака ${s.of}</span></div>`).join('');
+  paneTactics(){ return `<div class="grid g2"><div class="card"><b>Подсказки большинства (ПП)</b><div style="margin-top:8px">${this.ppHints()}</div></div><div class="card"><b>Подсказки меньшинства (ПК)</b><div style="margin-top:8px">${this.pkHints()}</div></div></div>${this.viewSpecial()}${this.bestCombosView()}`; },
+  bestCombosView(){
+    const map={}; (CRM.store.get('matches')||[]).forEach(m=>{ const cr=m.result&&m.result.comboRatings; if(!cr)return; for(const k in cr){const c=cr[k]; if(!map[k])map[k]={label:c.label,type:c.type,ratings:[]}; if(c.rating)map[k].ratings.push(num(c.rating));} });
+    const rows=Object.values(map).map(c=>({label:c.label,type:c.type,avg:round1(avg(c.ratings)),n:c.ratings.length})).sort((a,b)=>b.avg-a.avg);
+    return `<div class="card" style="margin-top:14px"><b>Лучшие сочетания</b>${rows.length?`<table style="margin-top:8px"><thead><tr><th>Сочетание</th><th>Тип</th><th class="num">GP</th><th class="num">Ср. оценка</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc(r.type||'')}</td><td class="num">${r.n}</td><td class="num"><b>${r.avg}</b></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px">Нет данных по сочетаниям — они накапливаются по мере оценки звеньев в матчах.</p>'}</div>`;
   },
-  pkHints(){
-    const scout=CRM.store.get('scout')||[];
-    const def=scout.filter(p=>p.pos!=='G').map(p=>({p,d:num(p.skills&&p.skills.defense),iq:num(p.skills&&p.skills.iq)})).sort((a,b)=>(b.d+b.iq)-(a.d+a.iq)).slice(0,5);
-    if(!def.some(s=>s.d||s.iq)) return '<p class="muted" style="font-size:12px">Заполните навыки (оборона, IQ) для подсказок.</p>';
-    return def.map((s,i)=>`<div style="display:flex;gap:8px;padding:4px 0;align-items:center"><span class="pill good">${i+1}</span><b>${esc(playerName(s.p))}</b><span class="muted">${POS_LABEL[s.p.pos]||''}</span><span class="muted" style="margin-left:auto;font-size:12px">оборона ${s.d} · IQ ${s.iq}</span></div>`).join('');
+  /* ---------- STAFF (two editable groups) ---------- */
+  paneStaff(){
+    const s=CRM.store.get('roster.staff')||{};
+    const grp=(key)=>{ const g=s[key]||{title:key,members:[]};
+      return `<div class="card"><div style="display:flex;align-items:center;gap:8px"><b>${esc(g.title||key)}</b><button class="btn sm ghost" title="Переименовать" onclick="CRM.modules.roster.editStaffTitle('${key}')">✎</button><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.roster.addStaff('${key}')">+ Сотрудник</button></div>${(g.members&&g.members.length)?`<table style="margin-top:8px"><tbody>${g.members.map((m,i)=>`<tr><td><b>${esc(m.name)}</b></td><td class="muted">${esc(m.role||'')}</td><td style="text-align:right;white-space:nowrap"><button class="btn sm ghost" onclick="CRM.modules.roster.editStaff('${key}',${i})">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.roster.delStaff('${key}',${i})">×</button></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет сотрудников.</p>'}</div>`; };
+    return `<div class="grid g2">${grp('g1')}${grp('g2')}</div>`;
   },
-
+  addStaff(key){ CRM.ui.formModal({title:'Новый сотрудник',fields:[{key:'name',label:'Имя',required:true},{key:'role',label:'Должность'}],onSubmit:v=>{ const s=CRM.store.get('roster.staff')||{}; if(!s[key])s[key]={title:key,members:[]}; s[key].members.push({name:v.name,role:v.role||''}); CRM.store.set('roster.staff',s); CRM.router.render(); CRM.toast('Добавлено'); }}); },
+  editStaff(key,i){ const s=CRM.store.get('roster.staff')||{}; const m=(s[key]&&s[key].members[i]); if(!m) return; CRM.ui.formModal({title:'Сотрудник',fields:[{key:'name',label:'Имя',value:m.name,required:true},{key:'role',label:'Должность',value:m.role}],onSubmit:v=>{ m.name=v.name;m.role=v.role||''; CRM.store.set('roster.staff',s); CRM.router.render(); CRM.toast('Сохранено'); }}); },
+  delStaff(key,i){ CRM.ui.confirm({title:'Удаление',message:'Удалить сотрудника?',danger:true,onOk:()=>{ const s=CRM.store.get('roster.staff')||{}; if(s[key]&&s[key].members) s[key].members.splice(i,1); CRM.store.set('roster.staff',s); CRM.router.render(); CRM.toast('Удалено'); }}); },
+  editStaffTitle(key){ const s=CRM.store.get('roster.staff')||{}; CRM.ui.formModal({title:'Название группы',fields:[{key:'title',label:'Название',value:(s[key]||{}).title,required:true}],onSubmit:v=>{ if(!s[key])s[key]={members:[]}; s[key].title=v.title; CRM.store.set('roster.staff',s); CRM.router.render(); }}); },
+  /* ---------- SAVE LINEUP TO HISTORY ---------- */
   createLineupForm(){
     const lines=CRM.store.get('roster.lines')||{};
     if(!Object.values(lines).filter(Boolean).length){ CRM.toast('Сначала заполните состав'); return; }
@@ -1247,32 +1261,24 @@ CRM.modules.roster={
       <div style="margin-top:10px"><label class="fld">Заметки</label><textarea id="ls_notes" rows="2"></textarea></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.roster.savePending()">Сохранить в историю</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
   },
-  startPending(){ /* working lineup already lives in roster.lines */ return CRM.store.get('roster.lines')||{}; },
   savePending(){
     const lines=Object.assign({},CRM.store.get('roster.lines')||{});
     const special=JSON.parse(JSON.stringify(CRM.store.get('roster.special')||{}));
-    const date=document.getElementById('ls_date').value;
-    const type=document.getElementById('ls_type').value;
-    const label=document.getElementById('ls_label').value.trim();
-    const matchId=document.getElementById('ls_match').value;
-    const rating=num(document.getElementById('ls_rating').value);
-    const notes=document.getElementById('ls_notes').value.trim();
+    const date=document.getElementById('ls_date').value, type=document.getElementById('ls_type').value;
+    const label=document.getElementById('ls_label').value.trim(), matchId=document.getElementById('ls_match').value;
+    const rating=num(document.getElementById('ls_rating').value), notes=document.getElementById('ls_notes').value.trim();
     const hist=CRM.store.get('roster.history')||[];
     const entry={id:uuid(),type,date,dateStr:date,groupIdx:0,groupTotal:1,gameLabel:label||(type==='match'?'Состав на матч':'Тренировочный состав'),lines,special,rating,notes,matchId:''};
-    hist.push(entry);
-    CRM.store.set('roster.history',hist);
-    if(matchId){ // two-way link
-      const m=CRM.modules.matches._md(matchId);
-      if(m){ if(m.lineupId){const old=hist.find(h=>h.id===m.lineupId);if(old&&old.matchId===matchId)old.matchId='';} m.lineupId=entry.id; entry.matchId=matchId; CRM.store.save(); }
-    }
+    hist.push(entry); CRM.store.set('roster.history',hist);
+    if(matchId){ const m=CRM.modules.matches._md(matchId); if(m){ if(m.lineupId){const old=hist.find(h=>h.id===m.lineupId);if(old&&old.matchId===matchId)old.matchId='';} m.lineupId=entry.id; entry.matchId=matchId; CRM.store.save(); } }
     CRM.store.save(); CRM.modal.close(); CRM.router.render(); CRM.toast('Состав сохранён в историю');
   },
-  historyView(){
+  /* ---------- HISTORY (split: match / training) ---------- */
+  _histRow(h){ const m=h.matchId?CRM.modules.matches._md(h.matchId):null; return `<tr><td>${fmtDate(h.dateStr||h.date)}</td><td><b>${esc(h.gameLabel||'')}</b></td><td class="num">${Object.values(h.lines||{}).filter(Boolean).length}</td><td>${m?'<span class="pill accent">vs '+esc(m.opp)+'</span>':'<span class="muted">—</span>'}</td><td style="text-align:right"><button class="btn sm" onclick="CRM.modules.roster.openHistory('${h.id}')">Открыть</button></td></tr>`; },
+  paneHistory(){
     const hist=(CRM.store.get('roster.history')||[]).slice().sort((a,b)=>(b.dateStr||b.date||'').localeCompare(a.dateStr||a.date||''));
-    return `<div class="card" style="margin-top:14px"><b>История составов</b>
-      ${hist.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Метка</th><th>Тип</th><th class="num">Игроков</th><th>Матч</th><th></th></tr></thead><tbody>
-      ${hist.map(h=>{const m=h.matchId?CRM.modules.matches._md(h.matchId):null;return `<tr><td>${fmtDate(h.dateStr||h.date)}</td><td><b>${esc(h.gameLabel||'')}</b></td><td>${h.type==='match'?'Матч':'Тренировка'}</td><td class="num">${Object.values(h.lines||{}).filter(Boolean).length}</td><td>${m?'<span class="pill accent">vs '+esc(m.opp)+'</span>':'<span class="muted">—</span>'}</td><td><button class="btn sm" onclick="CRM.modules.roster.openHistory('${h.id}')">Открыть</button></td></tr>`;}).join('')}
-      </tbody></table>`:'<p class="muted" style="margin-top:8px">История пуста.</p>'}</div>`;
+    const sec=(title,type)=>{ const list=hist.filter(h=>h.type===type); return `<div class="card" style="margin-bottom:14px"><b>${title}</b> <span class="pill">${list.length}</span>${list.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Метка</th><th class="num">Игроков</th><th>Матч</th><th></th></tr></thead><tbody>${list.map(h=>this._histRow(h)).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Пусто.</p>'}</div>`; };
+    return sec('Матчевые составы','match')+sec('Тренировочные составы','practice');
   },
   openHistory(id){
     const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h) return;
@@ -1283,23 +1289,13 @@ CRM.modules.roster={
       ${h.notes?`<div class="card" style="margin-top:12px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(h.notes)}</p></div>`:''}
       <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.roster.loadHistory('${h.id}')">Загрузить в рабочий состав</button><button class="btn danger" onclick="CRM.modules.roster.delFromModal('${h.id}')">Удалить</button></div>`));
   },
-  loadHistory(id){ const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h)return; CRM.store.set('roster.lines',Object.assign({},h.lines)); CRM.store.set('roster.special',JSON.parse(JSON.stringify(h.special||{}))); CRM.modal.close(); CRM.router.render(); CRM.toast('Состав загружен'); },
+  loadHistory(id){ const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===id); if(!h)return; CRM.store.set('roster.lines',Object.assign({},h.lines)); CRM.store.set('roster.special',JSON.parse(JSON.stringify(h.special||{}))); CRM.modal.close(); CRM.router.go('roster',{view:'lineup'}); CRM.toast('Состав загружен'); },
   delFromModal(id){
     CRM.ui.confirm({title:'Удаление',message:'Удалить состав из истории?',danger:true,onOk:()=>{
       const hist=CRM.store.get('roster.history')||[]; const h=hist.find(x=>x.id===id);
-      if(h&&h.matchId){ const m=CRM.modules.matches._md(h.matchId); if(m&&m.lineupId===id) m.lineupId=''; } // unlink lineupId both sides
-      CRM.store.set('roster.history',hist.filter(x=>x.id!==id)); CRM.store.save();
-      CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено');
+      if(h&&h.matchId){ const m=CRM.modules.matches._md(h.matchId); if(m&&m.lineupId===id) m.lineupId=''; }
+      CRM.store.set('roster.history',hist.filter(x=>x.id!==id)); CRM.store.save(); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено');
     }});
-  },
-  bestCombosView(){
-    const map={};
-    (CRM.store.get('matches')||[]).forEach(m=>{ const cr=m.result&&m.result.comboRatings; if(!cr)return; for(const k in cr){const c=cr[k]; if(!map[k])map[k]={label:c.label,type:c.type,ratings:[]}; if(c.rating)map[k].ratings.push(num(c.rating));} });
-    const rows=Object.values(map).map(c=>({label:c.label,type:c.type,avg:round1(avg(c.ratings)),n:c.ratings.length})).sort((a,b)=>b.avg-a.avg);
-    return `<div class="card" style="margin-top:14px"><b>Лучшие сочетания</b>
-      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Сочетание</th><th>Тип</th><th class="num">GP</th><th class="num">Ср. оценка</th></tr></thead><tbody>
-      ${rows.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc(r.type||'')}</td><td class="num">${r.n}</td><td class="num"><b>${r.avg}</b></td></tr>`).join('')}</tbody></table>`
-      :'<p class="muted" style="margin-top:8px">Нет данных по сочетаниям. Они накапливаются по мере оценки звеньев в матчах.</p>'}</div>`;
   }
 };
 
