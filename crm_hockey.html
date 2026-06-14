@@ -982,12 +982,14 @@ CRM.modules.matches={
       <button class="${tab==='prep'?'active':''}" onclick="CRM.modules.matches.open('${id}','prep')">Подготовка</button>
       <button class="${tab==='day'?'active':''}" onclick="CRM.modules.matches.matchDay('${id}')">Матч-день</button>
       <button class="${tab==='result'?'active':''}" onclick="CRM.modules.matches.open('${id}','result')">Итоги</button>
+      <button class="${tab==='zones'?'active':''}" onclick="CRM.modules.matches.open('${id}','zones')">Зоны голов</button>
       <button class="${tab==='report'?'active':''}" onclick="CRM.modules.matches.matchReport('${id}')">Отчёт</button>
     </div>`;
     let body='';
     if(tab==='prep') body=this._prepPane(m);
     else if(tab==='day') body=this._dayPane(m);
     else if(tab==='result') body=this._resultPane(m);
+    else if(tab==='zones') body=this._zonesPane(m);
     else body=this._reportPane(m);
     CRM.modal.open(CRM.modal.frame('Матч',head+body));
   },
@@ -1206,6 +1208,70 @@ CRM.modules.matches={
     ${m.notes?`<div class="card" style="margin-top:14px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(m.notes)}</p></div>`:''}
     <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.open('${m.id}','result')">Изменить итоги</button><button class="btn" onclick="window.print()">Печать</button><button class="btn danger" onclick="CRM.modules.matches.del('${m.id}')">Удалить матч</button></div>`;
   },
+  /* ---- goal zones & tagging (D2) ---- */
+  GOAL_TAGS:['5x5','PP','PK','EN','бросок','добивание','с пятака','в касание','выход 1-0','рикошет','от борта','контратака'],
+  _goalSide:'for',
+  setGoalSide(mid,s){ this._goalSide=s; this.open(mid,'zones'); },
+  _rinkSvg(m){
+    const goals=m.result.goals||[];
+    const markers=goals.map(g=>{ const x=((g.x||0)*200).toFixed(1), y=((g.y||0)*150).toFixed(1); const col=g.side==='against'?'#3b82f6':'#ef4444';
+      return `<g onclick="event.stopPropagation();CRM.modules.matches.editGoal('${m.id}','${g.id}')" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="6" fill="${col}" stroke="#fff" stroke-width="1.5"/><text x="${x}" y="${(parseFloat(y)+2.6).toFixed(1)}" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">${g.side==='against'?'A':'G'}</text></g>`; }).join('');
+    return `<svg id="rink" viewBox="0 0 200 150" style="width:100%;max-width:430px;background:#f5fbff;border:1px solid var(--line);border-radius:12px;display:block;cursor:crosshair" onclick="CRM.modules.matches.rinkClick(event,'${m.id}')">
+      <rect x="2" y="2" width="196" height="146" rx="34" fill="none" stroke="#c7d2dd" stroke-width="1.5"/>
+      <line x1="2" y1="28" x2="198" y2="28" stroke="#e0534f" stroke-width="1.2"/>
+      <rect x="88" y="6" width="24" height="9" rx="2" fill="none" stroke="#e0534f" stroke-width="1.2"/>
+      <path d="M88 15 a13 13 0 0 0 24 0" fill="#dbeafe" stroke="#6aa5e0" stroke-width="1"/>
+      <circle cx="55" cy="80" r="20" fill="none" stroke="#e0534f" stroke-width="1"/><circle cx="55" cy="80" r="2" fill="#e0534f"/>
+      <circle cx="145" cy="80" r="20" fill="none" stroke="#e0534f" stroke-width="1"/><circle cx="145" cy="80" r="2" fill="#e0534f"/>
+      <line x1="2" y1="140" x2="198" y2="140" stroke="#6aa5e0" stroke-width="1.4"/>
+      ${markers}
+    </svg>`;
+  },
+  rinkClick(e,mid){
+    const svg=document.getElementById('rink'); if(!svg||typeof svg.getBoundingClientRect!=='function') return;
+    const r=svg.getBoundingClientRect(); if(!r||!r.width) return;
+    const x=(e.clientX-r.left)/r.width, y=(e.clientY-r.top)/r.height; if(x<0||x>1||y<0||y>1) return;
+    const m=this.ensureExt(this._md(mid)); const g={id:'g_'+uuid().slice(3),side:this._goalSide,x:Math.max(0,Math.min(1,x)),y:Math.max(0,Math.min(1,y)),period:'',scorerId:'',tags:[],note:''};
+    m.result.goals.push(g); CRM.store.save(); this.editGoal(mid,g.id);
+  },
+  _zonesPane(m){
+    const goals=m.result.goals||[]; const side=this._goalSide; const st=this.goalStats(m);
+    return `<div class="card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>Карта голов</b>
+      <div class="seg" style="margin-left:auto"><button class="${side==='for'?'active':''}" onclick="CRM.modules.matches.setGoalSide('${m.id}','for')">Забили</button><button class="${side==='against'?'active':''}" onclick="CRM.modules.matches.setGoalSide('${m.id}','against')">Пропустили</button></div></div>
+      <p class="muted" style="font-size:12px;margin:8px 0">Кликните по площадке, чтобы отметить точку гола (режим: <b>${side==='for'?'забили':'пропустили'}</b>). Клик по точке — редактировать/удалить.</p>
+      ${this._rinkSvg(m)}
+    </div>
+    <div class="card" style="margin-top:14px"><b>Голы (${goals.length})</b>
+      ${goals.length?`<table style="margin-top:8px"><thead><tr><th></th><th>Период</th><th>Автор</th><th>Теги</th><th></th></tr></thead><tbody>${goals.map(g=>{const p=g.scorerId?playerById(g.scorerId):null;return `<tr><td><span class="gdot" style="background:${g.side==='against'?'#3b82f6':'#ef4444'}"></span> ${g.side==='against'?'проп.':'забит'}</td><td>${esc(g.period||'—')}</td><td>${p?esc(playerSurname(p)):'—'}</td><td class="muted" style="font-size:12px">${(g.tags||[]).map(esc).join(', ')||'—'}</td><td style="text-align:right"><button class="btn sm ghost" onclick="CRM.modules.matches.editGoal('${m.id}','${g.id}')">✎</button></td></tr>`;}).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Голы не отмечены.</p>'}
+    </div>
+    <div class="card" style="margin-top:14px"><b>Статистика по тегам</b>
+      ${st.rows.length?`<table style="margin-top:8px"><thead><tr><th>Тег</th><th class="num">Забили</th><th class="num">Пропустили</th></tr></thead><tbody>${st.rows.map(r=>`<tr><td>${esc(r.tag)}</td><td class="num">${r.for}</td><td class="num">${r.against}</td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет тегов. Отметьте голы и присвойте способ.</p>'}
+    </div>`;
+  },
+  goalStats(m){
+    const map={}; (m.result.goals||[]).forEach(g=>(g.tags||[]).forEach(t=>{ if(!map[t])map[t]={tag:t,for:0,against:0}; if(g.side==='against')map[t].against++; else map[t].for++; }));
+    return { rows:Object.values(map).sort((a,b)=>(b.for+b.against)-(a.for+a.against)) };
+  },
+  editGoal(mid,gid){
+    const m=this.ensureExt(this._md(mid)); const g=(m.result.goals||[]).find(x=>x.id===gid); if(!g) return;
+    const sk=(CRM.store.get('scout')||[]).filter(p=>p.pos!=='G');
+    const tags=this.GOAL_TAGS.map(t=>`<label style="display:inline-flex;gap:5px;align-items:center;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;margin:3px 3px 0 0"><input type="checkbox" class="gtag" value="${esc(t)}" style="width:auto" ${(g.tags||[]).indexOf(t)>=0?'checked':''}> ${esc(t)}</label>`).join('');
+    CRM.modal.open(CRM.modal.frame(g.side==='against'?'Пропущенный гол':'Забитый гол',`
+      <div class="row"><div style="flex:1"><label class="fld">Сторона</label><select id="g_side"><option value="for" ${g.side!=='against'?'selected':''}>Забили</option><option value="against" ${g.side==='against'?'selected':''}>Пропустили</option></select></div>
+        <div style="flex:1"><label class="fld">Период</label><select id="g_period"><option value="">—</option>${['1','2','3','ОТ','Буллит'].map(p=>`<option value="${p}" ${g.period===p?'selected':''}>${p}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Автор (наш)</label><select id="g_scorer"><option value="">—</option>${sk.map(p=>`<option value="${p.id}" ${g.scorerId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div></div>
+      <div style="margin-top:12px"><label class="fld">Способ гола (теги)</label><div>${tags}</div></div>
+      <div style="margin-top:12px"><label class="fld">Заметка</label><input id="g_note" value="${esc(g.note||'')}"></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.matches.saveGoal('${mid}','${gid}')">Сохранить</button><button class="btn danger" onclick="CRM.modules.matches.delGoal('${mid}','${gid}')">Удалить точку</button><button class="btn" onclick="CRM.modules.matches.open('${mid}','zones')">Закрыть</button></div>`));
+  },
+  saveGoal(mid,gid){
+    const m=this.ensureExt(this._md(mid)); const g=(m.result.goals||[]).find(x=>x.id===gid); if(!g) return;
+    const gv=(x)=>{const e=document.getElementById(x);return e?e.value:'';};
+    g.side=gv('g_side')||'for'; g.period=gv('g_period'); g.scorerId=gv('g_scorer'); g.note=gv('g_note');
+    g.tags=Array.prototype.slice.call(document.querySelectorAll('.gtag')).filter(c=>c.checked).map(c=>c.value);
+    CRM.store.save(); this.open(mid,'zones'); CRM.toast('Гол сохранён');
+  },
+  delGoal(mid,gid){ const m=this.ensureExt(this._md(mid)); m.result.goals=(m.result.goals||[]).filter(x=>x.id!==gid); CRM.store.save(); this.open(mid,'zones'); CRM.toast('Удалено'); },
   del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить матч?',danger:true,onOk:()=>{ const m=this._md(id); if(m&&m.lineupId){const h=(CRM.store.get('roster.history')||[]).find(x=>x.id===m.lineupId);if(h&&h.matchId===id)h.matchId='';} let matches=CRM.store.get('matches')||[]; matches=matches.filter(x=>x.id!==id); CRM.store.set('matches',matches); CRM.modal.close(); CRM.router.render(); CRM.toast('Матч удалён'); }}); },
 
   /* ---- panes embedded in profiles ---- */
