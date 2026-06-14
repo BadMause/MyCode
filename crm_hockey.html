@@ -225,7 +225,7 @@ CRM.TABS = [
   ["opponents","07","Opponents","Scouting & rosters"],
   ["physical","08","Assessments","Physical assessments"],
   ["psycho","09","Mental","Mental fitness evaluation"],
-  ["preseason","10","Preseason","Training plan"],
+  ["preseason","10","Periodization","Periodization plan"],
   ["calendar","11","Calendar","Season events"],
   ["medical","12","Medical","Injuries & status"],
   ["analytics","13","Analytics","Charts & trends"],
@@ -1882,6 +1882,7 @@ CRM.modules.preseason={
     if(!Array.isArray(ps.fatigue)||ps.fatigue.length!==this.WEEKS){ const old=ps.fatigue||[]; ps.fatigue=[]; for(let w=0;w<this.WEEKS;w++)ps.fatigue[w]=old[w]||0; }
     if(!ps.cal)ps.cal={start:'',end:'',seasonEnd:''};
     if(ps.seasonPlan==null)ps.seasonPlan=''; if(ps.seasonDetails==null)ps.seasonDetails='';
+    if(!Array.isArray(ps.milestones))ps.milestones=[];
     CRM.store.set('preseason',ps); return ps;
   },
   dayCat(load){ if(load<=0)return 0; if(load<=420)return 1; if(load<=840)return 2; if(load<=1260)return 3; return 4; }
@@ -1890,8 +1891,9 @@ CRM.modules.preseason={
   load(cell){ return num(cell&&cell.intensity)*num(cell&&cell.minutes); },
   render(el){
     const ps=this.ensure();
-    el.innerHTML=sectionTitle('10','Предсезонная подготовка','Периодизация по Бомпе · 7 недель',
-      `<button class="btn" onclick="CRM.modules.preseason.fatigueTest()">Тест усталости</button>
+    el.innerHTML=sectionTitle('10','Периодизация','Periodization · 7-недельный микроцикл по Бомпе',
+      `<button class="btn" onclick="CRM.modules.preseason.importPlanner()">Импорт</button>
+      <button class="btn" onclick="CRM.modules.preseason.fatigueTest()">Тест усталости</button>
       <button class="btn" onclick="CRM.modules.preseason.autobuild()">Автопостроение</button>
       <button class="btn" onclick="window.print()">Печать</button>`)+
     `<div class="card" style="margin-bottom:14px"><div class="row">
@@ -1914,6 +1916,7 @@ CRM.modules.preseason={
     </tbody></table></div>
     ${this.conflictsView(ps)}
     ${this.statsView(ps)}
+    ${this.milestonesView(ps)}
     <div class="card" style="margin-top:14px"><b>План на сезон (поддержание)</b>
       <textarea rows="4" style="margin-top:8px" onchange="CRM.modules.preseason.setSeason('seasonPlan',this.value)">${esc(ps.seasonPlan||'')}</textarea></div>`;
   },
@@ -1994,6 +1997,26 @@ CRM.modules.preseason={
     let sum=0,n=0; document.querySelectorAll('input[data-ft]').forEach(i=>{sum+=num(i.value);n++;});
     const idx=Math.round((borg*2 + (sum/n)*2));
     ps.fatigue[w]=idx; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); CRM.toast('Индекс усталости: '+idx);
+  },
+  milestonesView(ps){
+    const ms=(ps.milestones||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    return `<div class="card" style="margin-top:14px"><div style="display:flex;align-items:center"><b>Ключевые вехи</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.preseason.addMilestone()">+ Веха</button></div>
+      ${ms.length?`<table style="margin-top:8px"><tbody>${ms.map(m=>`<tr><td style="width:96px">${fmtDateShort(m.date)}</td><td><b>${esc(m.title)}</b></td><td class="muted">${esc(m.note||'')}</td><td style="text-align:right"><button class="btn sm ghost danger" onclick="CRM.modules.preseason.delMilestone('${m.id}')">×</button></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет вех (контрольные точки, сборы, контрольные матчи, старт сезона).</p>'}</div>`;
+  },
+  addMilestone(){ CRM.ui.formModal({title:'Веха',fields:[{key:'date',label:'Дата',type:'date',value:localYmd()},{key:'title',label:'Название',required:true},{key:'note',label:'Заметка'}],onSubmit:v=>{ const ps=this.ensure(); ps.milestones.push({id:uuid(),date:v.date,title:v.title,note:v.note||''}); CRM.store.set('preseason',ps); CRM.router.render(); CRM.toast('Добавлено'); }}); },
+  delMilestone(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить веху?',danger:true,onOk:()=>{ const ps=this.ensure(); ps.milestones=(ps.milestones||[]).filter(m=>m.id!==id); CRM.store.set('preseason',ps); CRM.router.render(); }}); },
+  importPlanner(){
+    CRM.modal.open(CRM.modal.frame('Импорт из планировщика',`
+      <p class="muted" style="font-size:12px;margin-bottom:8px">Вставьте JSON из preseason_planner (ключи <code>plan/details/fatigue/cal</code> или <code>ps9p/ps9d/ps9f/ps9c</code>). Существующий план будет заменён импортированным.</p>
+      <textarea id="imp_json" rows="8" placeholder='{"plan":[...],"details":[...],"fatigue":[...],"cal":{"start":"","end":""}}'></textarea>
+      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.doImport()">Импортировать</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  doImport(){
+    let obj; try{ obj=JSON.parse((document.getElementById('imp_json')||{}).value||''); }catch(e){ CRM.toast('Некорректный JSON'); return; }
+    const ps=this.ensure();
+    const plan=obj.plan||obj.ps9p, det=obj.details||obj.ps9d, fat=obj.fatigue||obj.ps9f, cal=obj.cal||obj.ps9c;
+    if(Array.isArray(plan)) ps.plan=plan; if(Array.isArray(det)) ps.details=det; if(Array.isArray(fat)) ps.fatigue=fat; if(cal&&typeof cal==='object') ps.cal=Object.assign({start:'',end:'',seasonEnd:''},cal);
+    CRM.store.set('preseason',ps); this.ensure(); CRM.modal.close(); CRM.router.render(); CRM.toast('Импортировано');
   }
 };
 
