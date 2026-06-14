@@ -468,7 +468,7 @@ CRM.modules.dashboard={
       `<button class="btn primary" onclick="CRM.router.go('matches')">К матчам</button>`)+
     `<div class="grid g4" style="margin-bottom:14px">
       <div class="kpi"><div class="v">${finished.length}</div><div class="l">Сыграно матчей</div><div class="s pill good">${wins}П ${ties}Н ${losses}П</div></div>
-      <div class="kpi"><div class="v">${goalsFor}:${goalsAgainst}</div><div class="l">Шайбы за / против</div><div class="s ${goalsFor>=goalsAgainst?'pill good':'pill bad'}">${goalsFor-goalsAgainst>=0?'+':''}${goalsFor-goalsAgainst}</div></div>
+      <div class="kpi"><div class="v">${goalsFor}:${goalsAgainst}</div><div class="l">Goals for / against</div><div class="s ${goalsFor>=goalsAgainst?'pill good':'pill bad'}">${goalsFor-goalsAgainst>=0?'+':''}${goalsFor-goalsAgainst}</div></div>
       <div class="kpi"><div class="v">${scout.length}</div><div class="l">Игроков в команде</div><div class="s muted">${onIce} в составе</div></div>
       <div class="kpi"><div class="v" style="color:${injured.length?'var(--bad)':'var(--good)'}">${injured.length}</div><div class="l">Лазарет</div><div class="s muted">травмы / ограничения</div></div>
     </div>
@@ -482,7 +482,7 @@ CRM.modules.dashboard={
         ${upcoming.length?`<table><tbody>${upcoming.slice(0,5).map(m=>`<tr onclick="CRM.modules.matches.open('${m.id}')" style="cursor:pointer">
           <td style="width:70px"><span class="muted">${fmtDateShort(m.date)}</span></td>
           <td><b>${esc(m.opp||'Соперник')}</b> ${m.home?'<span class="pill accent">дома</span>':'<span class="pill">в гостях</span>'}</td>
-          <td class="num">${m.playoff?'<span class="pill bad">плей-офф</span>':m.preseason?'<span class="pill warn">предсезон</span>':'<span class="pill">сезон</span>'}</td></tr>`).join('')}</tbody></table>`
+          <td class="num">${m.playoff?'<span class="pill bad">playoff</span>':m.preseason?'<span class="pill warn">preseason</span>':'<span class="pill">season</span>'}</td></tr>`).join('')}</tbody></table>`
           :'<div class="empty">Нет запланированных матчей</div>'}
       </div>
     </div>
@@ -497,7 +497,7 @@ CRM.modules.dashboard={
       </div>
       <div class="card">
         <div style="margin-bottom:12px"><b>Бомбардиры</b></div>
-        ${(()=>{const ag=CRM.modules.matches.teamLeaders(); return ag.length?`<table><thead><tr><th>Игрок</th><th class="num">И</th><th class="num">Г</th><th class="num">А</th><th class="num">О</th></tr></thead><tbody>${ag.slice(0,6).map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.gp}</td><td class="num">${r.g}</td><td class="num">${r.a}</td><td class="num"><b>${r.pts}</b></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Нет статистики</div>';})()}
+        ${(()=>{const ag=CRM.modules.matches.teamLeaders(); return ag.length?`<table><thead><tr><th>Игрок</th><th class="num">GP</th><th class="num">G</th><th class="num">A</th><th class="num">P</th></tr></thead><tbody>${ag.slice(0,6).map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.gp}</td><td class="num">${r.g}</td><td class="num">${r.a}</td><td class="num"><b>${r.pts}</b></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Нет статистики</div>';})()}
       </div>
     </div>`;
 
@@ -537,7 +537,7 @@ CRM.modules.scouting={
           ${pr[p.id]?`<span class="pill accent" style="margin-left:auto">приоритет</span>`:''}
         </div>
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;font-size:11px">
-          ${p.shot?`<span class="pill">хват ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h}см</span>`:''}${p.w?`<span class="pill">${p.w}кг</span>`:''}${p.team?`<span class="pill">${esc(p.team)}</span>`:''}
+          ${p.shot?`<span class="pill">shot ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h} cm</span>`:''}${p.w?`<span class="pill">${p.w} kg</span>`:''}${p.team?`<span class="pill">${esc(p.team)}</span>`:''}
         </div>
         ${p.note?`<p class="muted" style="margin-top:8px;font-size:12px">${esc(p.note).slice(0,90)}</p>`:''}
       </div>`).join(''):'<div class="empty card" style="grid-column:1/-1">База пуста. Добавьте кандидата.</div>'}
@@ -545,7 +545,7 @@ CRM.modules.scouting={
   },
   open(id){
     const p=scoutById(id); if(!p) return;
-    const sk=p.skills||{}; const order=[['skating','Катание'],['size','Габариты'],['iq','Хоккейный IQ'],['puck','Владение'],['shot','Бросок'],['offense','Атака'],['defense','Оборона']];
+    const sk=p.skills||{}; const order=[['skating','Skating'],['size','Size'],['iq','Hockey IQ'],['puck','Puck'],['shot','Shot'],['offense','Offense'],['defense','Defense']];
     const pr=CRM.store.get('scoutPriorities')||{};
     CRM.modal.open(CRM.modal.frame('Скаут-отчёт',`
       <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
@@ -568,7 +568,7 @@ CRM.modules.scouting={
           ${order.map(([k,l])=>`<div style="margin-bottom:8px"><div style="display:flex;font-size:12px"><span>${l}</span><b style="margin-left:auto">${num(sk[k])}/10</b></div><div class="bar"><i style="width:${num(sk[k])*10}%"></i></div></div>`).join('')}
         </div></div>
       </div>
-      ${p.gkNotes?`<div class="card" style="margin-top:14px"><b>Вратарские заметки</b><p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(p.gkNotes)}</p></div>`:''}
+      ${p.gkNotes?`<div class="card" style="margin-top:14px"><b>Goalie notes</b><p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(p.gkNotes)}</p></div>`:''}
       ${p.note?`<div class="card" style="margin-top:14px"><b>Заключение скаута</b><p style="margin-top:6px;white-space:pre-wrap">${esc(p.note)}</p></div>`:''}
       <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.scouting.edit('${p.id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.scouting.del('${p.id}')">Удалить</button></div>
     `));
@@ -590,15 +590,15 @@ CRM.modules.scouting={
     CRM.modal.open(CRM.modal.frame(id?'Редактировать кандидата':'Новый кандидат',`
       <div class="row">${f('surname','Фамилия',p&&p.surname)}${f('firstName','Имя',p&&p.firstName)}${f('number','Номер',p&&p.number,'number')}</div>
       <div class="row" style="margin-top:10px">
-        <div style="flex:1"><label class="fld">Позиция</label><select id="sc_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
-        <div style="flex:1"><label class="fld">Хват</label><select id="sc_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Левый</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Правый</option></select></div>
+        <div style="flex:1"><label class="fld">Position</label><select id="sc_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Shot</label><select id="sc_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Left</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Right</option></select></div>
         ${f('age','Возраст',p&&p.age,'number')}${f('grade','Грейд (A/B/C/D)',p&&p.grade)}
       </div>
       <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}${f('team','Текущий клуб',p&&p.team)}${f('agent','Агент',p&&p.agent)}</div>
-      <div style="margin-top:14px"><b>Оценки навыков (0–10)</b><div class="row" style="margin-top:8px">${sf('skating','Катание')}${sf('size','Габариты')}${sf('iq','IQ')}${sf('puck','Владение')}</div>
-      <div class="row" style="margin-top:8px">${sf('shot','Бросок')}${sf('offense','Атака')}${sf('defense','Оборона')}</div></div>
+      <div style="margin-top:14px"><b>Оценки навыков (0–10)</b><div class="row" style="margin-top:8px">${sf('skating','Skating')}${sf('size','Size')}${sf('iq','IQ')}${sf('puck','Puck')}</div>
+      <div class="row" style="margin-top:8px">${sf('shot','Shot')}${sf('offense','Offense')}${sf('defense','Defense')}</div></div>
       <div style="margin-top:12px"><label class="fld">Заключение скаута</label><textarea id="sc_note" rows="3">${esc(p&&p.note||'')}</textarea></div>
-      ${(p&&p.pos==='G')||!id?`<div style="margin-top:10px"><label class="fld">Вратарские заметки</label><textarea id="sc_gkNotes" rows="2">${esc(p&&p.gkNotes||'')}</textarea></div>`:''}
+      ${(p&&p.pos==='G')||!id?`<div style="margin-top:10px"><label class="fld">Goalie notes</label><textarea id="sc_gkNotes" rows="2">${esc(p&&p.gkNotes||'')}</textarea></div>`:''}
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.scouting.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
     `));
   },
@@ -622,7 +622,7 @@ CRM.modules.scouting={
     const pr=CRM.store.get('scoutPriorities')||{}; const ids=Object.keys(pr);
     const list=ids.map(scoutById).filter(Boolean).sort((a,b)=>(b.rating||0)-(a.rating||0));
     CRM.modal.open(CRM.modal.frame('Приоритетные цели скаутинга',
-      list.length?`<table><thead><tr><th>Грейд</th><th>Игрок</th><th>Поз.</th><th class="num">Рейтинг</th><th></th></tr></thead><tbody>
+      list.length?`<table><thead><tr><th>Grade</th><th>Игрок</th><th>Pos</th><th class="num">Rating</th><th></th></tr></thead><tbody>
       ${list.map(p=>`<tr><td><span class="grade" style="background:${gradeColor(p.grade)}">${esc(p.grade||'?')}</span></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td><td class="num">${p.rating||0}</td><td><button class="btn sm" onclick="CRM.modules.scouting.open('${p.id}')">Открыть</button></td></tr>`).join('')}
       </tbody></table>`:'<div class="empty">Нет приоритетных целей. Отметьте кандидатов звёздочкой.</div>'));
   }
@@ -641,7 +641,7 @@ CRM.modules.profiles={
     el.innerHTML=sectionTitle('03','Игроки команды','Профили, статистика и медкарта',
       `<button class="btn primary" onclick="CRM.modules.profiles.edit()">+ Игрок</button>`)+
     `<div class="seg" style="margin-bottom:14px">${['','G','D','C','LW','RW'].map(p=>`<button class="${fpos===p?'active':''}" onclick="CRM.router.go('profiles',${p?`{pos:'${p}'}`:'null'})">${p?POS_LABEL[p]:'All'}</button>`).join('')}</div>
-    <div class="card" style="padding:0">${list.length?`<table><thead><tr><th>#</th><th>Игрок</th><th>Поз.</th><th class="num">Возр.</th><th>Хват</th><th class="num">И</th><th class="num">О</th><th>Статус</th></tr></thead><tbody>
+    <div class="card" style="padding:0">${list.length?`<table><thead><tr><th>#</th><th>Игрок</th><th>Pos</th><th class="num">Возр.</th><th>Shot</th><th class="num">GP</th><th class="num">P</th><th>Status</th></tr></thead><tbody>
       ${list.map(p=>{const ag=CRM.modules.matches.playerAgg(p.id);return `<tr style="cursor:pointer" onclick="CRM.modules.profiles.open('${p.id}')">
         <td><b>${esc(p.number||'')}</b></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td>
         <td class="num">${esc(p.age||'')}</td><td>${p.shot||''}</td><td class="num">${ag.gp}</td><td class="num"><b>${ag.pts}</b></td>
@@ -654,7 +654,7 @@ CRM.modules.profiles={
     const ag=CRM.modules.matches.playerAgg(id);
     const head=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
       <div style="width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${esc(p.number||'#')}</div>
-      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· хват '+p.shot:''}</div></div>
+      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· shot '+p.shot:''}</div></div>
       <span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span>
     </div>
     <div class="tabsrow">
@@ -665,18 +665,18 @@ CRM.modules.profiles={
     let body='';
     if(tab==='overview'){
       body=`<div class="grid g3" style="margin-bottom:14px">
-        <div class="kpi"><div class="v">${ag.gp}</div><div class="l">Игр всего</div></div>
-        <div class="kpi"><div class="v">${ag.gpPre}</div><div class="l">Предсезонка</div></div>
-        <div class="kpi"><div class="v">${ag.gpSeason}</div><div class="l">Сезон</div></div>
-        <div class="kpi"><div class="v">${ag.gpPlayoff}</div><div class="l">Плей-офф</div></div>
-        <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Ср. оценка</div></div>
-        <div class="kpi"><div class="v" style="color:${ag.misses?'var(--bad)':'var(--ink)'}">${ag.misses}</div><div class="l">Пропуски</div></div>
+        <div class="kpi"><div class="v">${ag.gp}</div><div class="l">Games played</div></div>
+        <div class="kpi"><div class="v">${ag.gpPre}</div><div class="l">Preseason</div></div>
+        <div class="kpi"><div class="v">${ag.gpSeason}</div><div class="l">Season</div></div>
+        <div class="kpi"><div class="v">${ag.gpPlayoff}</div><div class="l">Playoff</div></div>
+        <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Avg rating</div></div>
+        <div class="kpi"><div class="v" style="color:${ag.misses?'var(--bad)':'var(--ink)'}">${ag.misses}</div><div class="l">Missed</div></div>
       </div>
       <div class="card"><b>Сводная статистика</b>
         <div class="grid g4" style="margin-top:10px;gap:8px">
-          <div class="kpi"><div class="v">${ag.g}</div><div class="l">Голы</div></div>
-          <div class="kpi"><div class="v">${ag.a}</div><div class="l">Передачи</div></div>
-          <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Очки</div></div>
+          <div class="kpi"><div class="v">${ag.g}</div><div class="l">Goals</div></div>
+          <div class="kpi"><div class="v">${ag.a}</div><div class="l">Assists</div></div>
+          <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Points</div></div>
           <div class="kpi"><div class="v">${ag.pm>=0?'+':''}${ag.pm}</div><div class="l">+/−</div></div>
         </div>
       </div>
@@ -703,8 +703,8 @@ CRM.modules.profiles={
     CRM.modal.open(CRM.modal.frame(id?'Редактировать игрока':'Новый игрок',`
       <div class="row">${f('surname','Фамилия',p&&p.surname)}${f('firstName','Имя',p&&p.firstName)}${f('number','Номер',p&&p.number,'number')}</div>
       <div class="row" style="margin-top:10px">
-        <div style="flex:1"><label class="fld">Позиция</label><select id="pf_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
-        <div style="flex:1"><label class="fld">Хват</label><select id="pf_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Левый</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Правый</option></select></div>
+        <div style="flex:1"><label class="fld">Position</label><select id="pf_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Shot</label><select id="pf_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Left</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Right</option></select></div>
         ${f('age','Возраст',p&&p.age,'number')}
       </div>
       <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}
@@ -736,7 +736,7 @@ const ROSTER_SLOTS={
   defKeys(){ const a=[]; this.defLines.forEach(n=>this.defPos.forEach(p=>a.push('d'+n+p))); return a; },
   allKeys(){ return [].concat(this.fwdKeys(),this.defKeys(),this.gk); },
   label(key){
-    if(key[0]==='g') return 'Вратарь '+key[1];
+    if(key[0]==='g') return 'Goalie '+key[1];
     const line=key[1], pos=key[2];
     const posL={L:'ЛК',C:'Ц',R:'ПК'}[pos]||{L:'ЛЗ',R:'ПЗ'}[pos]||pos;
     return (key[0]==='f'?'Зв.'+line+' ':'Пара'+line+' ')+posL;
@@ -764,7 +764,7 @@ CRM.modules.matches={
     return m;
   },
   tournLabel(m){ return m.playoff?'playoff':m.preseason?'preseason':'season'; },
-  tournPill(m){ return m.playoff?'<span class="pill bad">плей-офф</span>':m.preseason?'<span class="pill warn">предсезон</span>':'<span class="pill">сезон</span>'; },
+  tournPill(m){ return m.playoff?'<span class="pill bad">playoff</span>':m.preseason?'<span class="pill warn">preseason</span>':'<span class="pill">season</span>'; },
 
   playerMatchHistory(pid){
     const out=[];
@@ -805,7 +805,7 @@ CRM.modules.matches={
     const matches=(CRM.store.get('matches')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     el.innerHTML=sectionTitle('05','Матчи','Подготовка · день матча · итоги · отчёт',
       `<button class="btn primary" onclick="CRM.modules.matches.add()">+ Матч</button>`)+
-    `<div class="card" style="padding:0">${matches.length?`<table><thead><tr><th>Дата</th><th>Соперник</th><th>Турнир</th><th class="num">Счёт</th><th>Статус</th><th></th></tr></thead><tbody>
+    `<div class="card" style="padding:0">${matches.length?`<table><thead><tr><th>Дата</th><th>Соперник</th><th>Tournament</th><th class="num">Счёт</th><th>Status</th><th></th></tr></thead><tbody>
       ${matches.map(m=>`<tr style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}')">
         <td>${fmtDate(m.date)}</td>
         <td><b>${esc(m.opp||'Соперник')}</b> ${m.home?'<span class="pill accent">дома</span>':'<span class="pill">гости</span>'}</td>
@@ -821,8 +821,8 @@ CRM.modules.matches={
       <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="m_date" type="date" value="${localYmd()}"></div>
       <div style="flex:1"><label class="fld">Соперник</label><input id="m_opp" list="m_opplist" placeholder="Название"><datalist id="m_opplist">${ops.map(o=>`<option value="${esc(o.name)}">`).join('')}</datalist></div></div>
       <div class="row" style="margin-top:10px">
-        <div style="flex:1"><label class="fld">Площадка</label><select id="m_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
-        <div style="flex:1"><label class="fld">Турнир</label><select id="m_tourn"><option value="season">Сезон</option><option value="preseason">Предсезонка</option><option value="playoff">Плей-офф</option></select></div>
+        <div style="flex:1"><label class="fld">Venue</label><select id="m_home"><option value="1">Home</option><option value="0">Away</option></select></div>
+        <div style="flex:1"><label class="fld">Tournament</label><select id="m_tourn"><option value="season">Season</option><option value="preseason">Preseason</option><option value="playoff">Playoff</option></select></div>
       </div>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.matches.saveNew()">Создать</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
   },
@@ -847,7 +847,7 @@ CRM.modules.matches={
     tab=tab||(m.result.finished?'report':'prep');
     const head=`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
       <div style="flex:1;min-width:180px"><h2 style="font-size:20px">vs ${esc(m.opp||'Соперник')}</h2>
-        <div class="muted">${fmtDate(m.date)} · ${m.home?'дома':'в гостях'} · ${this.tournLabel(m)}</div></div>
+        <div class="muted">${fmtDate(m.date)} · ${m.home?'home':'away'} · ${this.tournLabel(m)}</div></div>
       ${m.result.finished?`<div style="font-size:26px;font-weight:800">${num(m.score.our)}:${num(m.score.opp)}</div>`:''}
     </div>
     <div class="tabsrow">
@@ -946,27 +946,27 @@ CRM.modules.matches={
     const ps=m.result.playerStats;
     return `<div class="card">
       <div class="row"><div style="flex:1"><label class="fld">Наши шайбы</label><input id="r_our" type="number" min="0" value="${m.score.our==null?'':m.score.our}"></div>
-      <div style="flex:1"><label class="fld">Шайбы соперника</label><input id="r_opp" type="number" min="0" value="${m.score.opp==null?'':m.score.opp}"></div>
+      <div style="flex:1"><label class="fld">Opponent goals</label><input id="r_opp" type="number" min="0" value="${m.score.opp==null?'':m.score.opp}"></div>
       <div style="flex:1"><label class="fld">Оценка матча (1–10)</label><input id="r_rating" type="number" min="0" max="10" value="${m.rating||''}"></div></div>
     </div>
-    <div class="card" style="margin-top:14px"><b>Спецбригады</b>
+    <div class="card" style="margin-top:14px"><b>Special teams</b>
       <div class="row" style="margin-top:8px">
-        <div style="flex:1"><label class="fld">Голы в большинстве</label><input id="r_ppGoals" type="number" min="0" value="${num(m.result.ppGoals)}"></div>
+        <div style="flex:1"><label class="fld">Power-play goals</label><input id="r_ppGoals" type="number" min="0" value="${num(m.result.ppGoals)}"></div>
         <div style="flex:1"><label class="fld">Попыток ПП</label><input id="r_ppAttempts" type="number" min="0" value="${num(m.result.ppAttempts)}"></div>
         <div style="flex:1"><label class="fld">Пропущ. в меньш.</label><input id="r_pkGA" type="number" min="0" value="${num(m.result.pkGoalsAgainst)}"></div>
         <div style="flex:1"><label class="fld">Раз в меньшинстве</label><input id="r_pkTimes" type="number" min="0" value="${num(m.result.pkTimes)}"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:14px"><b>Вратари</b>
+    <div class="card" style="margin-top:14px"><b>Goalies</b>
       <div class="row" style="margin-top:8px">
         <div style="flex:1"><label class="fld">Стартовый</label><select id="r_gkStart"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.startId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
         <div style="flex:1"><label class="fld">Сменщик</label><select id="r_gkBackup"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.backupId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
-        <div style="flex:1;display:flex;align-items:flex-end"><label class="fld" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="r_gkChanged" style="width:auto" ${m.result.gk.changed?'checked':''}> Была замена вратаря</label></div>
+        <div style="flex:1;display:flex;align-items:flex-end"><label class="fld" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="r_gkChanged" style="width:auto" ${m.result.gk.changed?'checked':''}> Goalie was changed</label></div>
       </div>
       <p class="muted" style="font-size:11px;margin-top:6px">Система оценки вратарей заморожена — фиксируем только факт участия и замены.</p>
     </div>
     <div class="card" style="margin-top:14px"><b>Статистика полевых игроков</b>
-      <div style="overflow:auto;margin-top:8px"><table><thead><tr><th>Игрок</th><th class="num">Г</th><th class="num">А</th><th class="num">+/−</th><th class="num">Штр</th><th class="num">Оц.</th><th class="num">ПП-Г</th><th class="num">ПП-А</th></tr></thead><tbody>
+      <div style="overflow:auto;margin-top:8px"><table><thead><tr><th>Игрок</th><th class="num">G</th><th class="num">A</th><th class="num">+/−</th><th class="num">PIM</th><th class="num">Rtg</th><th class="num">PPG</th><th class="num">PPA</th></tr></thead><tbody>
       ${players.filter(p=>p.pos!=='G').map(p=>{const s=ps[p.id]||{};return `<tr><td><b>${esc(playerName(p))}</b></td>
         <td><input data-pid="${p.id}" data-f="g" type="number" min="0" value="${num(s.g)}" style="width:48px;text-align:center;padding:4px"></td>
         <td><input data-pid="${p.id}" data-f="a" type="number" min="0" value="${num(s.a)}" style="width:48px;text-align:center;padding:4px"></td>
@@ -1016,16 +1016,16 @@ CRM.modules.matches={
     const ppPct=m.result.ppAttempts?Math.round(num(m.result.ppGoals)/num(m.result.ppAttempts)*100):0;
     const pkPct=m.result.pkTimes?Math.round((1-num(m.result.pkGoalsAgainst)/num(m.result.pkTimes))*100):0;
     const gkS=playerById(m.result.gk.startId);
-    const res=m.score.our>m.score.opp?'<span class="pill good">Победа</span>':m.score.our<m.score.opp?'<span class="pill bad">Поражение</span>':'<span class="pill warn">Ничья</span>';
+    const res=m.score.our>m.score.opp?'<span class="pill good">Win</span>':m.score.our<m.score.opp?'<span class="pill bad">Loss</span>':'<span class="pill warn">Tie</span>';
     return `<div class="grid g4" style="margin-bottom:14px">
       <div class="kpi"><div class="v">${num(m.score.our)}:${num(m.score.opp)}</div><div class="l">Счёт</div><div class="s">${res}</div></div>
       <div class="kpi"><div class="v">${m.rating||'—'}</div><div class="l">Оценка матча</div></div>
       <div class="kpi"><div class="v">${ppPct}%</div><div class="l">Реализация ПП</div><div class="s muted">${num(m.result.ppGoals)}/${num(m.result.ppAttempts)}</div></div>
       <div class="kpi"><div class="v">${pkPct}%</div><div class="l">Нейтрализация ПК</div><div class="s muted">${num(m.result.pkTimes)} мен.</div></div>
     </div>
-    ${gkS?`<div class="card" style="margin-bottom:14px"><b>Вратарь:</b> ${esc(playerName(gkS))} ${m.result.gk.changed?'<span class="pill warn">была замена</span>':''}</div>`:''}
+    ${gkS?`<div class="card" style="margin-bottom:14px"><b>Goalie:</b> ${esc(playerName(gkS))} ${m.result.gk.changed?'<span class="pill warn">goalie changed</span>':''}</div>`:''}
     <div class="card"><b>Статистика игроков</b>
-      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">Г</th><th class="num">А</th><th class="num">О</th><th class="num">+/−</th><th class="num">Штр</th><th class="num">Оц.</th></tr></thead><tbody>
+      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">G</th><th class="num">A</th><th class="num">P</th><th class="num">+/−</th><th class="num">PIM</th><th class="num">Rtg</th></tr></thead><tbody>
       ${rows.map(r=>`<tr><td><b>${esc(playerName(r.p))}</b></td><td class="num">${num(r.s.g)}</td><td class="num">${num(r.s.a)}</td><td class="num"><b>${num(r.s.g)+num(r.s.a)}</b></td><td class="num">${num(r.s.pm)>=0?'+':''}${num(r.s.pm)}</td><td class="num">${num(r.s.pim)}</td><td class="num">${r.s.rating||'—'}</td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="margin-top:8px">Нет индивидуальной статистики.</p>'}
     </div>
@@ -1040,12 +1040,12 @@ CRM.modules.matches={
     if(!hist.length) return '<div class="empty">Нет сыгранных матчей.</div>';
     const ag=this.playerAgg(pid);
     return `<div class="grid g4" style="margin-bottom:12px">
-      <div class="kpi"><div class="v">${ag.g}</div><div class="l">Голы</div></div>
-      <div class="kpi"><div class="v">${ag.a}</div><div class="l">Передачи</div></div>
-      <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Очки</div></div>
-      <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Ср. оценка</div></div>
+      <div class="kpi"><div class="v">${ag.g}</div><div class="l">Goals</div></div>
+      <div class="kpi"><div class="v">${ag.a}</div><div class="l">Assists</div></div>
+      <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Points</div></div>
+      <div class="kpi"><div class="v">${ag.avgRating||'—'}</div><div class="l">Avg rating</div></div>
     </div>
-    <div class="card" style="padding:0"><table><thead><tr><th>Дата</th><th>Соперник</th><th class="num">Г</th><th class="num">А</th><th class="num">+/−</th><th class="num">Оц.</th></tr></thead><tbody>
+    <div class="card" style="padding:0"><table><thead><tr><th>Дата</th><th>Соперник</th><th class="num">G</th><th class="num">A</th><th class="num">+/−</th><th class="num">Rtg</th></tr></thead><tbody>
     ${hist.slice().reverse().map(({m,st})=>`<tr style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}','report')"><td>${fmtDateShort(m.date)}</td><td>${esc(m.opp)}</td><td class="num">${num(st.g)}</td><td class="num">${num(st.a)}</td><td class="num">${num(st.pm)>=0?'+':''}${num(st.pm)}</td><td class="num">${st.rating||'—'}</td></tr>`).join('')}
     </tbody></table></div>`;
   }
@@ -1058,7 +1058,7 @@ CRM.modules.roster={
   render(el){
     const showSpecial=!!CRM.store.get('roster.showSpecial');
     el.innerHTML=sectionTitle('04','Состав','Звенья 5×5, спецбригады и история',
-      `<button class="btn" onclick="CRM.modules.roster.toggleSpecial()">${showSpecial?'Скрыть спецбригады':'Спецбригады'}</button>
+      `<button class="btn" onclick="CRM.modules.roster.toggleSpecial()">${showSpecial?'Hide special teams':'Special teams'}</button>
        <button class="btn" onclick="CRM.modules.roster.clearLineup()">Очистить</button>
        <button class="btn primary" onclick="CRM.modules.roster.createLineupForm()">Сохранить состав</button>`)+
     `<div class="grid g2">${this.viewHome()}</div>
@@ -1100,7 +1100,7 @@ CRM.modules.roster={
     const unit=(key)=>{const u=sp[key]||{};return `<div class="card"><b>${SPECIAL_LABEL[key]}</b><div style="margin-top:8px">
       <label class="fld">Бригада 1</label><textarea rows="2" placeholder="Игроки бригады 1" onchange="CRM.modules.roster.setSpecial('${key}','b1',this.value)">${esc(u.b1||'')}</textarea>
       <label class="fld" style="margin-top:8px">Бригада 2</label><textarea rows="2" placeholder="Игроки бригады 2" onchange="CRM.modules.roster.setSpecial('${key}','b2',this.value)">${esc(u.b2||'')}</textarea></div></div>`;};
-    return `<div style="margin-top:14px"><h2 style="font-size:15px;margin-bottom:10px">Спецбригады</h2><div class="grid g3">${SPECIAL_KEYS.map(unit).join('')}</div></div>`;
+    return `<div style="margin-top:14px"><h2 style="font-size:15px;margin-bottom:10px">Special teams</h2><div class="grid g3">${SPECIAL_KEYS.map(unit).join('')}</div></div>`;
   },
   setSlot(key,pid){
     const lines=CRM.store.get('roster.lines')||{};
@@ -1189,7 +1189,7 @@ CRM.modules.roster={
     (CRM.store.get('matches')||[]).forEach(m=>{ const cr=m.result&&m.result.comboRatings; if(!cr)return; for(const k in cr){const c=cr[k]; if(!map[k])map[k]={label:c.label,type:c.type,ratings:[]}; if(c.rating)map[k].ratings.push(num(c.rating));} });
     const rows=Object.values(map).map(c=>({label:c.label,type:c.type,avg:round1(avg(c.ratings)),n:c.ratings.length})).sort((a,b)=>b.avg-a.avg);
     return `<div class="card" style="margin-top:14px"><b>Лучшие сочетания</b>
-      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Сочетание</th><th>Тип</th><th class="num">Игр</th><th class="num">Ср. оценка</th></tr></thead><tbody>
+      ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Сочетание</th><th>Тип</th><th class="num">GP</th><th class="num">Ср. оценка</th></tr></thead><tbody>
       ${rows.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc(r.type||'')}</td><td class="num">${r.n}</td><td class="num"><b>${r.avg}</b></td></tr>`).join('')}</tbody></table>`
       :'<p class="muted" style="margin-top:8px">Нет данных по сочетаниям. Они накапливаются по мере оценки звеньев в матчах.</p>'}</div>`;
   }
@@ -1225,7 +1225,7 @@ CRM.modules.stats={
     const teamAvg={}; cols.forEach(([k])=>teamAvg[k]=field.length?round1(avg(field.map(r=>r[k]))):0);
     el.innerHTML=sectionTitle('06','Статистика','Индивидуальные показатели игроков',
       `<div class="seg">${[['all','Все'],['best','Лучшие'],['avg','Средние'],['worst','Худшие']].map(([k,l])=>`<button class="${this._mode===k?'active':''}" onclick="CRM.modules.stats.setMode('${k}')">${l}</button>`).join('')}</div>`)+
-    `<div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>Игрок</th><th>Поз</th>
+    `<div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>Игрок</th><th>Pos</th>
       ${cols.map(([k,l])=>`<th class="num sortable" onclick="CRM.modules.stats.sort('${k}')">${l}${s.key===k?(s.dir<0?' ▾':' ▴'):''}</th>`).join('')}</tr></thead><tbody>
       ${this._mode==='avg'?'':rows.map(r=>`<tr style="cursor:pointer" onclick="CRM.modules.profiles.open('${r.id}','matches')"><td><b>${esc(r.name)}</b></td><td>${POS_LABEL[r.pos]||''}</td>
         ${cols.map(([k])=>`<td class="num">${k==='pm'?(r[k]>=0?'+':'')+r[k]:r[k]}</td>`).join('')}</tr>`).join('')}
@@ -1234,8 +1234,8 @@ CRM.modules.stats={
       <tfoot><tr style="background:var(--panel2);font-weight:700"><td>Среднее по команде</td><td></td>${cols.map(([k])=>`<td class="num">${teamAvg[k]}</td>`).join('')}</tr></tfoot>
     </table></div>
     ${field.length?'':'<div class="empty card">Нет сыгранных матчей со статистикой.</div>'}
-    <div class="card" style="margin-top:14px;padding:0"><div style="padding:14px 14px 0"><b>Вратари</b></div>
-      ${gks.length?`<table style="margin-top:8px"><thead><tr><th>Вратарь</th><th class="num">Игр</th><th class="num">Ср.оц.</th></tr></thead><tbody>
+    <div class="card" style="margin-top:14px;padding:0"><div style="padding:14px 14px 0"><b>Goalies</b></div>
+      ${gks.length?`<table style="margin-top:8px"><thead><tr><th>Goalie</th><th class="num">GP</th><th class="num">Avg</th></tr></thead><tbody>
       ${gks.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.gp}</td><td class="num">${r.avg||'—'}</td></tr>`).join('')}</tbody></table>`
       :'<div class="empty">Нет вратарской статистики. Система оценки вратарей заморожена.</div>'}
     </div>`;
@@ -1255,7 +1255,7 @@ CRM.modules.opponents={
     if(params.view==='bracket'){ this.playoffBracket(el); return; }
     const ops=(CRM.store.get('opponents')||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
     el.innerHTML=sectionTitle('07','Соперники','Ростеры, тактика и история встреч',
-      `<button class="btn" onclick="CRM.router.go('opponents',{view:'bracket'})">Сетка плей-офф</button>
+      `<button class="btn" onclick="CRM.router.go('opponents',{view:'bracket'})">Playoff bracket</button>
        <button class="btn primary" onclick="CRM.modules.opponents.edit()">+ Соперник</button>`)+
     `<div class="grid g3">${ops.length?ops.map(o=>{
       const games=(o.games||[]); const played=games.filter(g=>g.score);
@@ -1273,7 +1273,7 @@ CRM.modules.opponents={
       <h2 style="font-size:20px">${esc(o.name)}</h2>${o.city?`<span class="muted">${esc(o.city)}</span>`:''}
       <button class="btn sm" style="margin-left:auto" onclick="CRM.modules.opponents.edit('${o.id}')">Редактировать</button></div>
     <div class="tabsrow">
-      ${[['roster','Ростер'],['leaders','Лидеры'],['tactics','Тактика'],['games','Наши игры'],['lineups','Составы'],['preseason','Предсезонка']].map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="CRM.modules.opponents.open('${id}','${k}')">${l}</button>`).join('')}
+      ${[['roster','Roster'],['leaders','Leaders'],['tactics','Tactics'],['games','Our games'],['lineups','Lineups'],['preseason','Preseason']].map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="CRM.modules.opponents.open('${id}','${k}')">${l}</button>`).join('')}
     </div>`;
     let body='';
     if(tab==='roster') body=this.paneRoster(o);
@@ -1287,7 +1287,7 @@ CRM.modules.opponents={
   paneRoster(o){
     const ros=o.roster||[];
     return `<div class="card"><div style="display:flex;align-items:center"><b>Ростер</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.opponents.addPlayer('${o.id}')">+ Игрок</button></div>
-      ${ros.length?`<table style="margin-top:8px"><thead><tr><th>#</th><th>Игрок</th><th>Поз</th><th>Лидер</th><th></th></tr></thead><tbody>
+      ${ros.length?`<table style="margin-top:8px"><thead><tr><th>#</th><th>Игрок</th><th>Pos</th><th>Лидер</th><th></th></tr></thead><tbody>
       ${ros.map(r=>`<tr><td>${esc(r.num||'')}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.pos||'')}</td><td>${r.leader?'<span class="pill bad">★</span>':''}</td>
         <td><button class="btn sm ghost" onclick="CRM.modules.opponents.toggleLeader('${o.id}','${r.id}')">${r.leader?'снять':'лидер'}</button> <button class="btn sm ghost danger" onclick="CRM.modules.opponents.delPlayer('${o.id}','${r.id}')">×</button></td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="margin-top:8px">Ростер пуст.</p>'}</div>`;
@@ -1309,8 +1309,8 @@ CRM.modules.opponents={
   paneGames(o){
     const games=(o.games||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     return `<div class="card"><div style="display:flex;align-items:center"><b>История встреч</b><button class="btn sm primary" style="margin-left:auto" onclick="CRM.modules.opponents.createGameForm('${o.id}')">+ Матч с соперником</button></div>
-      ${games.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Где</th><th class="num">Счёт</th><th>Турнир</th><th></th></tr></thead><tbody>
-      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'дома':'гости'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td>${g.playoff?'плей-офф':g.preseason?'предсезон':'сезон'} ${g.roundNote?'· '+esc(g.roundNote):''}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
+      ${games.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Где</th><th class="num">Счёт</th><th>Tournament</th><th></th></tr></thead><tbody>
+      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'home':'away'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td>${g.playoff?'playoff':g.preseason?'preseason':'season'} ${g.roundNote?'· '+esc(g.roundNote):''}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="margin-top:8px">Встреч нет.</p>'}</div>`;
   },
   paneLineups(o){
@@ -1322,14 +1322,14 @@ CRM.modules.opponents={
     return `<div class="card"><b>Зафиксированные составы соперника</b>
       ${lus.length?lus.slice().reverse().map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="muted" style="font-size:12px">${fmtDate(l.date)}</div><div>${(l.lines||[]).map(x=>esc(x)).join(', ')||'—'}</div></div>`).join('')
       :'<p class="muted" style="margin-top:8px">Составы соперника не фиксировались.</p>'}</div>
-    ${freqRows.length?`<div class="card" style="margin-top:14px"><b>Частотный анализ выходов</b><table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">Появлений</th></tr></thead><tbody>${freqRows.map(([n,c])=>`<tr><td>${esc(n)}</td><td class="num">${c}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+    ${freqRows.length?`<div class="card" style="margin-top:14px"><b>Частотный анализ выходов</b><table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">Appearances</th></tr></thead><tbody>${freqRows.map(([n,c])=>`<tr><td>${esc(n)}</td><td class="num">${c}</td></tr>`).join('')}</tbody></table></div>`:''}`;
   },
   renderPreseason(o){
     const games=(o.games||[]).filter(g=>g.preseason).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    return `<div class="card"><div style="display:flex;align-items:center"><b>Предсезонные встречи</b><button class="btn sm primary" style="margin-left:auto" onclick="CRM.modules.opponents.addPreseasonGame('${o.id}')">+ Предсезонный матч</button></div>
+    return `<div class="card"><div style="display:flex;align-items:center"><b>Preseason games</b><button class="btn sm primary" style="margin-left:auto" onclick="CRM.modules.opponents.addPreseasonGame('${o.id}')">+ Preseason game</button></div>
       ${games.length?`<table style="margin-top:8px"><thead><tr><th>Дата</th><th>Где</th><th class="num">Счёт</th><th></th></tr></thead><tbody>
-      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'дома':'гости'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
-      </tbody></table>`:'<p class="muted" style="margin-top:8px">Предсезонных встреч нет.</p>'}</div>`;
+      ${games.map(g=>`<tr><td>${fmtDate(g.date)}</td><td>${g.home?'home':'away'}</td><td class="num">${g.score?esc(g.score):'—'}</td><td><button class="btn sm ghost danger" onclick="CRM.modules.opponents.delGame('${o.id}','${g.id}',true)">×</button></td></tr>`).join('')}
+      </tbody></table>`:'<p class="muted" style="margin-top:8px">No preseason games.</p>'}</div>`;
   },
 
   edit(id){
@@ -1354,7 +1354,7 @@ CRM.modules.opponents={
     CRM.modal.open(CRM.modal.frame('Игрок соперника',`
       <div class="row"><div style="flex:1"><label class="fld">Номер</label><input id="rp_num"></div>
       <div style="flex:2"><label class="fld">Имя</label><input id="rp_name"></div>
-      <div style="flex:1"><label class="fld">Позиция</label><input id="rp_pos" placeholder="C/LW/RW/D/G"></div></div>
+      <div style="flex:1"><label class="fld">Position</label><input id="rp_pos" placeholder="C/LW/RW/D/G"></div></div>
       <label class="fld" style="margin-top:10px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="rp_leader" style="width:auto"> Лидер команды</label>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.opponents.savePlayer('${id}')">Добавить</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','roster')">Отмена</button></div>`));
   },
@@ -1371,8 +1371,8 @@ CRM.modules.opponents={
     const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
     CRM.modal.open(CRM.modal.frame('Матч с '+esc(o.name),`
       <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="cg_date" type="date" value="${localYmd()}"></div>
-      <div style="flex:1"><label class="fld">Площадка</label><select id="cg_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
-      <div style="flex:1"><label class="fld">Турнир</label><select id="cg_tourn"><option value="season">Сезон</option><option value="preseason">Предсезонка</option><option value="playoff">Плей-офф</option></select></div></div>
+      <div style="flex:1"><label class="fld">Venue</label><select id="cg_home"><option value="1">Home</option><option value="0">Away</option></select></div>
+      <div style="flex:1"><label class="fld">Tournament</label><select id="cg_tourn"><option value="season">Season</option><option value="preseason">Preseason</option><option value="playoff">Playoff</option></select></div></div>
       <p class="muted" style="font-size:12px;margin-top:10px">Будет создана запись игры у соперника и связанный матч в разделе «Матчи».</p>
       <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.opponents.createGamePair('${id}')">Создать</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','games')">Отмена</button></div>`));
   },
@@ -1396,9 +1396,9 @@ CRM.modules.opponents={
   },
   addPreseasonGame(id){
     const o=(CRM.store.get('opponents')||[]).find(x=>x.id===id);
-    CRM.modal.open(CRM.modal.frame('Предсезонный матч',`
+    CRM.modal.open(CRM.modal.frame('Preseason game',`
       <div class="row"><div style="flex:1"><label class="fld">Дата</label><input id="pg_date" type="date" value="${localYmd()}"></div>
-      <div style="flex:1"><label class="fld">Площадка</label><select id="pg_home"><option value="1">Дома</option><option value="0">В гостях</option></select></div>
+      <div style="flex:1"><label class="fld">Venue</label><select id="pg_home"><option value="1">Home</option><option value="0">Away</option></select></div>
       <div style="flex:1"><label class="fld">Счёт</label><input id="pg_score" placeholder="3:2"></div></div>
       <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.opponents.savePreseasonGame('${id}')">Добавить</button><button class="btn" onclick="CRM.modules.opponents.open('${id}','preseason')">Отмена</button></div>`));
   },
@@ -1424,12 +1424,12 @@ CRM.modules.opponents={
   playoffBracket(el){
     const b=CRM.store.get('playoffBracket')||{r8:[],r4:[],r2:[],f:[]};
     const rounds=[['r8','1/4 финала',8],['r4','1/2 финала',4],['r2','Финал',2]];
-    el.innerHTML=sectionTitle('07','Сетка плей-офф','Турнирная сетка',
+    el.innerHTML=sectionTitle('07','Playoff bracket','Турнирная сетка',
       `<button class="btn" onclick="CRM.router.go('opponents')">‹ К соперникам</button>`)+
     `<div class="grid g3">${rounds.map(([k,l,n])=>`<div class="card"><b>${l}</b><div style="margin-top:8px">
       ${Array.from({length:n}).map((_,i)=>`<input style="margin-bottom:6px" placeholder="Участник ${i+1}" value="${esc((b[k]||[])[i]||'')}" onchange="CRM.modules.opponents.setBracket('${k}',${i},this.value)">`).join('')}
     </div></div>`).join('')}</div>
-    <div class="card" style="margin-top:14px"><b>Чемпион</b><input style="margin-top:8px;max-width:300px" placeholder="Победитель" value="${esc((b.f||[])[0]||'')}" onchange="CRM.modules.opponents.setBracket('f',0,this.value)"></div>`;
+    <div class="card" style="margin-top:14px"><b>Champion</b><input style="margin-top:8px;max-width:300px" placeholder="Winner" value="${esc((b.f||[])[0]||'')}" onchange="CRM.modules.opponents.setBracket('f',0,this.value)"></div>`;
   },
   setBracket(round,idx,val){ const b=CRM.store.get('playoffBracket')||{r8:[],r4:[],r2:[],f:[]}; if(!b[round])b[round]=[]; b[round][idx]=val; CRM.store.set('playoffBracket',b); CRM.toast('Сохранено'); }
 };
@@ -1522,7 +1522,7 @@ CRM.modules.medical={
       <div class="kpi"><div class="v" style="color:var(--warn)">${scout.filter(p=>p.status==='limited').length}</div><div class="l">Ограничены</div></div>
       <div class="kpi"><div class="v" style="color:var(--good)">${scout.filter(p=>p.status==='active').length}</div><div class="l">Здоровы</div></div>
     </div>
-    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th><th>Диагноз</th><th>Статус</th><th>Возврат</th><th></th></tr></thead><tbody>
+    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th><th>Диагноз</th><th>Status</th><th>Возврат</th><th></th></tr></thead><tbody>
       ${recs.map(r=>{const p=playerById(r.playerId);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td><td>${esc(r.diagnosis||'—')}</td><td><span class="pill ${STATUS_CLASS[r.status]||''}">${STATUS_LABEL[r.status]||''}</span></td><td>${r.returnDate?fmtDateShort(r.returnDate):'—'}</td><td><button class="btn sm ghost" onclick="CRM.modules.medical.edit('${r.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.medical.del('${r.id}')">×</button></td></tr>`;}).join('')}
     </tbody></table>`:'<div class="empty">Нет медицинских записей.</div>'}</div>`;
   },
@@ -1591,9 +1591,9 @@ CRM.modules.preseason={
       <button class="btn" onclick="CRM.modules.preseason.autobuild()">Автопостроение</button>
       <button class="btn" onclick="window.print()">Печать</button>`)+
     `<div class="card" style="margin-bottom:14px"><div class="row">
-      <div style="flex:1"><label class="fld">Начало предсезонки</label><input type="date" value="${ps.cal.start||''}" onchange="CRM.modules.preseason.setCal('start',this.value)"></div>
-      <div style="flex:1"><label class="fld">Конец предсезонки</label><input type="date" value="${ps.cal.end||''}" onchange="CRM.modules.preseason.setCal('end',this.value)"></div>
-      <div style="flex:1"><label class="fld">Конец сезона</label><input type="date" value="${ps.cal.seasonEnd||''}" onchange="CRM.modules.preseason.setCal('seasonEnd',this.value)"></div>
+      <div style="flex:1"><label class="fld">Preseason start</label><input type="date" value="${ps.cal.start||''}" onchange="CRM.modules.preseason.setCal('start',this.value)"></div>
+      <div style="flex:1"><label class="fld">Preseason end</label><input type="date" value="${ps.cal.end||''}" onchange="CRM.modules.preseason.setCal('end',this.value)"></div>
+      <div style="flex:1"><label class="fld">Season end</label><input type="date" value="${ps.cal.seasonEnd||''}" onchange="CRM.modules.preseason.setCal('seasonEnd',this.value)"></div>
     </div></div>
     <div class="card" style="margin-bottom:14px"><b>Фазы Бомпы</b><div class="row" style="margin-top:8px;gap:8px">
       ${this.PHASES.map(p=>`<span class="pill" style="background:${p.color}1a;color:${p.color};border-color:transparent">● ${p.name}</span>`).join('')}
@@ -1699,7 +1699,7 @@ CRM.modules.preseason={
 CRM.modules.calendar={
   events(){
     const out=[];
-    (CRM.store.get('matches')||[]).forEach(m=>out.push({date:m.date,type:'match',id:m.id,title:'Матч vs '+(m.opp||''),meta:(m.home?'дома':'гости')+' · '+CRM.modules.matches.tournLabel(m),done:!!(m.result&&m.result.finished)}));
+    (CRM.store.get('matches')||[]).forEach(m=>out.push({date:m.date,type:'match',id:m.id,title:'Game vs '+(m.opp||''),meta:(m.home?'home':'away')+' · '+CRM.modules.matches.tournLabel(m),done:!!(m.result&&m.result.finished)}));
     (CRM.store.get('calendar')||[]).forEach(e=>out.push({date:e.date,type:'event',id:e.id,title:e.title,meta:e.note||'',kind:e.kind}));
     return out.filter(e=>e.date).sort((a,b)=>a.date.localeCompare(b.date));
   },
@@ -1741,8 +1741,8 @@ CRM.modules.analytics={
   render(el){
     el.innerHTML=sectionTitle('13','Аналитика','Графики и тренды по реальным данным')+
     `<div class="grid g2">
-      <div class="card"><b>Голы: за / против</b><div class="chartbox" style="margin-top:8px"><canvas id="anGoals"></canvas></div></div>
-      <div class="card"><b>Спецбригады (эффективность, %)</b><div class="chartbox" style="margin-top:8px"><canvas id="anSpec"></canvas></div></div>
+      <div class="card"><b>Goals: for / against</b><div class="chartbox" style="margin-top:8px"><canvas id="anGoals"></canvas></div></div>
+      <div class="card"><b>Special teams (efficiency, %)</b><div class="chartbox" style="margin-top:8px"><canvas id="anSpec"></canvas></div></div>
       <div class="card"><b>Бомбардиры (очки)</b><div class="chartbox" style="margin-top:8px"><canvas id="anScorers"></canvas></div></div>
       <div class="card"><b>Состояние состава</b><div class="chartbox" style="margin-top:8px"><canvas id="anHealth"></canvas></div></div>
     </div>`;
@@ -1755,7 +1755,7 @@ CRM.modules.analytics={
       {label:'ПП %',data:finished.map(m=>m.result.ppAttempts?Math.round(num(m.result.ppGoals)/num(m.result.ppAttempts)*100):0),borderColor:'#1d9e75',tension:.3},
       {label:'ПК %',data:finished.map(m=>m.result.pkTimes?Math.round((1-num(m.result.pkGoalsAgainst)/num(m.result.pkTimes))*100):0),borderColor:'#ba7517',tension:.3}]},options:chartOpts({scales:{y:{beginAtZero:true,max:100,grid:{color:'#eef0f3'}},x:{grid:{color:'#eef0f3'}}}})});
     const lead=CRM.modules.matches.teamLeaders().slice(0,8);
-    makeChart('anScorers',{type:'bar',data:{labels:lead.length?lead.map(l=>l.name.split(' ')[0]):['—'],datasets:[{label:'Очки',data:lead.map(l=>l.pts),backgroundColor:'#0a84ff'}]},options:Object.assign(chartOpts({plugins:{legend:{display:false}}}),{indexAxis:'y'})});
+    makeChart('anScorers',{type:'bar',data:{labels:lead.length?lead.map(l=>l.name.split(' ')[0]):['—'],datasets:[{label:'Points',data:lead.map(l=>l.pts),backgroundColor:'#0a84ff'}]},options:Object.assign(chartOpts({plugins:{legend:{display:false}}}),{indexAxis:'y'})});
     const scout=CRM.store.get('scout')||[]; const cnt={active:0,limited:0,injured:0,suspended:0}; scout.forEach(p=>cnt[p.status]=(cnt[p.status]||0)+1);
     makeChart('anHealth',{type:'doughnut',data:{labels:['Здоров','Ограничен','Травма','Дисквал.'],datasets:[{data:[cnt.active,cnt.limited,cnt.injured,cnt.suspended],backgroundColor:['#1d9e75','#ba7517','#e24b4a','#888780']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:11}}}}}});
   }
