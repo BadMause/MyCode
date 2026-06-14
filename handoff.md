@@ -1,27 +1,26 @@
 # HANDOFF — Hockey Coach CRM
 
 > Документ для переноса контекста в другой чат. Здесь: что это за проект, карта приложения
-> и его логики, что сделано в этой сессии и что осталось. Глубокая спецификация архитектуры —
-> в `BLUEPRINT.md` (этот файл — практический «где мы сейчас»).
+> и его логики, что сделано и что осталось. Глубокая спецификация — в `BLUEPRINT.md`
+> (этот файл — практический «где мы сейчас» + живая карта логики).
 >
-> Дата: 2026-06-14. Репозиторий: **BadMause/MyCode**. Рабочая ветка: **`claude/busy-lamport-7lnt8o`**.
+> Дата: 2026-06-14. Репозиторий: **BadMause/MyCode**.
+> Рабочая ветка: **`claude/admiring-carson-kv5qmv`** (синхронизирована с `claude/busy-lamport-7lnt8o`,
+> обе указывают на один коммит). Карта логики ведётся ЗДЕСЬ, не как блок в приложении.
 
 ---
 
 ## 0. TL;DR
 
-- **Что это:** один автономный офлайн-файл `crm_hockey.html` (~2240 строк, vanilla JS, без сборки,
+- **Что это:** один автономный офлайн-файл `crm_hockey.html` (~1930 строк, vanilla JS, без сборки,
   Chart.js встроен). CRM для хоккейного тренера: игроки, скаутинг, составы, матчи, статистика,
   соперники, физика/психология/медицина, предсезонка, календарь, аналитика, заметки, настройки.
 - **Хранилище:** `localStorage`, ключ **`crm_hockey_v1`** (namespace `CRM`).
 - **Как запустить:** открыть `crm_hockey.html` двойным кликом в браузере. Сервер не нужен.
-- **В этой сессии сделано (3 коммита):**
-  1. Слой расширяемости + живая «карта» в приложении (блок 16 Map) — `bc522ae`.
-  2. Фикс краша вкладок на нестроковых датах + английское меню/амплуа/статусы — `5251d9b`.
-  3. Перевод хоккейных терминов/сокращений на английский — `c924d75`.
+- **Блоков сейчас: 15** (см. §2.3). Блок «Map»/расширяемость **удалён** (см. §3, сессия 2).
 - **Принципы (не нарушать):** один владелец на сущность; одна точка создания; двусторонние связи
-  не рвём; даты — строки `YYYY-MM-DD`; все строки через `esc()`; новый блок — один вызов
-  `CRM.registerModule(...)`.
+  не рвём; даты — строки `YYYY-MM-DD`; все строки через `esc()`; новый блок =
+  `CRM.modules.x` + строка в `CRM.TABS` + иконка в `CRM.ICONS`; диалоги — только `CRM.ui` (не нативные).
 
 ---
 
@@ -30,82 +29,71 @@
 | Файл | Что это |
 |---|---|
 | `crm_hockey.html` | Само приложение (единственный рабочий файл). |
-| `BLUEPRINT.md` | Полная спецификация архитектуры (15 блоков, ownership, инварианты, §11 — расширяемость). |
-| `handoff.md` | Этот файл. |
+| `BLUEPRINT.md` | Спецификация архитектуры (ownership, инварианты, потоки данных). |
+| `handoff.md` | Этот файл — статус + живая карта логики. |
 | `.gitignore` | Игнорит `.shots/` (локальные скриншоты). |
 
 **Коммиты (новые → старые):**
 ```
+(эта сессия)  Remove in-app Map/extensibility block; keep logic map in handoff.md
+fa5817e  Add handoff.md — session summary + app/logic map for chat transfer
 c924d75  Translate hockey terms & abbreviations to English
 5251d9b  Fix tab crash on non-string dates; English menu, positions, statuses
-bc522ae  Add safe block-extension layer + live in-app architecture map
-34725c0  Add empty-state guards for physical/psycho/medical add forms   (до сессии)
-3155554  Add .gitignore for local screenshot artifacts                  (до сессии)
-73b435f  Inline Chart.js 4.4.1 for full offline use                      (до сессии)
-51c1956  Build offline Hockey Coach CRM (crm_hockey.html)                (до сессии)
+bc522ae  Add safe block-extension layer + live in-app architecture map   (частично откатан)
+34725c0  Add empty-state guards for physical/psycho/medical add forms
+3155554  Add .gitignore for local screenshot artifacts
+73b435f  Inline Chart.js 4.4.1 for full offline use
+51c1956  Build offline Hockey Coach CRM (crm_hockey.html)
 ```
-Всё запушено в `origin/claude/busy-lamport-7lnt8o`. PR **не** создавался.
+PR **не** создавался.
 
 ---
 
 ## 2. КАРТА ПРИЛОЖЕНИЯ (логика)
 
 ### 2.1 Инфраструктура (namespace `CRM`)
-Всё висит на `window.CRM`. Ключевые объекты (номера строк — ориентир, могут смещаться, ищи grep’ом):
+Всё висит на `window.CRM`. Номера строк актуальны, но при правках смещаются — проверяй grep’ом.
 
 | Объект | Строка | Назначение |
 |---|---|---|
 | `const CRM` | 186 | `{ modules:{}, LSKEY:"crm_hockey_v1" }` |
-| `CRM.TABS` | 189 | Массив `[id,num,label,desc]` — порядок и подписи сайдбара. |
-| `CRM.ICONS` | ~205 | SVG-иконки по id блока. |
-| Хелперы | 229–276 | `uuid, esc, parseLocalDate, localYmd, normYmd, fmtDate, fmtDateShort, num, clamp, avg, round1`. |
+| `CRM.TABS` | 189 | Массив `[id,num,label,desc]` — порядок и подписи сайдбара (15 блоков). |
+| `CRM.ICONS` | ~206 | SVG-иконки по id блока. |
+| Хелперы | ~229 | `uuid, esc, parseLocalDate, localYmd, normYmd, fmtDate, fmtDateShort, num, clamp, avg, round1`. |
 | Константы | ~277 | `POS_LABEL, POS_FULL, STATUS_LABEL, STATUS_CLASS` (амплуа/статусы — на английском). |
-| `playerById/scoutById/playerName/...` | ~280 | Доступ к игрокам, рендер имени/грейда. |
-| `sectionTitle/chartOpts/makeChart` | ~300 | Заголовок раздела, опции и фабрика графиков Chart.js. |
-| `CRM.store` | 282 | Единый стор: `load, get(path), set(path,val), save, exportJson, importJson, resetAll, defaults, defaultNorms`. Внутри `migrate()` (add-only миграции + нормализация дат). |
-| `CRM.toast` | ~360 | Тосты. |
-| `CRM.modal` | ~366 | `open(html), close(), frame(title,body)`. `<script>` внутри modal НЕ исполняется → события только через `onclick`. |
-| `CRM.modalNav` | ~385 | Стек «назад» для модалок (`wrap, back, reset`, максимум 12). |
-| `CRM.router` | ~400 | `parse(), go(name,params), render()`. Маршрут — из `location.hash`. |
-| `CRM.boot` | 439 | Точка входа (на `DOMContentLoaded`): `store.load()` → `registerCustomBlocks()` → строит сайдбар → `render()`. |
+| `CRM.store` | ~282 | Стор: `load, get(path), set(path,val), save, exportJson, importJson, resetAll, defaults, defaultNorms`. Внутри `migrate()` (add-only миграции + нормализация дат). |
+| `CRM.toast` | 362 | Тосты. |
+| `CRM.modal` | 369 | `open(html), close(), frame(title,body)`. `<script>` внутри modal НЕ исполняется → события только через `onclick`. |
+| `CRM.modalNav` | 388 | Стек «назад» для модалок (`wrap, back, reset`, максимум 12). |
+| `CRM.router` | 403 | `parse(), go(name,params), render()`. Маршрут — из `location.hash`; ошибки модуля ловятся в try/catch. |
+| `CRM.boot` | 436 | Точка входа (`DOMContentLoaded`): `store.load()` → шапка → сайдбар → `render()`. |
+| `CRM.ui` | 1874 | **Диалоги вместо нативных** (оставлены при удалении слоя расширяемости): `confirm({title,message,danger,okLabel,onOk})`, `formModal({title,fields,onSubmit,submitLabel,note})`, `ok/cancel/submit`. Оверлей `#dialog`. Поля: `text/number/date/textarea/select/checkbox`. |
 
-### 2.2 Слой расширяемости (добавлен в этой сессии) — секция «EXTENSIBILITY LAYER», стр. 1872+
-| Объект | Строка | Назначение |
-|---|---|---|
-| `CRM.ui` | 1886 | Диалоги вместо нативных: `confirm({title,message,danger,okLabel,onOk})`, `formModal({title,fields,onSubmit,submitLabel,note})`, `ok/cancel/submit`. Свой оверлей `#dialog` поверх `#modal`. Типы полей: `text/number/date/textarea/select/checkbox`. |
-| `CRM.registry` | 1938 | Единый источник истины для карты: `id → {id,num,label,desc,owns[],creates[],reads[],writes[],readonly,kind}`. `kind ∈ core|meta|custom`. |
-| `CRM.CORE_META` | 1942 | Метаданные 15 канонических блоков (ownership/reads/writes) — сидируются в registry при загрузке. |
-| `CRM.ownerOf(entity)` | ~1960 | Возвращает id блока-владельца сущности (по базовому ключу). |
-| `CRM.registerModule(def)` | 1966 | **Единственный способ добавить блок.** Проверяет id/формат/уникальность; **гарантирует «один владелец на сущность»**; регистрирует в `modules+TABS+ICONS+registry`. `def.replace:true` — обновить. |
-| `CRM.unregisterModule(id)` | ~1995 | Удаляет блок (системные `core/meta` удалять нельзя). |
-| `CRM.customBlocks` | 2005 | Пользовательские блоки: `PAL` (иконки), `iconSvg, iconKeys, makeModule(def), register(def,replace)`. Генерик-рендер списка/текста + CRUD. |
-| `CRM.registerCustomBlocks()` | 2076 | Вызывается из `boot` после `store.load`; перерегистрирует сохранённые кастом-блоки (идемпотентно, чистит «осиротевшие»). |
-| Блок **16 Map** | 2083 | `CRM.registerModule({id:'map',...})` — рендерит архитектуру ЖИВЬЁМ из `CRM.registry`: список блоков, владение, граф зависимостей, инварианты, how-to и менеджер кастом-блоков (кнопка «+ Новый блок»). |
+> Удалено в сессии 2: `CRM.registry`, `CRM.registerModule`, `CRM.ownerOf`, `CRM.unregisterModule`,
+> `CRM.CORE_META`, `CRM.customBlocks`, `CRM.registerCustomBlocks`, блок 16 «Map». `CRM.ui` оставлен.
 
-### 2.3 Блоки (16 + пользовательские)
+### 2.2 Блоки (15)
 Строки — начало `CRM.modules.X={...}`.
 
-| # | id | Строка | Владеет (store) | Создаёт |
+| # | id (label) | Строка | Владеет (store) | Создаёт |
 |---|---|---|---|---|
-| 01 | dashboard | 452 | — (read-only) | — |
-| 02 | scouting | 516 | `scoutDB, scoutTarget, scoutPriorities` | скаут-кандидата |
-| 03 | profiles | 634 | `scout[]` | игрока команды |
-| 04 | roster | 1057 | `roster.*` | состав/звено/историю |
-| 05 | matches | 751 | `matches[]` (+ пишет `opponents[].lineups`) | матч |
-| 06 | stats | 1201 | — | — |
-| 07 | opponents | 1250 | `opponents[], playoffBracket` | соперника, его игру |
-| 08 | physical | 1440 | `physical[]` | физтест |
-| 09 | psycho | 1482 | `psycho[]` | психотест |
-| 10 | preseason | 1564 | `preseason{}` | план/детали/усталость |
-| 11 | calendar | 1699 | `calendar[]` | событие |
-| 12 | medical | 1513 | `medical[]` (+ пишет `scout[].status`) | травму |
-| 13 | analytics | 1740 | — | — |
-| 14 | notes | 1767 | `notes[]` | заметку |
-| 15 | settings | 1798 | `settings{}` | — (нормативы, экспорт/импорт JSON) |
-| 16 | map | 2083 | — (meta) | пользовательские блоки |
-| 17.. | `cb_*` | runtime | `custom.<id>` | записи списка / текст |
+| 01 | dashboard (Dashboard) | 448 | — (read-only) | — |
+| 02 | scouting (Scouting) | 512 | `scoutDB, scoutTarget, scoutPriorities` | скаут-кандидата |
+| 03 | profiles (Players) | 630 | `scout[]` | игрока команды |
+| 04 | roster (Lines) | 1053 | `roster.*` | состав/звено/историю |
+| 05 | matches (Games) | 747 | `matches[]` (+ пишет `opponents[].lineups`) | матч |
+| 06 | stats (Stats) | 1197 | — | — |
+| 07 | opponents (Opponents) | 1246 | `opponents[], playoffBracket` | соперника, его игру |
+| 08 | physical (Fitness) | 1436 | `physical[]` | физтест |
+| 09 | psycho (Psychology) | 1478 | `psycho[]` | психотест |
+| 10 | preseason (Preseason) | 1560 | `preseason{}` | план/детали/усталость |
+| 11 | calendar (Calendar) | 1695 | `calendar[]` | событие |
+| 12 | medical (Medical) | 1509 | `medical[]` (+ пишет `scout[].status`) | травму |
+| 13 | analytics (Analytics) | 1736 | — | — |
+| 14 | notes (Notes) | 1763 | `notes[]` | заметку |
+| 15 | settings (Settings) | 1794 | `settings{}` | — (нормативы, экспорт/импорт JSON) |
 
-### 2.4 Владение и потоки данных (стрелка = «пишет в»)
+### 2.3 Владение и потоки данных (стрелка = «пишет в»)
 ```
 opponents ──► matches[]              (createGamePair → matches._create*)
 matches   ──► opponents[].lineups    (syncOppLineup*)
@@ -114,11 +102,10 @@ medical   ──► scout[].status
 scouting  ──► scout[]                (promoteToTeam* → profiles._create*)
 profiles  ──► scout[]                (владелец)
 ЧИТАТЕЛИ (никуда не пишут): dashboard, stats, analytics, calendar
-custom-блок ──► custom.<id>          (изолирован, не трогает чужие сущности)
 ```
-`*` — методы, помеченные в BLUEPRINT как канон, но в коде ещё НЕ внедрены (см. §4 ниже).
+`*` — канон BLUEPRINT, в коде ещё НЕ внедрён (см. §4).
 
-### 2.5 Схема localStorage (`store.defaults()`)
+### 2.4 Схема localStorage (`store.defaults()`)
 ```js
 {
   scout:[], scoutDB:[],
@@ -129,114 +116,147 @@ custom-блок ──► custom.<id>          (изолирован, не тр�
   preseason:{ plan:[], details:[], fatigue:[], seasonPlan:'', seasonDetails:'',
               cal:{start:'',end:'',seasonEnd:''} },
   notes:[],
-  customBlocks:[],          // [{id,num,label,desc,icon,kind:'list'|'text',fields:[{key,label,type}],createdAt}]
-  custom:{},                // { <blockId>: [...rows] }  или  { <blockId>: {text:''} }
   settings:{ coach, team, league, season, norms:[{id,name,lower,gold,silver,bronze}] },
   scoutTarget:{}, scoutPriorities:{},
   state:{ seedOpp10:false }
 }
 ```
 
-### 2.6 Инварианты (проверять перед сдачей)
+### 2.5 Инварианты (проверять перед сдачей)
 1. `roster.history[].matchId` ⇄ `matches[].lineupId` согласованы; удаление чистит обе стороны.
-2. `matches[]` пополняется только через `matches._create` (канон BLUEPRINT).
+2. `matches[]` пополняется только через `matches._create` (канон BLUEPRINT, ещё не внедрён).
 3. `scout[].status` пишет только `medical`.
 4. `scoutDB`(кандидаты) ↔ `scout`(команда) — мост только `promoteToTeam`.
 5. Статистика читается только из `result.finished===true`.
-6. Даты — `YYYY-MM-DD` строки (через `parseLocalDate`); все строки через `esc()`.
-7. Новый блок-владелец не может забрать чужую сущность (проверка в `registerModule`).
-8. Пользовательский блок владеет только `custom.<id>`.
+6. Даты — `YYYY-MM-DD` строки (через `parseLocalDate`/`normYmd`); все строки через `esc()`.
 
-### 2.7 Конвенции
-- Один HTML-файл, без сборки. Новый блок = **один** `CRM.registerModule(...)`.
-- События — только `onclick`-атрибуты (внутри `modal.open()` `<script>` не исполняется).
+### 2.6 Конвенции
+- Один HTML-файл, без сборки. Новый блок = `CRM.modules.x` + строка в `CRM.TABS` + иконка в `CRM.ICONS`.
+- События — только `onclick`-атрибуты (внутри `modal.open()`/`ui` `<script>` не исполняется).
 - Данные — только через `CRM.store.get/set`.
 - Миграции — add-only (новые поля с дефолтами), пользовательские данные не перезаписывать.
 - Никакого нативного `prompt/confirm` — только `CRM.ui.confirm/formModal`.
 
 ---
 
-## 3. ЧТО СДЕЛАНО В ЭТОЙ СЕССИИ
+## 3. ИСТОРИЯ ИЗМЕНЕНИЙ
 
-### 3.1 Слой расширяемости + живая карта (commit `bc522ae`)
-- **`CRM.registerModule` / `CRM.registry` / `CRM.CORE_META` / `CRM.ownerOf` / `CRM.unregisterModule`** —
-  декларативная регистрация блоков с гард-проверкой «один владелец на сущность» и авто-нумерацией.
-- **`CRM.ui.confirm` / `CRM.ui.formModal`** (оверлей `#dialog`) — заменили **все 14** нативных `confirm()`.
-- **Пользовательские блоки в рантайме** (`CRM.customBlocks` + `registerCustomBlocks`): из UI создаётся
-  блок типа «список» (колонки `имя:тип`) или «текст»; данные изолированы в `custom.<id>`; переживают
-  перезагрузку и экспорт/импорт.
-- **Блок 16 «Map»** — живая карта из `CRM.registry`: блоки, владение, граф, инварианты, how-to,
-  менеджер кастом-блоков.
-- В стор добавлены `customBlocks:[]`, `custom:{}` (+ миграция). В `BLUEPRINT.md` добавлен **§11**
-  (модель расширяемости) и обновлены §1/§3/§7/§8/§10.
+### Сессия 2 (2026-06-14, текущая)
+- **Синхронизация веток:** `claude/admiring-carson-kv5qmv` (рабочая ветка этой сессии) была на
+  пресессионном `34725c0`; fast-forward’нута на `fa5817e` (состояние из handoff). Обе ветки совпадают.
+- **Удалён блок «Map» и слой расширяемости** (по запросу пользователя: «Map убери из системы — это для
+  тебя, веди карту логики в Handoff.md»). Вырезаны `registry/registerModule/ownerOf/unregisterModule/
+  CORE_META/customBlocks/registerCustomBlocks` и сам блок 16; убраны `customBlocks/custom` из стора и
+  миграции; из `boot` убран вызов `registerCustomBlocks`. **`CRM.ui` (диалоги) оставлен** — он нужен
+  везде. Проверено: синтаксис OK, 15 вкладок рендерятся, фикс дат работает (см. §5).
+- **Принято большое ТЗ** на переработку модулей (см. §4) + два файла-донора к поглощению
+  (`scout_database_3.html`, `preseason_planner_v15_2.html`).
 
-### 3.2 Фикс краша + английское меню/амплуа/статусы (commit `5251d9b`)
-- **Баг:** вкладки Fitness/Medical/Notes падали с `(b.date||'').localeCompare is not a function` —
-  в `localStorage` от старой версии лежали даты не-строками (число/таймстамп/объект), сортировка по
-  дате крашилась.
-- **Фикс:** глобальный `normYmd(v)` + нормализация дат в `store.migrate()` для
-  `physical/psycho/medical/notes/calendar/matches/opponents.games/roster.history` → всё приводится к
-  `YYYY-MM-DD` при загрузке (инвариант 2.6.6). Данные чинятся сами при следующей загрузке.
-- **Английский (через центральные константы — пропагируется везде):** сайдбар `CRM.TABS`, `POS_LABEL`,
-  `POS_FULL`, `STATUS_LABEL`, `tournLabel`, фильтр позиций «All», метка блока Map.
-
-### 3.3 Перевод хоккейных терминов (commit `c924d75`)
-Переведены статы и сленг (описательная проза оставлена на русском — по решению пользователя):
-- Заголовки таблиц: `G/A/P/GP/PIM/Rtg/PPG/PPA/Avg`, `+/−`.
-- KPI: `Goals/Assists/Points/Games played/Avg rating/Missed`, `Goals for/against`.
-- `Special teams`, `Power-play goals`, `Opponent goals`; результаты `Win/Loss/Tie`.
-- `Goalies/Goalie/Goalie notes/"Goalie was changed"`.
-- Турниры `season/preseason/playoff` (плашки, селекты, инлайн); `Venue` + `Home/Away`; `Tournament`.
-- `Position`, `Shot (Left/Right)`; навыки `Skating/Size/Hockey IQ/Puck/Shot/Offense/Defense`.
-- `Lines/Special teams`, `Playoff bracket`, вкладки соперника (`Roster/Leaders/Tactics/Our games/
-  Lineups/Preseason`), `Preseason games`, `Champion/Winner`, рост/вес `cm/kg`.
-
-**Осталось на русском (намеренно):** подзаголовки разделов, кнопки (Сохранить/Отмена/Удалить/Открыть),
-общие подписи полей (Дата, Игрок, Имя, Команда, Возр.), пустые состояния, внутренняя документация
-блока Map.
+### Сессия 1 (предыдущая)
+- `bc522ae` — слой расширяемости + блок Map (в сессии 2 откатан, кроме `CRM.ui`).
+- `5251d9b` — фикс краша вкладок на нестроковых датах (`normYmd` + нормализация в `migrate`);
+  английское меню/амплуа/статусы.
+- `c924d75` — перевод хоккейных терминов/сокращений на английский (проза оставлена на русском).
 
 ---
 
-## 4. ЧТО ОСТАЛОСЬ / СЛЕДУЮЩИЕ ШАГИ
+## 4. ЧТО ОСТАЛОСЬ / ROADMAP (большое ТЗ, сессия 2)
 
-1. **Канон «одна точка создания» (BLUEPRINT §2/§10.1) ещё НЕ внедрён в коде:**
-   - нет `matches._create` (сейчас матч пушится напрямую в `matches.add()`/`createGamePair`);
-   - нет `scouting.promoteToTeam` (моста кандидат→команда);
-   - `syncOppLineup` — заглушка (см. ~стр. 859, `/* placeholder */`).
-   Это отдельный рефактор; слой расширяемости и карта к нему готовы.
-2. **Полный английский интерфейс** (если захотят): кнопки, подзаголовки, общие подписи полей, тексты
-   модалок, пустые состояния, тело блока Map. Сейчас переведены только хоккейные термины + меню.
-3. **BLUEPRINT §10 хвост:** реальная аналитика на `playerMatchHistory`, экспорт PDF/CSV + `@media print`,
-   кэш `playerMatchHistory` (`CRM._pmhCache`).
-4. **⌘K-поиск** расширить на матчи и заметки (BLUEPRINT §9).
+Заказчик прислал детальное ТЗ + визуальные референсы (3 картинки: цветовая философия линий;
+недельное расписание «Магнитогорск»; точки/зоны голов на льду). Сводка задач по модулям:
+
+**A. Scout (02) — переработка**
+- Индивидуальные профили; **разные формы оценки для защитников и нападающих**.
+- Статус **«Оценён» / «Не оценён»**.
+- Оценка = категории качеств → подпараметры; **общий балл = среднее по подпараметрам**; вид свёрнутый
+  (collapsable) и развёрнутый.
+- **Цветовая градация** рейтингов (предустановленные схемы по грейду) — отдельная вкладка.
+- **Вкладка приоритетов по позициям** — drag-and-drop порядок.
+- **Сравнение игроков** по всем параметрам (side-by-side).
+- Донор/референс: `scout_database_3.html` (`mhl_scout_players_v1`, `mhl_scout_roster_v1`, `mhl_compare_sel`).
+
+**B. Player Profiles (03)**
+- Зеркало scout-профиля + источники: тесты, медицина, психология, статистика, матчи, состав.
+- Без «статуса»; добавить **«тип контракта»** и **«агент»**.
+
+**C. Roster (04)**
+- Порядок: **нападающие → защитники → вратари**.
+- Интерактивный ростер снизу: клик подсвечивает позицию; **drag-and-drop** перестановка.
+- Тактические комбинации/подсказки — **вынести в отдельную вкладку** (убрать из основного вида).
+- **Тренерский штаб**: две группы, видимые/редактируемые.
+- Связь листов состава с планом игры; **история составов: «тренировка» / «матч»**.
+- Цветовая философия линий (картинка 1): зелёный=топ-5 лиги/ключевое звено, фиолетовый=5-10,
+  красный=скорость/размер, жёлтый/белый=ролевые/PK/прессинг.
+
+**D. Match (05)**
+- **Превью матчей карточками** (как профили).
+- Предматч: наш состав; состав соперника (ред.); **судьи** (имена/роли/юрисдикция); сильные/слабые
+  стороны соперника; **план A / план B** с визуальной перестановкой пар и звеньев; тактика **PP/PK**.
+- Запись матча: счёт, по периодам, **буллиты** (стрелки/вратари/исходы: гол/мимо).
+- Стата игрока: **G / A / +− / PIM**, успешные действия в **PP/PK** с таймингом и контекстом
+  (большинство/меньшинство).
+- Командная стата: броски, броски в створ, выигранные вбрасывания, хиты, блокшоты, **% PP/PK** —
+  отдельные вкладки.
+- **Зоны голов** (картинка 3): отмечать точки забитых/пропущенных; **тег гола** (5x5, PP, PK, тип
+  броска, добивание, приём, в переходе…) — теги в отдельную вкладку статистики; **правка после ввода**.
+
+**E. Physical → «Physical Assessments» (08)**
+- Тесты: прыжок в длину, подтягивания, **Cooper test** (переименовать bip-test). Фильтр: скрывать
+  больных/ограниченных. Ввод → синхрон с профилем; **календарный вид** дат тестов.
+- Сравнение истории, прогресс/регресс по игроку и команде; **линейные + круговые графики**, фильтр по периодам.
+
+**F. Psycho → «Mental Fitness Evaluation» (09)**
+- Тесты с **защитой от нечестности** (косвенные вопросы / проверки валидности).
+- Привязка результата к профилю; текстовая оценка + сводка балла.
+
+**G. Preseason → «Periodization» (10)**
+- **Интегрировать `preseason_planner_v15_2.html`** (ps9p/d/f/c): фазы сезона, тренировочные блоки, вехи;
+  редактирование; сохранить дизайн/логику планировщика.
+
+**H. Calendar (11)**
+- **Месячный вид**; компактные индикаторы (матч / отдых / тренировка).
+- Вкладка **«Организационное расписание»** (картинка 2): заметки/распечатки по датам; расширенный
+  дневной вид с несколькими активностями; правка + печать.
+
+**I. Medical (12)**
+- Цветовой статус: **красный=травма, жёлтый=ограничение, зелёный=здоров**.
+- Типы травм (низ/верх тела); детали (ушибы, переломы, сотрясения, болезни, прочее+описание);
+  **сроки восстановления**, тип лечения; редактирование в медкарте.
+
+**J. Сделано в сессии 2:** удалён in-app Map; карта логики ведётся в этом файле.
+
+**Старый технический долг (BLUEPRINT §2/§10):** канон `matches._create`, `scouting.promoteToTeam`,
+реальный `syncOppLineup` (сейчас заглушка); реальная аналитика на `playerMatchHistory`; экспорт PDF/CSV
++ `@media print`; ⌘K-поиск по матчам/заметкам.
 
 ---
 
-## 5. КАК ТЕСТИРОВАЛИ (воспроизводимо)
+## 5. КАК ТЕСТИРОВАТЬ (воспроизводимо)
 
-Браузера нет в окружении, поэтому проверяли через Node:
-1. **Синтаксис:** выдрать `<script>`-блок приложения (тот, что содержит `const CRM = window.CRM`) в
-   `/tmp/app.js` и `node --check /tmp/app.js`.
-2. **Рантайм (headless-харнесс):** замокать `window/document/localStorage/Chart/location`, выполнить
-   скрипт через indirect-eval, затем:
-   - `CRM.boot()`, прогнать `CRM.router.render()` по всем `CRM.TABS` — нет `Ошибка модуля`;
-   - засеять `localStorage` записями с «битыми» датами (number/timestamp/{}), убедиться, что
-     `migrate` нормализует и вкладки не падают;
-   - проверить `registerModule` (гард владельца, дубликаты, авто-num), кастом-блок (create/render/
-     delete), экспорт/импорт;
-   - проверить, что в отрендеренном HTML нет хоккейного русского и есть `Goals/Assists/Points`, амплуа.
+Браузера в окружении нет, поэтому через Node:
+1. **Синтаксис:** выдрать `<script>`-блок приложения (с `const CRM = window.CRM`) в `/tmp/app.js` и
+   `node --check /tmp/app.js`.
+2. **Рантайм (headless-харнесс):** замокать `window/document/localStorage/Chart/location` (forgiving
+   Proxy-элемент с настоящими `innerHTML/textContent`), выполнить скрипт через indirect-eval `(0,eval)`,
+   затем:
+   - `CRM.boot()`, прогнать `CRM.router.render()` по всем `CRM.TABS` (15) — проверить, что в
+     `#appRoot.innerHTML` нет маркера `Ошибка модуля` (router ловит ошибки модулей в try/catch);
+   - засеять `localStorage` записями с «битыми» датами (number/timestamp/{}), вызвать `store.load()` и
+     убедиться, что `migrate` нормализует их в строки и вкладки не падают;
+   - проверить, что `CRM.modules.map/registry/registerModule/customBlocks` отсутствуют, а `CRM.ui` есть.
 
-Последние прогоны: синтаксис OK; все 16 вкладок + профиль + отчёт матча рендерятся без ошибок.
+Последний прогон (сессия 2): синтаксис OK; 15 вкладок рендерятся без ошибок (пустой стор + битые даты);
+Map/расширяемость отсутствуют; `CRM.ui` на месте.
 
 ---
 
 ## 6. БЫСТРЫЙ СТАРТ ДЛЯ НОВОГО ЧАТА (можно вставить как первый промпт)
 
 > Контекст: офлайн-CRM `crm_hockey.html` в репо BadMause/MyCode, ветка
-> `claude/busy-lamport-7lnt8o`. Архитектура и правила — в `BLUEPRINT.md` (особенно §11) и
-> `handoff.md`. Принципы: один владелец на сущность; новый блок — один вызов
-> `CRM.registerModule(...)`; данные через `CRM.store.get/set`; даты `YYYY-MM-DD`; строки через
-> `esc()`; диалоги через `CRM.ui.confirm/formModal` (не нативные). Прочитай `handoff.md` и
-> `BLUEPRINT.md`, держи карту в контексте. Задача: <…>.
+> `claude/admiring-carson-kv5qmv`. Архитектура и правила — в `BLUEPRINT.md` и `handoff.md`.
+> Принципы: один владелец на сущность; новый блок = `CRM.modules.x` + строка в `CRM.TABS` + иконка;
+> данные через `CRM.store.get/set`; даты `YYYY-MM-DD`; строки через `esc()`; диалоги через
+> `CRM.ui.confirm/formModal` (не нативные); НЕ возвращать блок «Map» (карта логики живёт в handoff.md).
+> Прочитай `handoff.md` (особенно §4 — текущий roadmap) и `BLUEPRINT.md`. Задача: <…>.
 
-Перед сдачей любой правки: прогнать инварианты §2.6 и (если правил JS) синтаксис/рендер по §5.
+Перед сдачей любой правки: прогнать инварианты §2.5 и (если правил JS) синтаксис/рендер по §5.
