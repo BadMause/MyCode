@@ -883,6 +883,12 @@ CRM.modules.matches={
     if(!m.result.playerStats) m.result.playerStats={};
     if(!m.result.comboRatings) m.result.comboRatings={};
     if(!m.result.gk) m.result.gk={startId:'',backupId:'',changed:false};
+    if(!Array.isArray(m.prep.officials)) m.prep.officials=[];
+    ['oppStrengths','oppWeaknesses','planA','planB','ppTactics','pkTactics'].forEach(k=>{ if(m.prep[k]==null) m.prep[k]=''; });
+    if(!Array.isArray(m.result.periods)) m.result.periods=[];
+    if(!m.result.team||typeof m.result.team!=='object') m.result.team={shotsFor:0,shotsAgainst:0,sogFor:0,sogAgainst:0,foWon:0,foLost:0,hits:0,blocks:0};
+    if(!m.result.shootout||typeof m.result.shootout!=='object') m.result.shootout={happened:false,ours:[],theirs:[],goalieId:''};
+    if(!Array.isArray(m.result.goals)) m.result.goals=[];
     return m;
   },
   tournLabel(m){ return m.playoff?'playoff':m.preseason?'preseason':'season'; },
@@ -927,15 +933,15 @@ CRM.modules.matches={
     const matches=(CRM.store.get('matches')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     el.innerHTML=sectionTitle('05','Матчи','Подготовка · день матча · итоги · отчёт',
       `<button class="btn primary" onclick="CRM.modules.matches.add()">+ Матч</button>`)+
-    `<div class="card" style="padding:0">${matches.length?`<table><thead><tr><th>Дата</th><th>Соперник</th><th>Tournament</th><th class="num">Счёт</th><th>Status</th><th></th></tr></thead><tbody>
-      ${matches.map(m=>`<tr style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}')">
-        <td>${fmtDate(m.date)}</td>
-        <td><b>${esc(m.opp||'Соперник')}</b> ${m.home?'<span class="pill accent">дома</span>':'<span class="pill">гости</span>'}</td>
-        <td>${this.tournPill(m)}</td>
-        <td class="num">${m.result&&m.result.finished?`<b>${num(m.score.our)}:${num(m.score.opp)}</b>`:'—'}</td>
-        <td>${m.result&&m.result.finished?'<span class="pill good">завершён</span>':m.lineupId?'<span class="pill accent">готов</span>':'<span class="pill warn">подготовка</span>'}</td>
-        <td><button class="btn sm" onclick="event.stopPropagation();CRM.modules.matches.open('${m.id}')">Открыть</button></td></tr>`).join('')}
-    </tbody></table>`:'<div class="empty">Матчей нет. Создайте первый матч или сгенерируйте через раздел «Соперники».</div>'}</div>`;
+    (matches.length?`<div class="grid g3">${matches.map(m=>{
+      const fin=m.result&&m.result.finished, win=fin&&num(m.score.our)>num(m.score.opp), loss=fin&&num(m.score.our)<num(m.score.opp);
+      const status=fin?(win?'<span class="pill good">Win</span>':loss?'<span class="pill bad">Loss</span>':'<span class="pill warn">Tie</span>'):(m.lineupId?'<span class="pill accent">готов</span>':'<span class="pill warn">подготовка</span>');
+      return `<div class="card" style="cursor:pointer" onclick="CRM.modules.matches.open('${m.id}')">
+        <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><b>vs ${esc(m.opp||'Соперник')}</b><div class="muted" style="font-size:12px">${fmtDate(m.date)} · ${m.home?'дома':'гости'}</div></div>
+          <div style="text-align:right">${fin?`<div style="font-size:22px;font-weight:800;line-height:1">${num(m.score.our)}:${num(m.score.opp)}</div>`:'<div class="muted" style="font-size:13px">—</div>'}</div></div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${this.tournPill(m)}${status}${m.prep&&m.prep.officials&&m.prep.officials.length?'<span class="pill">судьи ✓</span>':''}</div>
+      </div>`;
+    }).join('')}</div>`:'<div class="empty card">Матчей нет. Создайте первый матч или сгенерируйте через раздел «Соперники».</div>');
   },
   add(){
     const ops=CRM.store.get('opponents')||[];
@@ -992,14 +998,21 @@ CRM.modules.matches={
     const hist=CRM.store.get('roster.history')||[];
     const lu=m.lineupId?hist.find(h=>h.id===m.lineupId):null;
     const op=m.oppId?(CRM.store.get('opponents')||[]).find(o=>o.id===m.oppId):null;
+    const ta=(id,label,val,ph)=>`<div style="margin-top:10px"><label class="fld">${label}</label><textarea id="${id}" rows="3" placeholder="${ph||''}">${esc(val||'')}</textarea></div>`;
     return `<div class="card">
       <div style="display:flex;align-items:center"><b>Состав на матч</b>
         <button class="btn sm" style="margin-left:auto" onclick="CRM.modules.matches.attachLineup('${m.id}')">${lu?'Сменить состав':'Прикрепить состав'}</button></div>
       ${lu?`<p class="muted" style="margin-top:8px">${esc(lu.gameLabel||'Состав')} · ${fmtDate(lu.dateStr||lu.date)}</p>${this._lineupMini(lu)}`:'<p class="muted" style="margin-top:8px">Состав не прикреплён.</p>'}
     </div>
-    <div class="card" style="margin-top:14px"><b>Установка на игру</b>
-      <textarea id="prep_tasks" rows="4" style="margin-top:8px" placeholder="Задачи, акценты, спецбригады...">${esc(m.prep.tasks||'')}</textarea>
-      <button class="btn sm primary" style="margin-top:8px" onclick="CRM.modules.matches.savePrep('${m.id}')">Сохранить установку</button>
+    <div class="card" style="margin-top:14px"><b>План на игру</b>
+      ${ta('prep_tasks','Установка / задачи',m.prep.tasks,'Акценты, задачи на игру...')}
+      <div class="grid g2">${ta('prep_oppStrengths','Сильные стороны соперника',m.prep.oppStrengths)}${ta('prep_oppWeaknesses','Слабые стороны соперника',m.prep.oppWeaknesses)}</div>
+      <div class="grid g2">${ta('prep_planA','План A (звенья / пары)',m.prep.planA,'Сочетания и акценты плана A')}${ta('prep_planB','План B',m.prep.planB,'Если план A не идёт')}</div>
+      <div class="grid g2">${ta('prep_ppTactics','Тактика большинства (ПП)',m.prep.ppTactics)}${ta('prep_pkTactics','Тактика меньшинства (ПК)',m.prep.pkTactics)}</div>
+      <button class="btn sm primary" style="margin-top:10px" onclick="CRM.modules.matches.savePrep('${m.id}')">Сохранить план</button>
+    </div>
+    <div class="card" style="margin-top:14px"><div style="display:flex;align-items:center"><b>Судейская бригада</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.matches.addOfficial('${m.id}')">+ Судья</button></div>
+      ${m.prep.officials.length?`<table style="margin-top:8px"><tbody>${m.prep.officials.map((o,i)=>`<tr><td><b>${esc(o.name)}</b></td><td class="muted">${esc(o.role||'')}</td><td class="muted">${esc(o.juris||'')}</td><td style="text-align:right;white-space:nowrap"><button class="btn sm ghost" onclick="CRM.modules.matches.editOfficial('${m.id}',${i})">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.matches.delOfficial('${m.id}',${i})">×</button></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Судьи не указаны.</p>'}
     </div>
     ${op&&op.roster&&op.roster.length?`<div class="card" style="margin-top:14px"><b>Соперник: персональная опека</b>
       <p class="muted" style="font-size:12px;margin:6px 0">Назначьте наших игроков на ключевых игроков соперника.</p>
@@ -1018,7 +1031,13 @@ CRM.modules.matches={
   },
   updOppSlot(mid,rid,pid){ const m=this.ensureExt(this._md(mid)); if(pid)m.prep.oppLines[rid]=pid; else delete m.prep.oppLines[rid]; CRM.store.save(); this.syncOppLineup(m); },
   syncOppLineup(m){ /* keep prep mapping consistent; placeholder for cross-sync */ CRM.store.save(); },
-  savePrep(id){ const m=this.ensureExt(this._md(id)); m.prep.tasks=(document.getElementById('prep_tasks')||{}).value||''; CRM.store.save(); CRM.toast('Установка сохранена'); },
+  savePrep(id){ const m=this.ensureExt(this._md(id)); const gv=(x)=>{const e=document.getElementById(x);return e?e.value:'';};
+    m.prep.tasks=gv('prep_tasks'); m.prep.oppStrengths=gv('prep_oppStrengths'); m.prep.oppWeaknesses=gv('prep_oppWeaknesses');
+    m.prep.planA=gv('prep_planA'); m.prep.planB=gv('prep_planB'); m.prep.ppTactics=gv('prep_ppTactics'); m.prep.pkTactics=gv('prep_pkTactics');
+    CRM.store.save(); CRM.toast('План сохранён'); },
+  addOfficial(id){ CRM.ui.formModal({title:'Судья',fields:[{key:'name',label:'Имя',required:true},{key:'role',label:'Роль',type:'select',options:[{value:'Главный судья',label:'Главный судья'},{value:'Линейный',label:'Линейный'},{value:'Видеоповтор',label:'Видеоповтор'},{value:'Инспектор',label:'Инспектор'}]},{key:'juris',label:'Юрисдикция / лига'}],onSubmit:v=>{ const m=this.ensureExt(this._md(id)); m.prep.officials.push({name:v.name,role:v.role||'',juris:v.juris||''}); CRM.store.save(); this.open(id,'prep'); CRM.toast('Добавлено'); }}); },
+  editOfficial(id,i){ const m=this.ensureExt(this._md(id)); const o=m.prep.officials[i]; if(!o) return; CRM.ui.formModal({title:'Судья',fields:[{key:'name',label:'Имя',value:o.name,required:true},{key:'role',label:'Роль',value:o.role},{key:'juris',label:'Юрисдикция / лига',value:o.juris}],onSubmit:v=>{ o.name=v.name;o.role=v.role||'';o.juris=v.juris||''; CRM.store.save(); this.open(id,'prep'); }}); },
+  delOfficial(id,i){ CRM.ui.confirm({title:'Удаление',message:'Удалить судью?',danger:true,onOk:()=>{ const m=this.ensureExt(this._md(id)); m.prep.officials.splice(i,1); CRM.store.save(); this.open(id,'prep'); }}); },
 
   attachLineup(mid){
     const hist=(CRM.store.get('roster.history')||[]).slice().sort((a,b)=>(b.dateStr||b.date||'').localeCompare(a.dateStr||a.date||''));
@@ -1065,11 +1084,21 @@ CRM.modules.matches={
     const scout=CRM.store.get('scout')||[];
     const players=onIce.length?onIce.map(playerById).filter(Boolean):scout;
     const gks=scout.filter(p=>p.pos==='G');
-    const ps=m.result.playerStats;
+    const ps=m.result.playerStats; const tm=m.result.team; const so=m.result.shootout; const per=m.result.periods;
+    const skaters=players.filter(p=>p.pos!=='G');
+    const periodRow=(i,lbl)=>{const pp=per[i]||{};return `<div class="row" style="margin-top:6px;align-items:center;gap:6px"><span style="width:38px;font-weight:600;font-size:12px">${lbl}</span><input id="pr_${i}_our" type="number" min="0" placeholder="мы" value="${pp.our==null?'':pp.our}" style="flex:1"><span>:</span><input id="pr_${i}_opp" type="number" min="0" placeholder="соп." value="${pp.opp==null?'':pp.opp}" style="flex:1"></div>`;};
+    const tmIn=(f,l)=>`<div style="flex:1;min-width:90px"><label class="fld">${l}</label><input id="tm_${f}" type="number" min="0" value="${num(tm[f])}"></div>`;
+    const soOur=(i)=>{const r=so.ours[i]||{};return `<div class="row" style="align-items:center;margin-top:4px;gap:6px"><span style="width:18px">${i+1}</span><select id="so_our_${i}_id" style="flex:1"><option value="">—</option>${skaters.map(p=>`<option value="${p.id}" ${r.shooterId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" id="so_our_${i}_sc" style="width:auto" ${r.scored?'checked':''}>гол</label></div>`;};
+    const soTheir=(i)=>{const r=so.theirs[i]||{};return `<div class="row" style="align-items:center;margin-top:4px;gap:6px"><span style="width:18px">${i+1}</span><input id="so_their_${i}_name" placeholder="игрок соперника" value="${esc(r.name||'')}" style="flex:1"><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" id="so_their_${i}_sc" style="width:auto" ${r.scored?'checked':''}>гол</label></div>`;};
     return `<div class="card">
       <div class="row"><div style="flex:1"><label class="fld">Наши шайбы</label><input id="r_our" type="number" min="0" value="${m.score.our==null?'':m.score.our}"></div>
       <div style="flex:1"><label class="fld">Opponent goals</label><input id="r_opp" type="number" min="0" value="${m.score.opp==null?'':m.score.opp}"></div>
       <div style="flex:1"><label class="fld">Оценка матча (1–10)</label><input id="r_rating" type="number" min="0" max="10" value="${m.rating||''}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Счёт по периодам</label>${[0,1,2].map(i=>periodRow(i,'П'+(i+1))).join('')}${periodRow(3,'ОТ')}</div>
+    </div>
+    <div class="card" style="margin-top:14px"><b>Командная статистика</b>
+      <div class="row" style="margin-top:8px">${tmIn('shotsFor','Броски (мы)')}${tmIn('shotsAgainst','Броски (соп.)')}${tmIn('sogFor','В створ (мы)')}${tmIn('sogAgainst','В створ (соп.)')}</div>
+      <div class="row" style="margin-top:8px">${tmIn('foWon','Вбрас. выигр.')}${tmIn('foLost','Вбрас. проигр.')}${tmIn('hits','Силовые')}${tmIn('blocks','Блокшоты')}</div>
     </div>
     <div class="card" style="margin-top:14px"><b>Special teams</b>
       <div class="row" style="margin-top:8px">
@@ -1079,47 +1108,56 @@ CRM.modules.matches={
         <div style="flex:1"><label class="fld">Раз в меньшинстве</label><input id="r_pkTimes" type="number" min="0" value="${num(m.result.pkTimes)}"></div>
       </div>
     </div>
+    <details class="cat" style="margin-top:14px"><summary>Буллиты (если были)<span class="ca"></span></summary><div class="catbody">
+      <div class="row" style="margin-top:6px;align-items:center;gap:10px"><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="so_happened" style="width:auto" ${so.happened?'checked':''}> Победитель определён в серии буллитов</label>
+        <div style="flex:1;max-width:220px"><label class="fld">Наш вратарь</label><select id="so_goalie"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${so.goalieId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div></div>
+      <div class="grid g2" style="margin-top:8px"><div><b style="font-size:12px">Наши</b>${[0,1,2,3,4].map(soOur).join('')}</div><div><b style="font-size:12px">Соперник</b>${[0,1,2,3,4].map(soTheir).join('')}</div></div>
+    </div></details>
     <div class="card" style="margin-top:14px"><b>Goalies</b>
       <div class="row" style="margin-top:8px">
         <div style="flex:1"><label class="fld">Стартовый</label><select id="r_gkStart"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.startId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
         <div style="flex:1"><label class="fld">Сменщик</label><select id="r_gkBackup"><option value="">—</option>${gks.map(g=>`<option value="${g.id}" ${m.result.gk.backupId===g.id?'selected':''}>${esc(playerName(g))}</option>`).join('')}</select></div>
         <div style="flex:1;display:flex;align-items:flex-end"><label class="fld" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="r_gkChanged" style="width:auto" ${m.result.gk.changed?'checked':''}> Goalie was changed</label></div>
       </div>
-      <p class="muted" style="font-size:11px;margin-top:6px">Система оценки вратарей заморожена — фиксируем только факт участия и замены.</p>
     </div>
     <div class="card" style="margin-top:14px"><b>Статистика полевых игроков</b>
       <div style="overflow:auto;margin-top:8px"><table><thead><tr><th>Игрок</th><th class="num">G</th><th class="num">A</th><th class="num">+/−</th><th class="num">PIM</th><th class="num">Rtg</th><th class="num">PPG</th><th class="num">PPA</th></tr></thead><tbody>
-      ${players.filter(p=>p.pos!=='G').map(p=>{const s=ps[p.id]||{};return `<tr><td><b>${esc(playerName(p))}</b></td>
-        <td><input data-pid="${p.id}" data-f="g" type="number" min="0" value="${num(s.g)}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="a" type="number" min="0" value="${num(s.a)}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="pm" type="number" value="${num(s.pm)}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="pim" type="number" min="0" value="${num(s.pim)}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="rating" type="number" min="0" max="10" value="${s.rating||''}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="ppG" type="number" min="0" value="${num(s.ppG)}" style="width:48px;text-align:center;padding:4px"></td>
-        <td><input data-pid="${p.id}" data-f="ppA" type="number" min="0" value="${num(s.ppA)}" style="width:48px;text-align:center;padding:4px"></td></tr>`;}).join('')}
+      ${skaters.map(p=>{const s=ps[p.id]||{};return `<tr><td><b>${esc(playerName(p))}</b></td>
+        <td><input data-pid="${p.id}" data-f="g" type="number" min="0" value="${num(s.g)}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="a" type="number" min="0" value="${num(s.a)}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="pm" type="number" value="${num(s.pm)}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="pim" type="number" min="0" value="${num(s.pim)}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="rating" type="number" min="0" max="10" value="${s.rating||''}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="ppG" type="number" min="0" value="${num(s.ppG)}" style="width:46px;text-align:center;padding:4px"></td>
+        <td><input data-pid="${p.id}" data-f="ppA" type="number" min="0" value="${num(s.ppA)}" style="width:46px;text-align:center;padding:4px"></td></tr>`;}).join('')}
       </tbody></table></div>
-      ${!players.length?'<p class="muted" style="margin-top:8px">Нет игроков. Прикрепите состав или добавьте игроков в команду.</p>':''}
+      ${!skaters.length?'<p class="muted" style="margin-top:8px">Нет игроков. Прикрепите состав или добавьте игроков в команду.</p>':''}
     </div>
     <div class="card" style="margin-top:14px"><label class="fld">Заметки по матчу</label><textarea id="r_notes" rows="3">${esc(m.notes||'')}</textarea></div>
     <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.saveResult('${m.id}')">Сохранить</button><button class="btn primary" onclick="CRM.modules.matches.finishMatch('${m.id}')">Сохранить и завершить</button></div>`;
   },
   _collectResult(m){
     const gv=(id)=>{const e=document.getElementById(id);return e?e.value:'';};
+    const ck=(id)=>!!(document.getElementById(id)||{}).checked;
     m.score.our=gv('r_our')===''?null:num(gv('r_our'));
     m.score.opp=gv('r_opp')===''?null:num(gv('r_opp'));
     m.rating=num(gv('r_rating'));
     m.result.ppGoals=num(gv('r_ppGoals')); m.result.ppAttempts=num(gv('r_ppAttempts'));
     m.result.pkGoalsAgainst=num(gv('r_pkGA')); m.result.pkTimes=num(gv('r_pkTimes'));
-    m.result.gk.startId=gv('r_gkStart'); m.result.gk.backupId=gv('r_gkBackup');
-    m.result.gk.changed=!!(document.getElementById('r_gkChanged')||{}).checked;
+    m.result.gk.startId=gv('r_gkStart'); m.result.gk.backupId=gv('r_gkBackup'); m.result.gk.changed=ck('r_gkChanged');
     m.notes=gv('r_notes');
+    const per=[]; for(let i=0;i<4;i++){ const o=gv('pr_'+i+'_our'),a=gv('pr_'+i+'_opp'); per.push((o===''&&a==='')?null:{our:o===''?null:num(o),opp:a===''?null:num(a)}); }
+    m.result.periods=per.some(Boolean)?per.map(x=>x||{our:null,opp:null}):[];
+    const t={}; ['shotsFor','shotsAgainst','sogFor','sogAgainst','foWon','foLost','hits','blocks'].forEach(f=>t[f]=num(gv('tm_'+f))); m.result.team=t;
+    const so={happened:ck('so_happened'),goalieId:gv('so_goalie'),ours:[],theirs:[]};
+    for(let i=0;i<5;i++){ const id=gv('so_our_'+i+'_id'); if(id||ck('so_our_'+i+'_sc')) so.ours.push({shooterId:id,scored:ck('so_our_'+i+'_sc')}); const nm=gv('so_their_'+i+'_name').trim(); if(nm||ck('so_their_'+i+'_sc')) so.theirs.push({name:nm,scored:ck('so_their_'+i+'_sc')}); }
+    m.result.shootout=so;
     const ps={};
     document.querySelectorAll('input[data-pid]').forEach(inp=>{
       const pid=inp.getAttribute('data-pid'), f=inp.getAttribute('data-f');
-      if(!ps[pid]) ps[pid]={g:0,a:0,pm:0,pim:0,rating:0,ppG:0,ppA:0,ppPos:'',pkOn:false};
-      ps[pid][f]= f==='rating'?num(inp.value): num(inp.value);
+      if(!ps[pid]) ps[pid]={g:0,a:0,pm:0,pim:0,rating:0,ppG:0,ppA:0};
+      ps[pid][f]=num(inp.value);
     });
-    // drop empty stat rows (no contribution and no rating)
     Object.keys(ps).forEach(pid=>{const s=ps[pid]; if(!s.g&&!s.a&&!s.pm&&!s.pim&&!s.rating&&!s.ppG&&!s.ppA) delete ps[pid];});
     m.result.playerStats=ps;
   },
@@ -1139,18 +1177,32 @@ CRM.modules.matches={
     const pkPct=m.result.pkTimes?Math.round((1-num(m.result.pkGoalsAgainst)/num(m.result.pkTimes))*100):0;
     const gkS=playerById(m.result.gk.startId);
     const res=m.score.our>m.score.opp?'<span class="pill good">Win</span>':m.score.our<m.score.opp?'<span class="pill bad">Loss</span>':'<span class="pill warn">Tie</span>';
+    const per=m.result.periods||[]; const perStr=per.length?per.map((pp,i)=>`${i<3?'П'+(i+1):'ОТ'} ${num(pp.our)}:${num(pp.opp)}`).join(' · '):'';
+    const t=m.result.team||{}; const foTot=num(t.foWon)+num(t.foLost); const foPct=foTot?Math.round(num(t.foWon)/foTot*100):0;
+    const hasTeam=['shotsFor','shotsAgainst','sogFor','sogAgainst','foWon','foLost','hits','blocks'].some(f=>num(t[f]));
+    const so=m.result.shootout||{}; const soOur=(so.ours||[]).filter(x=>x.scored).length, soTheir=(so.theirs||[]).filter(x=>x.scored).length;
     return `<div class="grid g4" style="margin-bottom:14px">
-      <div class="kpi"><div class="v">${num(m.score.our)}:${num(m.score.opp)}</div><div class="l">Счёт</div><div class="s">${res}</div></div>
+      <div class="kpi"><div class="v">${num(m.score.our)}:${num(m.score.opp)}</div><div class="l">Счёт</div><div class="s">${res}${so.happened?' · по буллитам':''}</div></div>
       <div class="kpi"><div class="v">${m.rating||'—'}</div><div class="l">Оценка матча</div></div>
       <div class="kpi"><div class="v">${ppPct}%</div><div class="l">Реализация ПП</div><div class="s muted">${num(m.result.ppGoals)}/${num(m.result.ppAttempts)}</div></div>
       <div class="kpi"><div class="v">${pkPct}%</div><div class="l">Нейтрализация ПК</div><div class="s muted">${num(m.result.pkTimes)} мен.</div></div>
     </div>
+    ${perStr?`<div class="card" style="margin-bottom:14px"><b>По периодам:</b> ${perStr}</div>`:''}
+    ${hasTeam?`<div class="card" style="margin-bottom:14px"><b>Командная статистика</b><div class="grid g4" style="margin-top:8px;gap:8px">
+      <div class="kpi"><div class="v">${num(t.shotsFor)}–${num(t.shotsAgainst)}</div><div class="l">Броски</div></div>
+      <div class="kpi"><div class="v">${num(t.sogFor)}–${num(t.sogAgainst)}</div><div class="l">В створ</div></div>
+      <div class="kpi"><div class="v">${foPct}%</div><div class="l">Вбрасывания</div><div class="s muted">${num(t.foWon)}/${foTot}</div></div>
+      <div class="kpi"><div class="v">${num(t.hits)} · ${num(t.blocks)}</div><div class="l">Силовые · блокшоты</div></div>
+    </div></div>`:''}
+    ${so.happened?`<div class="card" style="margin-bottom:14px"><b>Буллиты ${soOur}:${soTheir}</b>${(so.ours||[]).length?`<div class="muted" style="font-size:12px;margin-top:6px">Наши: ${(so.ours||[]).map(x=>{const p=playerById(x.shooterId);return (p?esc(playerSurname(p)):'?')+(x.scored?' ✓':' ✗');}).join(', ')}</div>`:''}</div>`:''}
     ${gkS?`<div class="card" style="margin-bottom:14px"><b>Goalie:</b> ${esc(playerName(gkS))} ${m.result.gk.changed?'<span class="pill warn">goalie changed</span>':''}</div>`:''}
     <div class="card"><b>Статистика игроков</b>
       ${rows.length?`<table style="margin-top:8px"><thead><tr><th>Игрок</th><th class="num">G</th><th class="num">A</th><th class="num">P</th><th class="num">+/−</th><th class="num">PIM</th><th class="num">Rtg</th></tr></thead><tbody>
       ${rows.map(r=>`<tr><td><b>${esc(playerName(r.p))}</b></td><td class="num">${num(r.s.g)}</td><td class="num">${num(r.s.a)}</td><td class="num"><b>${num(r.s.g)+num(r.s.a)}</b></td><td class="num">${num(r.s.pm)>=0?'+':''}${num(r.s.pm)}</td><td class="num">${num(r.s.pim)}</td><td class="num">${r.s.rating||'—'}</td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="margin-top:8px">Нет индивидуальной статистики.</p>'}
     </div>
+    ${m.prep&&(m.prep.planA||m.prep.oppStrengths||m.prep.oppWeaknesses)?`<div class="card" style="margin-top:14px"><b>План на игру (из подготовки)</b>${m.prep.oppStrengths?`<p style="margin-top:6px"><b>Силы соперника:</b> ${esc(m.prep.oppStrengths)}</p>`:''}${m.prep.oppWeaknesses?`<p style="margin-top:6px"><b>Слабости:</b> ${esc(m.prep.oppWeaknesses)}</p>`:''}${m.prep.planA?`<p style="margin-top:6px"><b>План A:</b> ${esc(m.prep.planA)}</p>`:''}${m.prep.planB?`<p style="margin-top:6px"><b>План B:</b> ${esc(m.prep.planB)}</p>`:''}</div>`:''}
+    ${m.prep&&m.prep.officials&&m.prep.officials.length?`<div class="card" style="margin-top:14px"><b>Судьи:</b> ${m.prep.officials.map(o=>esc(o.name)+(o.role?' ('+esc(o.role)+')':'')).join(', ')}</div>`:''}
     ${m.notes?`<div class="card" style="margin-top:14px"><b>Заметки</b><p style="white-space:pre-wrap;margin-top:6px">${esc(m.notes)}</p></div>`:''}
     <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.matches.open('${m.id}','result')">Изменить итоги</button><button class="btn" onclick="window.print()">Печать</button><button class="btn danger" onclick="CRM.modules.matches.del('${m.id}')">Удалить матч</button></div>`;
   },
