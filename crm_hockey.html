@@ -181,6 +181,15 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 .pchip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);cursor:grab;font-size:12px;font-weight:600}
 .pchip.sel{border-color:var(--accent);background:rgba(0,113,227,.1);color:var(--accent)}
 .poolzone{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;min-height:34px;padding:4px;border-radius:8px}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mhd{font-size:10px;font-weight:700;color:var(--ink2);text-align:center;padding:2px}
+.mcell{min-height:54px;border:1px solid var(--line);border-radius:8px;padding:4px;position:relative;background:var(--panel)}
+.mcell.empty{border:none;background:none}
+.mcell.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.mcell .mday{font-size:11px;font-weight:600;color:var(--ink2)}
+.mcell .mdot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%}
+.mcell .mtext{display:block;font-size:10px;margin-top:2px;line-height:1.2}
+.mcell .mtag{display:block;font-size:9px;margin-top:2px;padding:1px 4px;border-radius:4px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 code{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:.92em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
 </head>
@@ -214,8 +223,8 @@ CRM.TABS = [
   ["matches","05","Games","Prep, game day, results"],
   ["stats","06","Stats","Individual statistics"],
   ["opponents","07","Opponents","Scouting & rosters"],
-  ["physical","08","Fitness","Tests & standards"],
-  ["psycho","09","Psychology","Psych testing"],
+  ["physical","08","Assessments","Physical assessments"],
+  ["psycho","09","Mental","Mental fitness evaluation"],
   ["preseason","10","Preseason","Training plan"],
   ["calendar","11","Calendar","Season events"],
   ["medical","12","Medical","Injuries & status"],
@@ -250,6 +259,9 @@ function uuid(){ return 'id_'+Date.now().toString(36)+'_'+Math.random().toString
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function parseLocalDate(s){ if(!s) return null; const m=String(s).split('-').map(Number); if(m.length<3||!m[0]) return null; return new Date(m[0],m[1]-1,m[2]); }
 function localYmd(d){ d=d||new Date(); const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+const MONTHS_RU=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+function monthMatrix(year,month){ const first=new Date(year,month,1); const start=(first.getDay()+6)%7; const days=new Date(year,month+1,0).getDate(); const cells=[]; for(let i=0;i<start;i++)cells.push(null); for(let d=1;d<=days;d++)cells.push(new Date(year,month,d)); while(cells.length%7)cells.push(null); return cells; }
+function monthGridHtml(year,month,marks,opts){ opts=opts||{}; marks=marks||{}; const cells=monthMatrix(year,month); const wd=['Пн','Вт','Ср','Чт','Пт','Сб','Вс']; const today=localYmd(); let h='<div class="mgrid">'+wd.map(w=>`<div class="mhd">${w}</div>`).join(''); cells.forEach(c=>{ if(!c){h+='<div class="mcell empty"></div>';return;} const y=localYmd(c); const mk=marks[y]; const click=opts.onDay?` onclick="${opts.onDay}('${y}')" style="cursor:pointer"`:''; h+=`<div class="mcell${y===today?' today':''}"${click}><span class="mday">${c.getDate()}</span>${mk&&mk.dot?`<span class="mdot" style="background:${mk.dot}" title="${esc(mk.label||'')}"></span>`:''}${mk&&mk.tags?mk.tags.map(t=>`<span class="mtag" style="background:${t.bg||'var(--panel2)'};color:${t.fg||'var(--ink)'}">${esc(t.text)}</span>`).join(''):''}</div>`; }); h+='</div>'; return h; }
 /* coerce any legacy/non-string date into a YYYY-MM-DD string (invariant §7.7) */
 function normYmd(v){
   if(v==null) return '';
@@ -321,7 +333,7 @@ CRM.store = (function(){
       {id:'jump',name:'Прыжок в длину (см)',lower:false,gold:260,silver:240,bronze:220},
       {id:'plank',name:'Планка (сек)',lower:false,gold:180,silver:120,bronze:90},
       {id:'pullups',name:'Подтягивания',lower:false,gold:15,silver:10,bronze:6},
-      {id:'beep',name:'Beep-test (уровень)',lower:false,gold:12,silver:10,bronze:8}
+      {id:'cooper',name:'Cooper test (м)',lower:false,gold:3000,silver:2600,bronze:2200}
     ];
   }
   function migrate(d){
@@ -334,6 +346,8 @@ CRM.store = (function(){
     ['g1','g2'].forEach((g,i)=>{ if(!d.roster.staff[g]||typeof d.roster.staff[g]!=='object') d.roster.staff[g]={title:i?'Сервисная бригада':'Тренерский штаб',members:[]}; if(!Array.isArray(d.roster.staff[g].members)) d.roster.staff[g].members=[]; });
     d.settings=Object.assign({coach:'',team:'Моя команда',league:'',season:'2025/26',norms:defaultNorms()},d.settings||{});
     if(!Array.isArray(d.settings.norms)||!d.settings.norms.length) d.settings.norms=defaultNorms();
+    (d.settings.norms||[]).forEach(n=>{ if(n&&n.id==='beep'){ n.id='cooper'; if(/^Beep/i.test(n.name||'')) n.name='Cooper test (м)'; } });
+    (d.physical||[]).forEach(r=>{ if(r&&r.results&&r.results.beep!=null&&r.results.cooper==null){ r.results.cooper=r.results.beep; delete r.results.beep; } });
     d.preseason=Object.assign({plan:[],details:[],fatigue:[],seasonPlan:'',seasonDetails:'',cal:{start:'',end:'',seasonEnd:''}},d.preseason||{});
     d.playoffBracket=Object.assign({r8:[],r4:[],r2:[],f:[]},d.playoffBracket||{});
     d.state=Object.assign({seedOpp10:false},d.state||{});
@@ -1667,13 +1681,20 @@ CRM.modules.physical={
     if(better(val,norm.gold))return 'gold'; if(better(val,norm.silver))return 'silver'; if(better(val,norm.bronze))return 'bronze'; return 'none';
   },
   medalPill(m){ const map={gold:['good','Золото'],silver:['accent','Серебро'],bronze:['warn','Бронза'],none:['bad','Ниже норм']}; return m&&map[m]?`<span class="pill ${map[m][0]}">${map[m][1]}</span>`:''; },
-  render(el){
+  _period:'all', _chartNorm:'', _cal:null,
+  render(el,params){
+    const view=(params&&params.view)||'table';
+    const tabs=[['table','Результаты'],['charts','Динамика'],['cal','Календарь']];
+    const nav=`<div class="seg" style="margin-bottom:14px">${tabs.map(t=>`<button class="${view===t[0]?'active':''}" onclick="CRM.router.go('physical',{view:'${t[0]}'})">${t[1]}</button>`).join('')}</div>`;
+    el.innerHTML=sectionTitle('08','Физические тесты','Physical assessments · тесты, нормативы, динамика',
+      `<button class="btn" onclick="CRM.router.go('settings')">Нормативы</button><button class="btn primary" onclick="CRM.modules.physical.addTest()">+ Тестирование</button>`)+nav+
+      (view==='charts'?this.paneCharts():view==='cal'?this.paneCal():this.paneTable());
+    if(view==='charts') this._drawCharts();
+  },
+  paneTable(){
     const norms=CRM.store.get('settings.norms')||[];
     const recs=(CRM.store.get('physical')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    el.innerHTML=sectionTitle('08','Физическая подготовка','Тестирование и нормативы',
-      `<button class="btn" onclick="CRM.router.go('settings')">Нормативы</button>
-       <button class="btn primary" onclick="CRM.modules.physical.addTest()">+ Тестирование</button>`)+
-    `<div class="card" style="margin-bottom:14px"><b>Нормативы</b><table style="margin-top:8px"><thead><tr><th>Показатель</th><th class="num">🥇</th><th class="num">🥈</th><th class="num">🥉</th></tr></thead><tbody>
+    return `<div class="card" style="margin-bottom:14px"><b>Нормативы</b><table style="margin-top:8px"><thead><tr><th>Показатель</th><th class="num">🥇</th><th class="num">🥈</th><th class="num">🥉</th></tr></thead><tbody>
       ${norms.map(n=>`<tr><td>${esc(n.name)}</td><td class="num">${n.gold}</td><td class="num">${n.silver}</td><td class="num">${n.bronze}</td></tr>`).join('')}</tbody></table></div>
     <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th>${norms.map(n=>`<th class="num">${esc(n.name.split(' ')[0])}</th>`).join('')}<th></th></tr></thead><tbody>
       ${recs.map(r=>{const p=playerById(r.playerId);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td>
@@ -1681,11 +1702,45 @@ CRM.modules.physical={
         <td><button class="btn sm ghost danger" onclick="CRM.modules.physical.del('${r.id}')">×</button></td></tr>`;}).join('')}
     </tbody></table>`:'<div class="empty">Нет данных тестирования.</div>'}</div>`;
   },
+  _recsInPeriod(){
+    let recs=(CRM.store.get('physical')||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(this._period!=='all'){ const days=this._period==='3m'?90:this._period==='6m'?180:365; const cut=new Date(); cut.setDate(cut.getDate()-days); const cy=localYmd(cut); recs=recs.filter(r=>(r.date||'')>=cy); }
+    return recs;
+  },
+  paneCharts(){
+    const norms=CRM.store.get('settings.norms')||[]; if(!norms.length) return '<div class="empty card">Нет нормативов. Задайте их в «Настройках».</div>';
+    const sel=this._chartNorm||norms[0].id;
+    return `<div class="card"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:160px"><label class="fld">Показатель</label><select onchange="CRM.modules.physical.setChartNorm(this.value)">${norms.map(n=>`<option value="${n.id}" ${sel===n.id?'selected':''}>${esc(n.name)}</option>`).join('')}</select></div>
+      <div style="flex:1;min-width:140px"><label class="fld">Период</label><select onchange="CRM.modules.physical.setPeriod(this.value)">${[['all','Всё время'],['3m','3 мес'],['6m','6 мес'],['1y','1 год']].map(o=>`<option value="${o[0]}" ${this._period===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>
+      <div class="grid g2" style="margin-top:12px"><div><b style="font-size:13px">Динамика (среднее по команде)</b><div class="chartbox" style="margin-top:6px"><canvas id="phLine"></canvas></div></div>
+        <div><b style="font-size:13px">Распределение медалей</b><div class="chartbox" style="margin-top:6px"><canvas id="phPie"></canvas></div></div></div>
+    </div>`;
+  },
+  setChartNorm(v){ this._chartNorm=v; CRM.router.render(); },
+  setPeriod(v){ this._period=v; CRM.router.render(); },
+  _drawCharts(){
+    const norms=CRM.store.get('settings.norms')||[]; if(!norms.length) return; const norm=norms.find(n=>n.id===(this._chartNorm||norms[0].id))||norms[0];
+    const recs=this._recsInPeriod();
+    const byDate={}; recs.forEach(r=>{ const v=(r.results||{})[norm.id]; if(v==null||v==='')return; (byDate[r.date]=byDate[r.date]||[]).push(num(v)); });
+    const dates=Object.keys(byDate).sort();
+    makeChart('phLine',{type:'line',data:{labels:dates.map(fmtDateShort),datasets:[{label:norm.name,data:dates.map(d=>round1(avg(byDate[d]))),borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.12)',fill:true,tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{beginAtZero:false}}}});
+    const cnt={gold:0,silver:0,bronze:0,none:0}; recs.forEach(r=>{ const md=this.medal(norm,(r.results||{})[norm.id]); if(md)cnt[md]++; });
+    makeChart('phPie',{type:'doughnut',data:{labels:['Золото','Серебро','Бронза','Ниже норм'],datasets:[{data:[cnt.gold,cnt.silver,cnt.bronze,cnt.none],backgroundColor:['#1d9e75','#0071e3','#ba7517','#e24b4a']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+  },
+  paneCal(){
+    const recs=CRM.store.get('physical')||[]; const now=new Date(); const c=this._cal||{y:now.getFullYear(),m:now.getMonth()};
+    const marks={}; recs.forEach(r=>{ if(!r.date)return; const n=(marks[r.date]?marks[r.date]._n:0)+1; marks[r.date]={dot:'#0071e3',label:n+' тест(ов)',_n:n}; });
+    return `<div class="card"><div style="display:flex;align-items:center;gap:8px"><b>${MONTHS_RU[c.m]} ${c.y}</b><div style="margin-left:auto;display:flex;gap:6px"><button class="btn sm" onclick="CRM.modules.physical.calNav(-1)">‹</button><button class="btn sm" onclick="CRM.modules.physical.calNav(1)">›</button></div></div>
+      <div style="margin-top:10px">${monthGridHtml(c.y,c.m,marks)}</div>
+      <p class="muted" style="font-size:12px;margin-top:8px">Синяя точка — день, когда проводилось тестирование.</p></div>`;
+  },
+  calNav(delta){ const now=new Date(); const c=this._cal||{y:now.getFullYear(),m:now.getMonth()}; let m=c.m+delta,y=c.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} this._cal={y:y,m:m}; CRM.router.render(); },
   addTest(){
-    const scout=CRM.store.get('scout')||[]; const norms=CRM.store.get('settings.norms')||[];
-    if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
+    const scout=(CRM.store.get('scout')||[]).filter(p=>p.status!=='injured'&&p.status!=='suspended'&&p.status!=='limited'); const norms=CRM.store.get('settings.norms')||[];
+    if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Нет доступных игроков (травмированные и ограниченные исключены). Добавьте игроков в «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
     CRM.modal.open(CRM.modal.frame('Тестирование',`
-      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ph_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
+      <div class="row"><div style="flex:2"><label class="fld">Игрок (без травм/ограничений)</label><select id="ph_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="ph_date" type="date" value="${localYmd()}"></div></div>
       <div style="margin-top:12px">${norms.map(n=>`<div class="row" style="margin-bottom:8px"><div style="flex:2"><label class="fld">${esc(n.name)}</label></div><div style="flex:1"><input data-norm="${n.id}" type="number" step="0.01"></div></div>`).join('')}</div>
       <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.physical.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
@@ -1703,40 +1758,62 @@ CRM.modules.physical={
    =================================================================== */
 CRM.modules.psycho={
   PARAMS:[['motivation','Мотивация'],['focus','Концентрация'],['stress','Стрессоустойчивость'],['team','Командность'],['lead','Лидерство']],
+  LIE:[['l1','Я всегда говорю только правду'],['l2','Я никогда не раздражаюсь на партнёров'],['l3','Я всегда выполняю всё, что обещаю']],
+  band(v){ v=num(v); return v>=8?['Высокий','good']:v>=5?['Средний','accent']:['Низкий','bad']; },
+  validity(rec){ const lie=this.LIE.map(([k])=>num((rec.lie||{})[k])).filter(v=>v>0); if(!lie.length) return {pct:100,label:'нет данных',cls:'muted'}; const a=avg(lie); const pct=Math.max(0,Math.min(100,Math.round(100-Math.max(0,a-5)*20))); return {pct,label:pct>=70?'Достоверно':pct>=40?'Сомнительно':'Низкая достоверность',cls:pct>=70?'good':pct>=40?'warn':'bad'}; },
   render(el){
     const recs=(CRM.store.get('psycho')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    el.innerHTML=sectionTitle('09','Психология','Психологическое тестирование',
+    el.innerHTML=sectionTitle('09','Психологическая оценка','Mental fitness evaluation · честность ответов контролируется',
       `<button class="btn primary" onclick="CRM.modules.psycho.addTest()">+ Тест</button>`)+
-    `<div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th>${this.PARAMS.map(p=>`<th class="num">${esc(p[1].slice(0,4))}.</th>`).join('')}<th class="num">Σ</th><th></th></tr></thead><tbody>
-      ${recs.map(r=>{const p=playerById(r.playerId);const sc=r.scores||{};const sum=this.PARAMS.reduce((s,[k])=>s+num(sc[k]),0);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td>${this.PARAMS.map(([k])=>`<td class="num">${num(sc[k])}</td>`).join('')}<td class="num"><b>${sum}</b></td><td><button class="btn sm ghost danger" onclick="CRM.modules.psycho.del('${r.id}')">×</button></td></tr>`;}).join('')}
+    `<div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th>${this.PARAMS.map(p=>`<th class="num">${esc(p[1].slice(0,4))}.</th>`).join('')}<th class="num">Σ</th><th>Достов.</th><th></th></tr></thead><tbody>
+      ${recs.map(r=>{const p=playerById(r.playerId);const sc=r.scores||{};const sum=this.PARAMS.reduce((s,[k])=>s+num(sc[k]),0);const vd=this.validity(r);return `<tr style="cursor:pointer" onclick="CRM.modules.psycho.open('${r.id}')"><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td>${this.PARAMS.map(([k])=>`<td class="num">${num(sc[k])}</td>`).join('')}<td class="num"><b>${sum}</b></td><td><span class="pill ${vd.cls}">${vd.pct}%</span></td><td><button class="btn sm ghost danger" onclick="event.stopPropagation();CRM.modules.psycho.del('${r.id}')">×</button></td></tr>`;}).join('')}
     </tbody></table>`:'<div class="empty">Нет психотестов.</div>'}</div>`;
+  },
+  open(id){
+    const r=(CRM.store.get('psycho')||[]).find(x=>x.id===id); if(!r) return; const p=playerById(r.playerId); const sc=r.scores||{}; const vd=this.validity(r);
+    const summary=this.PARAMS.map(([k,l])=>{const b=this.band(sc[k]);const col=b[1]==='good'?'#22c55e':b[1]==='accent'?'#0071e3':'#ef4444';return `<div class="evrow"><span class="lbl">${esc(l)}</span><span class="bar"><i style="width:${num(sc[k])*10}%;background:${col}"></i></span><span class="vv">${num(sc[k])}</span><span class="pill ${b[1]}" style="margin-left:6px">${b[0]}</span></div>`;}).join('');
+    const txt=this.PARAMS.map(([k,l])=>`${l.toLowerCase()} — ${this.band(sc[k])[0].toLowerCase()}`).join('; ');
+    CRM.modal.open(CRM.modal.frame('Оценка · '+(p?playerName(p):'—'),`
+      <div class="muted" style="margin-bottom:10px">${fmtDate(r.date)} · <span class="pill ${vd.cls}">Достоверность ${vd.pct}% · ${vd.label}</span></div>
+      <div class="grid g2"><div class="card"><b>Профиль</b><div class="chartbox sm" style="margin-top:8px"><canvas id="psyRadar"></canvas></div></div>
+        <div class="card"><b>Оценки</b><div style="margin-top:6px">${summary}</div></div></div>
+      <div class="card" style="margin-top:14px"><b>Текстовая оценка</b><p style="margin-top:6px">Профиль: ${esc(txt)}.</p>${r.note?`<p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(r.note)}</p>`:''}${vd.pct<40?'<p class="pill bad" style="margin-top:8px;display:inline-block">⚠ Низкая достоверность — вероятны социально желательные ответы; рекомендуется перепройти.</p>':''}</div>
+      <div class="row" style="margin-top:14px"><button class="btn danger" onclick="CRM.modules.psycho.del('${r.id}')">Удалить</button><button class="btn" onclick="CRM.modal.close()">Закрыть</button></div>`));
+    makeChart('psyRadar',{type:'radar',data:{labels:this.PARAMS.map(p=>p[1]),datasets:[{data:this.PARAMS.map(([k])=>num(sc[k])),borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.15)',pointBackgroundColor:'#8b5cf6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{size:9}}}}}});
   },
   addTest(){
     const scout=CRM.store.get('scout')||[];
     if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
-    CRM.modal.open(CRM.modal.frame('Психотест',`
+    CRM.modal.open(CRM.modal.frame('Психологическая оценка',`
+      <p class="muted" style="font-size:12px;margin-bottom:8px">Отвечайте честно — встроены контрольные вопросы достоверности. Все шкалы 1–10.</p>
       <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="ps_pid">${scout.map(p=>`<option value="${p.id}">${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="ps_date" type="date" value="${localYmd()}"></div></div>
-      <div style="margin-top:12px">${this.PARAMS.map(([k,l])=>`<div class="row" style="margin-bottom:8px"><div style="flex:2"><label class="fld">${l} (1–10)</label></div><div style="flex:1"><input data-p="${k}" type="number" min="1" max="10" value="5"></div></div>`).join('')}</div>
-      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="ps_note" rows="2"></textarea></div>
+      <div style="margin-top:12px"><b style="font-size:13px">Качества</b>${this.PARAMS.map(([k,l])=>`<div class="row" style="margin:6px 0"><div style="flex:2"><label class="fld">${l} (1–10)</label></div><div style="flex:1"><input data-p="${k}" type="number" min="1" max="10" value="5"></div></div>`).join('')}</div>
+      <div style="margin-top:10px"><b style="font-size:13px">Контроль достоверности</b><p class="muted" style="font-size:11px;margin:2px 0 0">Насколько согласны (1 — нет, 10 — полностью)</p>${this.LIE.map(([k,l])=>`<div class="row" style="margin:6px 0"><div style="flex:2"><label class="fld">«${l}»</label></div><div style="flex:1"><input data-l="${k}" type="number" min="1" max="10" value="5"></div></div>`).join('')}</div>
+      <div style="margin-top:10px"><label class="fld">Заметка психолога</label><textarea id="ps_note" rows="2"></textarea></div>
       <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.psycho.save()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
   },
   save(){
     const scores={}; document.querySelectorAll('input[data-p]').forEach(i=>scores[i.getAttribute('data-p')]=num(i.value));
-    const recs=CRM.store.get('psycho')||[]; recs.push({id:uuid(),playerId:document.getElementById('ps_pid').value,date:document.getElementById('ps_date').value,scores,note:document.getElementById('ps_note').value.trim()});
+    const lie={}; document.querySelectorAll('input[data-l]').forEach(i=>lie[i.getAttribute('data-l')]=num(i.value));
+    const recs=CRM.store.get('psycho')||[]; recs.push({id:uuid(),playerId:document.getElementById('ps_pid').value,date:document.getElementById('ps_date').value,scores,lie,note:document.getElementById('ps_note').value.trim()});
     CRM.store.set('psycho',recs); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
-  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ CRM.store.set('psycho',(CRM.store.get('psycho')||[]).filter(r=>r.id!==id)); CRM.router.render(); }}); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить запись?',danger:true,onOk:()=>{ CRM.store.set('psycho',(CRM.store.get('psycho')||[]).filter(r=>r.id!==id)); CRM.modal.close(); CRM.router.render(); }}); }
 };
 
 /* ===================================================================
    12 — MEDICAL (syncs scout[].status)
    =================================================================== */
 CRM.modules.medical={
+  TYPES:['Ушиб','Перелом','Сотрясение','Растяжение','Вывих','Болезнь','Другое'],
+  PARTS:['Верх тела','Низ тела','Голова','Другое'],
+  statusColor(s){ return s==='injured'?'#ef4444':s==='limited'?'#eab308':s==='suspended'?'#6b7280':'#22c55e'; },
+  _daysLeft(r){ if(!r||!r.returnDate) return null; const d=parseLocalDate(r.returnDate); if(!d) return null; const t=new Date(); t.setHours(0,0,0,0); const diff=Math.round((d-t)/86400000); return diff>0?diff:0; },
   render(el){
     const recs=(CRM.store.get('medical')||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     const scout=CRM.store.get('scout')||[];
-    const inj=scout.filter(p=>p.status==='injured'||p.status==='limited');
+    const order=['injured','limited','suspended','active'];
     el.innerHTML=sectionTitle('12','Медицина','Травмы, статусы и восстановление',
       `<button class="btn primary" onclick="CRM.modules.medical.add()">+ Запись</button>`)+
     `<div class="grid g3" style="margin-bottom:14px">
@@ -1744,31 +1821,36 @@ CRM.modules.medical={
       <div class="kpi"><div class="v" style="color:var(--warn)">${scout.filter(p=>p.status==='limited').length}</div><div class="l">Ограничены</div></div>
       <div class="kpi"><div class="v" style="color:var(--good)">${scout.filter(p=>p.status==='active').length}</div><div class="l">Здоровы</div></div>
     </div>
-    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th>Дата</th><th>Игрок</th><th>Диагноз</th><th>Status</th><th>Возврат</th><th></th></tr></thead><tbody>
-      ${recs.map(r=>{const p=playerById(r.playerId);return `<tr><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td><td>${esc(r.diagnosis||'—')}</td><td><span class="pill ${STATUS_CLASS[r.status]||''}">${STATUS_LABEL[r.status]||''}</span></td><td>${r.returnDate?fmtDateShort(r.returnDate):'—'}</td><td><button class="btn sm ghost" onclick="CRM.modules.medical.edit('${r.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.medical.del('${r.id}')">×</button></td></tr>`;}).join('')}
+    <div class="card" style="margin-bottom:14px"><b>Состав — статус здоровья</b><p class="muted" style="font-size:12px;margin:4px 0 8px">🟢 здоров · 🟡 ограничения · 🔴 травма. Клик по игроку — добавить запись.</p>
+      ${scout.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${scout.slice().sort((a,b)=>order.indexOf(a.status||'active')-order.indexOf(b.status||'active')).map(p=>`<button class="pchip" style="cursor:pointer" onclick="CRM.modules.medical.add(null,'${p.id}')"><span class="gdot" style="background:${this.statusColor(p.status)}"></span> ${esc(playerName(p))}</button>`).join('')}</div>`:'<p class="muted">Нет игроков.</p>'}
+    </div>
+    <div class="card" style="padding:0">${recs.length?`<table><thead><tr><th></th><th>Дата</th><th>Игрок</th><th>Травма</th><th>Лечение</th><th>Status</th><th>Возврат</th><th></th></tr></thead><tbody>
+      ${recs.map(r=>{const p=playerById(r.playerId);const left=this._daysLeft(r);return `<tr><td><span class="gdot" style="background:${this.statusColor(r.status)}"></span></td><td>${fmtDateShort(r.date)}</td><td><b>${p?esc(playerName(p)):'—'}</b></td><td>${esc([r.injuryType,r.bodyPart].filter(Boolean).join(' · ')||r.diagnosis||'—')}${r.diagnosis&&(r.injuryType||r.bodyPart)?`<div class="muted" style="font-size:11px">${esc(r.diagnosis)}</div>`:''}</td><td class="muted" style="font-size:12px">${esc(r.treatment||'—')}</td><td><span class="pill ${STATUS_CLASS[r.status]||''}">${STATUS_LABEL[r.status]||''}</span></td><td>${r.returnDate?fmtDateShort(r.returnDate)+(left!=null?` <span class="muted">(${left} дн.)</span>`:''):'—'}</td><td style="white-space:nowrap"><button class="btn sm ghost" onclick="CRM.modules.medical.edit('${r.id}')">✎</button><button class="btn sm ghost danger" onclick="CRM.modules.medical.del('${r.id}')">×</button></td></tr>`;}).join('')}
     </tbody></table>`:'<div class="empty">Нет медицинских записей.</div>'}</div>`;
   },
-  add(id){
-    const r=id?(CRM.store.get('medical')||[]).find(x=>x.id===id):{};
+  add(id,presetPid){
+    const r=id?(CRM.store.get('medical')||[]).find(x=>x.id===id):{}; const pre=presetPid||(r&&r.playerId)||'';
     const scout=CRM.store.get('scout')||[];
     if(!scout.length){ CRM.modal.open(CRM.modal.frame('Нет игроков','<div class="empty">Сначала добавьте игроков в разделе «Игроки».</div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="CRM.router.go(\'profiles\');CRM.modal.close()">→ К игрокам</button></div>')); return; }
     CRM.modal.open(CRM.modal.frame(id?'Изменить запись':'Медзапись',`
-      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="md_pid">${scout.map(p=>`<option value="${p.id}" ${r&&r.playerId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div>
+      <div class="row"><div style="flex:2"><label class="fld">Игрок</label><select id="md_pid">${scout.map(p=>`<option value="${p.id}" ${pre===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div>
       <div style="flex:1"><label class="fld">Дата</label><input id="md_date" type="date" value="${r&&r.date||localYmd()}"></div></div>
-      <div style="margin-top:10px"><label class="fld">Диагноз</label><input id="md_diag" value="${esc(r&&r.diagnosis||'')}"></div>
+      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Тип травмы</label><select id="md_type"><option value="">—</option>${this.TYPES.map(t=>`<option value="${t}" ${r&&r.injuryType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Часть тела</label><select id="md_part"><option value="">—</option>${this.PARTS.map(t=>`<option value="${t}" ${r&&r.bodyPart===t?'selected':''}>${t}</option>`).join('')}</select></div></div>
+      <div style="margin-top:10px"><label class="fld">Диагноз / описание</label><input id="md_diag" value="${esc(r&&r.diagnosis||'')}"></div>
       <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Статус</label><select id="md_status">${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${r&&r.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>
-      <div style="flex:1"><label class="fld">Ожид. возврат</label><input id="md_return" type="date" value="${r&&r.returnDate||''}"></div></div>
+      <div style="flex:1"><label class="fld">Ожид. возврат (срок восст.)</label><input id="md_return" type="date" value="${r&&r.returnDate||''}"></div></div>
+      <div style="margin-top:10px"><label class="fld">Лечение / рекомендации</label><textarea id="md_treat" rows="2">${esc(r&&r.treatment||'')}</textarea></div>
       <div style="margin-top:10px"><label class="fld">Примечание</label><textarea id="md_note" rows="2">${esc(r&&r.statusNote||'')}</textarea></div>
       <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.medical.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
   },
   edit(id){ this.add(id); },
   save(id){
-    const recs=CRM.store.get('medical')||[];
-    const data={playerId:document.getElementById('md_pid').value,date:document.getElementById('md_date').value,diagnosis:document.getElementById('md_diag').value.trim(),status:document.getElementById('md_status').value,returnDate:document.getElementById('md_return').value,statusNote:document.getElementById('md_note').value.trim()};
+    const recs=CRM.store.get('medical')||[]; const g=(x)=>{const e=document.getElementById(x);return e?e.value:'';};
+    const data={playerId:g('md_pid'),date:g('md_date'),injuryType:g('md_type'),bodyPart:g('md_part'),diagnosis:g('md_diag').trim(),status:g('md_status'),returnDate:g('md_return'),treatment:g('md_treat').trim(),statusNote:g('md_note').trim()};
     let r=id?recs.find(x=>x.id===id):null;
     if(r)Object.assign(r,data); else {r=Object.assign({id:uuid()},data);recs.push(r);}
     CRM.store.set('medical',recs);
-    // sync player status to latest record for that player
     this.syncStatus(data.playerId);
     CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
