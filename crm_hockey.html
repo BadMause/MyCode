@@ -152,15 +152,23 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 #dialog.open{display:flex}
 #dialogBody{background:var(--panel);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);width:100%;max-width:520px}
 
-/* ============================= ARCHITECTURE MAP (16) ============================= */
-.legend-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
-.legend-card b{display:block;margin-bottom:5px;font-size:13px}
-.legend-card span{color:var(--ink2);font-size:12px}
-.codeblk{background:#1d1d1f;color:#e6e6e6;border-radius:12px;padding:14px 16px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12px;line-height:1.55;overflow-x:auto;white-space:pre;margin-top:10px}
-.arch-flow{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.9}
-.arch-flow .a-from{font-weight:700;color:var(--accent)}
-.arch-flow .a-to{font-weight:600}
-.tag-own{color:var(--good);font-weight:600;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:12px}
+/* ============================= SCOUTING — eval / grades / drag ============================= */
+.gchip{display:inline-flex;align-items:center;justify-content:center;padding:3px 11px;border-radius:999px;font-size:11px;font-weight:700}
+.gdot{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none}
+.cat{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.cat>summary{cursor:pointer;padding:9px 12px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;list-style:none}
+.cat>summary::-webkit-details-marker{display:none}
+.cat>summary .ca{margin-left:auto;font-weight:800;min-width:26px;text-align:right}
+.cat .catbody{padding:2px 12px 10px}
+.evrow{display:flex;align-items:center;gap:10px;font-size:12px;padding:4px 0}
+.evrow .lbl{flex:1;color:var(--ink2)}
+.evrow .bar{flex:0 0 90px}
+.evrow .vv{width:22px;text-align:right;font-weight:700}
+.dragrow{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;background:var(--panel)}
+.dragrow[draggable=true]{cursor:grab}
+.dragrow.dragover{border-color:var(--accent);background:rgba(0,113,227,.07)}
+.dragrow .rank{font-weight:800;color:var(--ink2);width:22px;text-align:center}
+.dragrow .grip{color:var(--ink2);cursor:grab;font-size:15px;line-height:1}
 code{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:.92em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 </style>
 </head>
@@ -261,7 +269,7 @@ function playerSurname(p){ if(!p) return ''; return p.surname || (p.name||'').sp
 function playerFirstName(p){ if(!p) return ''; return p.firstName || (p.name||'').split(' ')[0] || ''; }
 function playerName(p){ if(!p) return '—'; return p.name || ((p.surname||'')+' '+(p.firstName||'')).trim() || '—'; }
 function playerLabel(p){ if(!p) return '—'; const n=p.number?('#'+p.number+' '):''; return n+playerName(p); }
-function gradeColor(g){ const m={'A':'#1d9e75','A+':'#1d9e75','A-':'#1d9e75','B':'#0071e3','B+':'#0071e3','B-':'#0a84ff','C':'#ba7517','C+':'#ba7517','C-':'#cf8a2a','D':'#e24b4a','F':'#e24b4a'}; return m[g]||'#888780'; }
+function gradeColor(g){ const m={green:'#22c55e',purple:'#8b5cf6',red:'#ef4444',yellow:'#eab308',white:'#e5e7eb','A':'#1d9e75','A+':'#1d9e75','A-':'#1d9e75','B':'#0071e3','B+':'#0071e3','B-':'#0a84ff','C':'#ba7517','C+':'#ba7517','C-':'#cf8a2a','D':'#e24b4a','F':'#e24b4a'}; return m[g]||'#888780'; }
 
 function sectionTitle(num,title,desc,actions){
   return `<div class="sec-title">
@@ -329,6 +337,7 @@ CRM.store = (function(){
   function normalizePlayer(p){
     if(!p) return;
     if(p.skills===undefined) p.skills={skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0};
+    if(!p.eval||typeof p.eval!=='object'||Array.isArray(p.eval)) p.eval={};
     if(p.status===undefined) p.status='active';
     if(!p.name) p.name=((p.surname||'')+' '+(p.firstName||'')).trim();
   }
@@ -509,119 +518,216 @@ CRM.modules.dashboard={
 /* ===================================================================
    02 — SCOUTING (scoutDB = candidate database, NOT the team)
    =================================================================== */
+/* ---- evaluation model: data-driven categories→parameters per position (F/D/G), scale 1–5 ---- */
+const EVAL_MODEL={
+  F:{label:'Нападающий',cats:[
+    {key:'skating',label:'Катание',params:[['speed','Скорость'],['agility','Манёвренность'],['firststep','Первый шаг'],['balance','Баланс']]},
+    {key:'technique',label:'Техника',params:[['puck','Владение'],['pass','Пас'],['reception','Приём'],['shot','Бросок'],['deke','Обводка']]},
+    {key:'iq',label:'Мышление',params:[['vision','Видение'],['posit','Позиция'],['decisions','Решения'],['offpuck','Без шайбы']]},
+    {key:'offense',label:'Атака',params:[['finishing','Завершение'],['net','Игра на пятаке'],['conversion','Реализация']]},
+    {key:'defense',label:'Оборона',params:[['backcheck','Возврат'],['forecheck','Форчек'],['intercept','Перехваты']]},
+    {key:'compete',label:'Характер',params:[['battles','Единоборства'],['intensity','Интенсивность'],['discipline','Дисциплина']]}
+  ]},
+  D:{label:'Защитник',cats:[
+    {key:'skating',label:'Катание',params:[['speed','Скорость'],['backward','Спиной вперёд'],['mobility','Мобильность'],['gap','Gap-контроль']]},
+    {key:'defense',label:'Оборона',params:[['posit','Позиция'],['battles','Единоборства'],['boards','Игра у борта'],['blocks','Блокшоты']]},
+    {key:'breakout',label:'Первый пас',params:[['firstpass','Первый пас'],['exit','Выход из зоны'],['pressure','Под давлением']]},
+    {key:'offense',label:'Атака',params:[['join','Подключения'],['pointshot','Бросок от синей'],['pp','Большинство']]},
+    {key:'iq',label:'Мышление',params:[['reading','Чтение игры'],['decisions','Решения'],['positioning','Позиционирование']]},
+    {key:'compete',label:'Характер',params:[['toughness','Жёсткость'],['discipline','Дисциплина'],['leadership','Лидерство']]}
+  ]},
+  G:{label:'Вратарь',cats:[
+    {key:'technique',label:'Техника',params:[['stance','Стойка'],['butterfly','Butterfly'],['glove','Ловушка'],['blocker','Блин']]},
+    {key:'movement',label:'Перемещения',params:[['tpush','T-push'],['control','Контроль'],['recovery','Восстановление']]},
+    {key:'reading',label:'Чтение',params:[['shotread','Чтение броска'],['rebounds','Добивания'],['angles','Перекрытие углов']]},
+    {key:'mental',label:'Психология',params:[['focus','Концентрация'],['consistency','Стабильность'],['aftergoal','Игра после гола']]},
+    {key:'puck',label:'Игра с шайбой',params:[['stick','Клюшка'],['firstpass','Первый пас']]}
+  ]}
+};
+function posGroup(pos){ return pos==='G'?'G':(pos==='D'?'D':'F'); }
+function evalModelFor(pos){ return EVAL_MODEL[posGroup(pos)]; }
+/* eval is stored flat: p.eval['<catKey>.<paramKey>'] = 1..5 */
+function evalScore(p){
+  const model=evalModelFor(p&&p.pos); const ev=(p&&p.eval)||{}; const cats={}; let all=[];
+  model.cats.forEach(c=>{ const vals=c.params.map(pr=>+ev[c.key+'.'+pr[0]]||0).filter(v=>v>0); cats[c.key]=vals.length?avg(vals):0; all=all.concat(vals); });
+  return { overall: all.length?round1(avg(all)):0, cats, scored:all.length, total:model.cats.reduce((a,c)=>a+c.params.length,0) };
+}
+function isEvaluated(p){ return !!(p&&p.eval)&&Object.keys(p.eval).some(k=>+p.eval[k]>0); }
+function evColor(v){ v=+v||0; return v>=4?'#22c55e':(v>=3?'#eab308':(v>0?'#ef4444':'#e8e8ec')); }
+const GRADE_TIERS=[
+  {key:'green', label:'Зелёный',   color:'#22c55e', meaning:'Топ-5 лиги · ключевое звено'},
+  {key:'purple',label:'Фиолетовый',color:'#8b5cf6', meaning:'5–10 лучших в лиге'},
+  {key:'red',   label:'Красный',   color:'#ef4444', meaning:'Скорость / размер'},
+  {key:'yellow',label:'Жёлтый',    color:'#eab308', meaning:'Ролевой · меньшинство'},
+  {key:'white', label:'Белый',     color:'#e5e7eb', meaning:'Давление / роль'}
+];
+function gradeTier(key){ return GRADE_TIERS.find(t=>t.key===key)||null; }
+function gradeChip(key){ const t=gradeTier(key); if(!t) return '<span class="gchip" style="background:#e5e7eb;color:#666">— нет тира</span>'; const dark=(key==='white'||key==='yellow'); return '<span class="gchip" style="background:'+t.color+';color:'+(dark?'#0a0e17':'#fff')+'">'+esc(t.label)+'</span>'; }
+
 CRM.modules.scouting={
-  esc:esc,
+  esc:esc, _cmp:[], _drag:null,
   render(el,params){
-    const db=CRM.store.get('scoutDB')||[];
-    const pr=CRM.store.get('scoutPriorities')||{};
-    const fpos=params.pos||'';
-    let list=db.slice();
-    if(fpos) list=list.filter(p=>p.pos===fpos);
-    list.sort((a,b)=>(b.rating||0)-(a.rating||0));
+    const view=params.view||'list';
+    const tabs=[['list','Кандидаты'],['grades','Градация'],['priorities','Приоритеты'],['compare','Сравнение']];
+    const nav=`<div class="seg" style="margin-bottom:14px">${tabs.map(t=>`<button class="${view===t[0]?'active':''}" onclick="CRM.router.go('scouting',{view:'${t[0]}'})">${t[1]}</button>`).join('')}</div>`;
     el.innerHTML=sectionTitle('02','Скаутинг','База кандидатов на просмотр — отдельно от основной команды',
-      `<button class="btn" onclick="CRM.modules.scouting.priorities()">Приоритеты</button>
-       <button class="btn primary" onclick="CRM.modules.scouting.edit()">+ Кандидат</button>`)+
-    `<div class="seg" style="margin-bottom:14px">
-      ${['','C','LW','RW','D','G'].map(p=>`<button class="${fpos===p?'active':''}" onclick="CRM.router.go('scouting',${p?`{pos:'${p}'}`:'null'})">${p?POS_LABEL[p]:'All'}</button>`).join('')}
-    </div>
-    <div class="grid g3">
-    ${list.length?list.map(p=>`
-      <div class="card" style="cursor:pointer" onclick="CRM.modules.scouting.open('${p.id}')">
+      `<button class="btn primary" onclick="CRM.modules.scouting.edit()">+ Кандидат</button>`)+nav+
+      (view==='grades'?this.paneGrades():view==='priorities'?this.panePriorities():view==='compare'?this.paneCompare():this.paneList(params));
+    if(view==='compare') this._drawCompare();
+  },
+  /* ---------- LIST ---------- */
+  paneList(params){
+    const db=CRM.store.get('scoutDB')||[]; const fpos=params.pos||'';
+    let list=db.slice(); if(fpos) list=list.filter(p=>p.pos===fpos);
+    list.sort((a,b)=>evalScore(b).overall-evalScore(a).overall);
+    const filter=`<div class="seg" style="margin-bottom:14px">${['','C','LW','RW','D','G'].map(pp=>`<button class="${fpos===pp?'active':''}" onclick="CRM.router.go('scouting',{view:'list'${pp?",pos:'"+pp+"'":''}})">${pp?POS_LABEL[pp]:'All'}</button>`).join('')}</div>`;
+    if(!list.length) return filter+'<div class="empty card">База пуста. Добавьте кандидата.</div>';
+    return filter+`<div class="grid g3">${list.map(p=>{ const s=evalScore(p), ev=isEvaluated(p), t=gradeTier(p.grade);
+      return `<div class="card" style="cursor:pointer;border-left:3px solid ${t?t.color:'transparent'}" onclick="CRM.modules.scouting.open('${p.id}')">
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="grade" style="background:${gradeColor(p.grade)}">${esc(p.grade||'?')}</span>
-          <div style="min-width:0"><b>${esc(playerName(p))}</b><div class="muted" style="font-size:12px">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' л.':''}</div></div>
-          ${pr[p.id]?`<span class="pill accent" style="margin-left:auto">приоритет</span>`:''}
+          <div style="min-width:0;flex:1"><b>${esc(playerName(p))}</b><div class="muted" style="font-size:12px">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' л.':''}</div></div>
+          <div style="text-align:right"><div style="font-size:21px;font-weight:800;line-height:1">${ev?s.overall:'—'}</div><div class="muted" style="font-size:10px">/5</div></div>
         </div>
-        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;font-size:11px">
-          ${p.shot?`<span class="pill">shot ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h} cm</span>`:''}${p.w?`<span class="pill">${p.w} kg</span>`:''}${p.team?`<span class="pill">${esc(p.team)}</span>`:''}
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${gradeChip(p.grade)}<span class="pill ${ev?'good':'warn'}">${ev?'Оценён':'Не оценён'}</span>${p.team?`<span class="pill">${esc(p.team)}</span>`:''}
         </div>
-        ${p.note?`<p class="muted" style="margin-top:8px;font-size:12px">${esc(p.note).slice(0,90)}</p>`:''}
-      </div>`).join(''):'<div class="empty card" style="grid-column:1/-1">База пуста. Добавьте кандидата.</div>'}
+      </div>`; }).join('')}</div>`;
+  },
+  /* ---------- GRADES (color gradation) ---------- */
+  paneGrades(){
+    const db=CRM.store.get('scoutDB')||[];
+    const legend=`<div class="card" style="margin-bottom:14px"><b>Цветовая градация</b><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">${GRADE_TIERS.map(t=>`<div style="display:flex;align-items:center;gap:10px;font-size:13px"><span class="gdot" style="background:${t.color}"></span><b style="width:104px">${t.label}</b><span class="muted">${t.meaning}</span></div>`).join('')}</div></div>`;
+    const groups=GRADE_TIERS.map(t=>{ const members=db.filter(p=>p.grade===t.key).sort((a,b)=>evalScore(b).overall-evalScore(a).overall);
+      return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${t.color}"><div style="display:flex;align-items:center;gap:10px"><span class="gdot" style="background:${t.color}"></span><b>${t.label}</b><span class="muted" style="font-size:12px">${t.meaning}</span><span class="pill" style="margin-left:auto">${members.length}</span></div>
+      ${members.length?`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">${members.map(p=>`<button class="btn sm" onclick="CRM.modules.scouting.open('${p.id}')">${esc(playerName(p))} <span class="muted">${POS_LABEL[p.pos]||''} · ${isEvaluated(p)?evalScore(p).overall:'—'}</span></button>`).join('')}</div>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет игроков</p>'}</div>`; }).join('');
+    const ung=db.filter(p=>!gradeTier(p.grade));
+    const un=ung.length?`<div class="card" style="margin-bottom:12px"><b>Без градации</b> <span class="pill">${ung.length}</span><div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">${ung.map(p=>`<button class="btn sm" onclick="CRM.modules.scouting.open('${p.id}')">${esc(playerName(p))}</button>`).join('')}</div></div>`:'';
+    return legend+groups+un;
+  },
+  /* ---------- PRIORITIES (drag-drop per position) ---------- */
+  _prioList(group){
+    const db=CRM.store.get('scoutDB')||[]; const cands=db.filter(p=>posGroup(p.pos)===group);
+    const stored=(CRM.store.get('scoutPriorities')||{})[group]||[]; const byId={}; cands.forEach(p=>byId[p.id]=p);
+    const ordered=stored.map(id=>byId[id]).filter(Boolean);
+    const rest=cands.filter(p=>stored.indexOf(p.id)<0).sort((a,b)=>evalScore(b).overall-evalScore(a).overall);
+    return ordered.concat(rest);
+  },
+  panePriorities(){
+    const groups=[['F','Нападающие'],['D','Защитники'],['G','Вратари']];
+    return `<p class="muted" style="margin-bottom:12px;font-size:13px">Перетащите карточки, чтобы задать порядок приоритета по позиции. №1 — первый на просмотр/подписание.</p>`+groups.map(g=>{ const list=this._prioList(g[0]);
+      return `<div class="card" style="margin-bottom:14px"><b>${g[1]}</b>${list.length?`<div style="margin-top:10px" ondragover="event.preventDefault()">${list.map((p,i)=>`<div class="dragrow" draggable="true" ondragstart="CRM.modules.scouting.dragStart(event,'${g[0]}','${p.id}')" ondragover="CRM.modules.scouting.dragOver(event,this)" ondragleave="this.classList.remove('dragover')" ondrop="CRM.modules.scouting.drop(event,'${g[0]}','${p.id}',this)"><span class="rank">${i+1}</span><span class="grip">⠿</span>${gradeChip(p.grade)}<div style="flex:1;min-width:0"><b>${esc(playerName(p))}</b> <span class="muted" style="font-size:12px">${POS_LABEL[p.pos]||''}</span></div><b>${isEvaluated(p)?evalScore(p).overall:'—'}</b><button class="btn sm ghost" onclick="CRM.modules.scouting.open('${p.id}')">Открыть</button></div>`).join('')}</div>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет кандидатов этой позиции.</p>'}</div>`; }).join('');
+  },
+  dragStart(e,group,id){ this._drag={group:group,id:id}; try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}catch(_){} },
+  dragOver(e,row){ e.preventDefault(); if(row&&row.classList) row.classList.add('dragover'); },
+  drop(e,group,targetId,row){ e.preventDefault(); if(row&&row.classList) row.classList.remove('dragover');
+    const d=this._drag; if(!d||d.group!==group||d.id===targetId) return;
+    const full=this._prioList(group).map(p=>p.id); const from=full.indexOf(d.id); if(from>=0) full.splice(from,1);
+    const to=full.indexOf(targetId); full.splice(to<0?full.length:to,0,d.id);
+    const pr=CRM.store.get('scoutPriorities')||{}; pr[group]=full; CRM.store.set('scoutPriorities',pr); this._drag=null; CRM.router.render();
+  },
+  /* ---------- COMPARE ---------- */
+  setCmp(i,id){ this._cmp=this._cmp||[]; this._cmp[i]=id; CRM.router.render(); },
+  paneCompare(){
+    const db=CRM.store.get('scoutDB')||[]; this._cmp=this._cmp||[];
+    const pickers=`<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:14px">${[0,1,2,3].map(i=>`<select onchange="CRM.modules.scouting.setCmp(${i},this.value)" style="flex:1;min-width:150px"><option value="">Игрок ${i+1}…</option>${db.map(p=>`<option value="${p.id}" ${this._cmp[i]===p.id?'selected':''}>${esc(playerName(p))} (${POS_LABEL[p.pos]||''})</option>`).join('')}</select>`).join('')}</div>`;
+    const sel=this._cmp.map(id=>scoutById(id)).filter(Boolean);
+    if(sel.length<2) return pickers+'<div class="empty card">Выберите минимум 2 игроков для сравнения.</div>';
+    const sameGroup=sel.every(p=>posGroup(p.pos)===posGroup(sel[0].pos));
+    const head=`<tr><th>Параметр</th>${sel.map(p=>`<th>${esc(playerName(p))}</th>`).join('')}</tr>`;
+    let rows=`<tr><td>Позиция</td>${sel.map(p=>`<td>${POS_FULL[p.pos]||''}</td>`).join('')}</tr>`+
+      `<tr><td>Градация</td>${sel.map(p=>`<td>${gradeChip(p.grade)}</td>`).join('')}</tr>`+
+      `<tr><td>Статус</td>${sel.map(p=>`<td><span class="pill ${isEvaluated(p)?'good':'warn'}">${isEvaluated(p)?'Оценён':'Не оценён'}</span></td>`).join('')}</tr>`+
+      `<tr><td><b>Общий балл</b></td>${sel.map(p=>`<td><b style="font-size:15px">${isEvaluated(p)?evalScore(p).overall:'—'}</b></td>`).join('')}</tr>`;
+    let chart='';
+    if(sameGroup){ const model=evalModelFor(sel[0].pos);
+      rows+=model.cats.map(c=>`<tr><td><b>${esc(c.label)}</b></td>${sel.map(p=>{const s=evalScore(p);return `<td>${s.cats[c.key]?round1(s.cats[c.key]):'—'}</td>`;}).join('')}</tr>`+c.params.map(pr=>`<tr><td class="muted" style="padding-left:18px;font-size:12px">${esc(pr[1])}</td>${sel.map(p=>{const v=(p.eval||{})[c.key+'.'+pr[0]]||0;return `<td>${v||'—'}</td>`;}).join('')}</tr>`).join('')).join('');
+      chart=`<div class="card" style="margin-top:14px"><b>Радар по категориям</b><div class="chartbox" style="margin-top:8px"><canvas id="cmpRadar"></canvas></div></div>`;
+    } else { rows+=`<tr><td colspan="${sel.length+1}" class="muted" style="font-size:12px">Игроки разных позиций — детальные параметры не сравниваются. Выберите игроков одной позиции.</td></tr>`; }
+    return pickers+`<div class="card" style="padding:0;overflow:auto"><table>${head}${rows}</table></div>`+chart;
+  },
+  _drawCompare(){
+    const sel=(this._cmp||[]).map(id=>scoutById(id)).filter(Boolean); if(sel.length<2) return;
+    if(!sel.every(p=>posGroup(p.pos)===posGroup(sel[0].pos))) return;
+    const model=evalModelFor(sel[0].pos); const palette=['#0071e3','#e24b4a','#1d9e75','#ba7517'];
+    const datasets=sel.map((p,i)=>{ const s=evalScore(p); return {label:playerName(p),data:model.cats.map(c=>round1(s.cats[c.key]||0)),borderColor:palette[i%4],backgroundColor:palette[i%4]+'22',pointBackgroundColor:palette[i%4]}; });
+    makeChart('cmpRadar',{type:'radar',data:{labels:model.cats.map(c=>c.label),datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9}},pointLabels:{font:{family:'Inter',size:10}}}}}});
+  },
+  /* ---------- REPORT (collapsed/expanded) ---------- */
+  open(id){ const p=scoutById(id); if(!p) return; CRM.modal.open(CRM.modal.frame('Скаут-отчёт',this.reportHtml(p,'db'))); if(isEvaluated(p)) this._drawReportRadar(p,'scRadar'); },
+  reportHtml(p,src){
+    const ev=isEvaluated(p), s=evalScore(p), model=evalModelFor(p.pos), isTeam=(src==='team');
+    const head=`<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px"><h2 style="font-size:20px">${esc(playerName(p))}</h2>
+        <div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.team?'· '+esc(p.team):''}</div>
+        <div class="row" style="margin-top:8px;gap:6px">${gradeChip(p.grade)}<span class="pill ${ev?'good':'warn'}">${ev?'Оценён':'Не оценён'}</span>${p.shot?`<span class="pill">Хват ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h} см</span>`:''}${p.w?`<span class="pill">${p.w} кг</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}</div>
+      </div>
+      <div style="text-align:center"><div style="font-size:34px;font-weight:800;line-height:1">${ev?s.overall:'—'}</div><div class="muted" style="font-size:11px">общий балл / 5</div></div>
     </div>`;
+    const evalBody=ev?`<div class="grid g2" style="margin-top:16px">
+      <div class="card"><b>Профиль по категориям</b><div class="chartbox sm" style="margin-top:8px"><canvas id="scRadar"></canvas></div></div>
+      <div class="card"><b>Оценки</b><div class="muted" style="font-size:11px;margin-bottom:6px">${s.scored}/${s.total} параметров · разверните категорию для деталей</div>
+      ${model.cats.map(c=>{ const ca=s.cats[c.key]||0; return `<details class="cat"><summary>${esc(c.label)}<span class="bar" style="flex:0 0 80px"><i style="width:${ca/5*100}%;background:${evColor(ca)}"></i></span><span class="ca">${ca?round1(ca):'—'}</span></summary><div class="catbody">${c.params.map(pr=>{ const v=(p.eval||{})[c.key+'.'+pr[0]]||0; return `<div class="evrow"><span class="lbl">${esc(pr[1])}</span><span class="bar"><i style="width:${v/5*100}%;background:${evColor(v)}"></i></span><span class="vv">${v||'—'}</span></div>`; }).join('')}</div></details>`; }).join('')}
+      </div></div>`:`<div class="card" style="margin-top:16px"><div class="empty">Игрок ещё не оценён. Нажмите «Оценить».</div></div>`;
+    const gk=p.gkNotes?`<div class="card" style="margin-top:14px"><b>Заметки по вратарю</b><p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(p.gkNotes)}</p></div>`:'';
+    const note=p.note?`<div class="card" style="margin-top:14px"><b>Заключение скаута</b><p style="margin-top:6px;white-space:pre-wrap">${esc(p.note)}</p></div>`:'';
+    const actions=isTeam
+      ?`<button class="btn primary" onclick="CRM.modules.scouting.evaluate('${p.id}','team')">Оценить</button><button class="btn" onclick="CRM.modules.profiles.edit('${p.id}')">Редактировать</button>`
+      :`<button class="btn primary" onclick="CRM.modules.scouting.evaluate('${p.id}','db')">Оценить</button><button class="btn" onclick="CRM.modules.scouting.toTeam('${p.id}')">→ В команду</button><button class="btn" onclick="CRM.modules.scouting.edit('${p.id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.scouting.del('${p.id}')">Удалить</button>`;
+    return head+evalBody+gk+note+`<div class="row" style="margin-top:16px">${actions}</div>`;
   },
-  open(id){
-    const p=scoutById(id); if(!p) return;
-    const sk=p.skills||{}; const order=[['skating','Skating'],['size','Size'],['iq','Hockey IQ'],['puck','Puck'],['shot','Shot'],['offense','Offense'],['defense','Defense']];
-    const pr=CRM.store.get('scoutPriorities')||{};
-    CRM.modal.open(CRM.modal.frame('Скаут-отчёт',`
-      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
-        <span class="grade" style="background:${gradeColor(p.grade)};width:48px;height:48px;font-size:18px">${esc(p.grade||'?')}</span>
-        <div style="flex:1;min-width:200px">
-          <h2 style="font-size:20px">${esc(playerName(p))}</h2>
-          <div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.team?'· '+esc(p.team):''}</div>
-          <div class="row" style="margin-top:8px;gap:6px">
-            ${p.shot?`<span class="pill">Хват ${p.shot}</span>`:''}${p.h?`<span class="pill">${p.h} см</span>`:''}${p.w?`<span class="pill">${p.w} кг</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn ${pr[p.id]?'primary':''} sm" onclick="CRM.modules.scouting.togglePriority('${p.id}')">${pr[p.id]?'★ В приоритете':'☆ В приоритет'}</button>
-          <button class="btn sm" onclick="CRM.modules.scouting.toTeam('${p.id}')">→ В команду</button>
-        </div>
-      </div>
-      <div class="grid g2" style="margin-top:18px">
-        <div class="card"><b>Профиль навыков</b><div class="chartbox sm" style="margin-top:8px"><canvas id="scRadar"></canvas></div></div>
-        <div class="card"><b>Оценки</b><div style="margin-top:10px">
-          ${order.map(([k,l])=>`<div style="margin-bottom:8px"><div style="display:flex;font-size:12px"><span>${l}</span><b style="margin-left:auto">${num(sk[k])}/10</b></div><div class="bar"><i style="width:${num(sk[k])*10}%"></i></div></div>`).join('')}
-        </div></div>
-      </div>
-      ${p.gkNotes?`<div class="card" style="margin-top:14px"><b>Goalie notes</b><p class="muted" style="margin-top:6px;white-space:pre-wrap">${esc(p.gkNotes)}</p></div>`:''}
-      ${p.note?`<div class="card" style="margin-top:14px"><b>Заключение скаута</b><p style="margin-top:6px;white-space:pre-wrap">${esc(p.note)}</p></div>`:''}
-      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.scouting.edit('${p.id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.scouting.del('${p.id}')">Удалить</button></div>
-    `));
-    const vals=order.map(([k])=>num(sk[k]));
-    makeChart('scRadar',{type:'radar',data:{labels:order.map(o=>o[1]),datasets:[{data:vals,borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.15)',pointBackgroundColor:'#0071e3'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{family:'Inter',size:10}}}}}});
+  _drawReportRadar(p,cid){ const s=evalScore(p), model=evalModelFor(p.pos);
+    makeChart(cid,{type:'radar',data:{labels:model.cats.map(c=>c.label),datasets:[{data:model.cats.map(c=>round1(s.cats[c.key]||0)),borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.15)',pointBackgroundColor:'#0071e3'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9}},pointLabels:{font:{family:'Inter',size:10}}}}}});
   },
-  togglePriority(id){ const pr=CRM.store.get('scoutPriorities')||{}; if(pr[id]) delete pr[id]; else pr[id]=true; CRM.store.set('scoutPriorities',pr); CRM.toast('Приоритеты обновлены'); this.open(id); },
-  toTeam(id){
-    const p=scoutById(id); if(!p) return;
-    const scout=CRM.store.get('scout')||[];
-    const np=Object.assign({},p,{id:uuid(),status:'active'}); scout.push(np); CRM.store.set('scout',scout);
-    CRM.toast(playerName(p)+' добавлен(а) в команду'); CRM.modal.close();
-  },
+  /* ---------- BASIC INFO FORM ---------- */
   edit(id){
     const p=id?scoutById(id):{};
-    const sk=(p&&p.skills)||{};
     const f=(n,l,v,t)=>`<div style="flex:1;min-width:120px"><label class="fld">${l}</label><input id="sc_${n}" value="${esc(v==null?'':v)}" ${t?'type="'+t+'"':''}></div>`;
-    const sf=(n,l)=>`<div style="flex:1;min-width:90px"><label class="fld">${l}</label><input id="sk_${n}" type="number" min="0" max="10" value="${num(sk[n])}"></div>`;
     CRM.modal.open(CRM.modal.frame(id?'Редактировать кандидата':'Новый кандидат',`
       <div class="row">${f('surname','Фамилия',p&&p.surname)}${f('firstName','Имя',p&&p.firstName)}${f('number','Номер',p&&p.number,'number')}</div>
       <div class="row" style="margin-top:10px">
-        <div style="flex:1"><label class="fld">Position</label><select id="sc_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
-        <div style="flex:1"><label class="fld">Shot</label><select id="sc_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Left</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Right</option></select></div>
-        ${f('age','Возраст',p&&p.age,'number')}${f('grade','Грейд (A/B/C/D)',p&&p.grade)}
+        <div style="flex:1"><label class="fld">Позиция</label><select id="sc_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="fld">Хват</label><select id="sc_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Left</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Right</option></select></div>
+        ${f('age','Возраст',p&&p.age,'number')}
       </div>
       <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}${f('team','Текущий клуб',p&&p.team)}${f('agent','Агент',p&&p.agent)}</div>
-      <div style="margin-top:14px"><b>Оценки навыков (0–10)</b><div class="row" style="margin-top:8px">${sf('skating','Skating')}${sf('size','Size')}${sf('iq','IQ')}${sf('puck','Puck')}</div>
-      <div class="row" style="margin-top:8px">${sf('shot','Shot')}${sf('offense','Offense')}${sf('defense','Defense')}</div></div>
-      <div style="margin-top:12px"><label class="fld">Заключение скаута</label><textarea id="sc_note" rows="3">${esc(p&&p.note||'')}</textarea></div>
-      ${(p&&p.pos==='G')||!id?`<div style="margin-top:10px"><label class="fld">Goalie notes</label><textarea id="sc_gkNotes" rows="2">${esc(p&&p.gkNotes||'')}</textarea></div>`:''}
+      <div style="margin-top:12px"><label class="fld">Градация (цветовой тир)</label><select id="sc_grade"><option value="">— нет</option>${GRADE_TIERS.map(t=>`<option value="${t.key}" ${p&&p.grade===t.key?'selected':''}>${t.label} · ${t.meaning}</option>`).join('')}</select></div>
+      <div style="margin-top:12px"><label class="fld">Заключение скаута</label><textarea id="sc_note" rows="3">${esc((p&&p.note)||'')}</textarea></div>
+      <div style="margin-top:10px"><label class="fld">Заметки по вратарю (если вратарь)</label><textarea id="sc_gkNotes" rows="2">${esc((p&&p.gkNotes)||'')}</textarea></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.scouting.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
     `));
   },
   save(id){
-    const v=(n)=>{const e=document.getElementById('sc_'+n);return e?e.value.trim():'';};
-    const sv=(n)=>num((document.getElementById('sk_'+n)||{}).value);
-    const db=CRM.store.get('scoutDB')||[];
-    let p=id?db.find(x=>x.id===id):null;
-    const data={ surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),
-      age:v('age'),grade:v('grade').toUpperCase(),h:v('h'),w:v('w'),team:v('team'),agent:v('agent'),note:v('note'),
-      gkNotes:(document.getElementById('sc_gkNotes')||{}).value||'',
-      skills:{skating:sv('skating'),size:sv('size'),iq:sv('iq'),puck:sv('puck'),shot:sv('shot'),offense:sv('offense'),defense:sv('defense')} };
+    const v=(n)=>{const e=document.getElementById('sc_'+n);return e?(typeof e.value==='string'?e.value.trim():e.value):'';};
+    const db=CRM.store.get('scoutDB')||[]; let p=id?db.find(x=>x.id===id):null;
+    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),age:v('age'),h:v('h'),w:v('w'),team:v('team'),agent:v('agent'),grade:v('grade'),note:v('note'),gkNotes:v('gkNotes')};
     data.name=(data.surname+' '+data.firstName).trim();
-    data.rating=round1(avg(Object.values(data.skills)));
     if(!data.surname&&!data.firstName){ CRM.toast('Укажите имя'); return; }
-    if(p){ Object.assign(p,data); } else { p=Object.assign({id:'sd_'+uuid().slice(3)},data); db.push(p); }
+    if(p){ Object.assign(p,data); } else { p=Object.assign({id:'sd_'+uuid().slice(3),eval:{}},data); db.push(p); }
     CRM.store.set('scoutDB',db); CRM.modal.close(); CRM.router.render(); CRM.toast('Кандидат сохранён');
   },
-  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить кандидата из базы?',danger:true,onOk:()=>{ let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; delete pr[id]; CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); }}); },
-  priorities(){
-    const pr=CRM.store.get('scoutPriorities')||{}; const ids=Object.keys(pr);
-    const list=ids.map(scoutById).filter(Boolean).sort((a,b)=>(b.rating||0)-(a.rating||0));
-    CRM.modal.open(CRM.modal.frame('Приоритетные цели скаутинга',
-      list.length?`<table><thead><tr><th>Grade</th><th>Игрок</th><th>Pos</th><th class="num">Rating</th><th></th></tr></thead><tbody>
-      ${list.map(p=>`<tr><td><span class="grade" style="background:${gradeColor(p.grade)}">${esc(p.grade||'?')}</span></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td><td class="num">${p.rating||0}</td><td><button class="btn sm" onclick="CRM.modules.scouting.open('${p.id}')">Открыть</button></td></tr>`).join('')}
-      </tbody></table>`:'<div class="empty">Нет приоритетных целей. Отметьте кандидатов звёздочкой.</div>'));
-  }
+  /* ---------- EVALUATION FORM (position-specific) ---------- */
+  evaluate(id,src){
+    src=src||'db'; const p=(src==='team'?playerById(id):scoutById(id)); if(!p) return;
+    const model=evalModelFor(p.pos); const ev=p.eval||{};
+    const body=model.cats.map(c=>`<div class="card" style="margin-bottom:10px"><b>${esc(c.label)}</b><div style="margin-top:8px">${c.params.map(pr=>{ const k=c.key+'.'+pr[0]; const cur=ev[k]||0; return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="flex:1;font-size:13px">${esc(pr[1])}</span><select id="ev_${k}" style="width:80px">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${String(cur)===String(n)?'selected':''}>${n||'—'}</option>`).join('')}</select></div>`; }).join('')}</div></div>`).join('');
+    CRM.modal.open(CRM.modal.frame('Оценка · '+playerName(p)+' ('+model.label+')',
+      `<p class="muted" style="font-size:12px;margin-bottom:10px">Шкала 1–5 (0 = не оценено). Общий балл = среднее всех заполненных параметров.</p>${body}<div class="row" style="margin-top:6px"><button class="btn primary" onclick="CRM.modules.scouting.saveEval('${id}','${src}')">Сохранить оценку</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
+  },
+  saveEval(id,src){
+    src=src||'db'; const key=(src==='team')?'scout':'scoutDB';
+    const arr=CRM.store.get(key)||[]; const p=arr.find(x=>x.id===id); if(!p) return;
+    const model=evalModelFor(p.pos); const ev={};
+    model.cats.forEach(c=>c.params.forEach(pr=>{ const k=c.key+'.'+pr[0]; const e=document.getElementById('ev_'+k); const val=e?+e.value:0; if(val>0) ev[k]=val; }));
+    p.eval=ev; p.rating=evalScore(p).overall; CRM.store.set(key,arr); CRM.router.render();
+    if(src==='team') CRM.modules.profiles.open(id); else this.open(id);
+    CRM.toast('Оценка сохранена');
+  },
+  /* ---------- PROMOTE TO TEAM ---------- */
+  toTeam(id){
+    const p=scoutById(id); if(!p) return;
+    CRM.ui.confirm({title:'В команду',message:playerName(p)+' будет добавлен(а) в состав (с сохранением оценки).',okLabel:'Добавить',onOk:()=>{ const scout=CRM.store.get('scout')||[]; scout.push(Object.assign({},p,{id:uuid(),status:'active'})); CRM.store.set('scout',scout); CRM.modal.close(); CRM.toast(playerName(p)+' добавлен(а) в команду'); }});
+  },
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить кандидата из базы?',danger:true,onOk:()=>{ let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; Object.keys(pr).forEach(g=>{pr[g]=(pr[g]||[]).filter(x=>x!==id);}); CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); }}); }
 };
 
 /* ===================================================================
@@ -650,7 +756,7 @@ CRM.modules.profiles={
     const ag=CRM.modules.matches.playerAgg(id);
     const head=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
       <div style="width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${esc(p.number||'#')}</div>
-      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· shot '+p.shot:''}</div></div>
+      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· shot '+p.shot:''}</div><div class="row" style="margin-top:6px;gap:6px">${p.contract?`<span class="pill">${esc(p.contract)}</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}</div></div>
       <span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span>
     </div>
     <div class="tabsrow">
@@ -676,6 +782,7 @@ CRM.modules.profiles={
           <div class="kpi"><div class="v">${ag.pm>=0?'+':''}${ag.pm}</div><div class="l">+/−</div></div>
         </div>
       </div>
+      ${(function(){const ev=isEvaluated(p),s=evalScore(p),model=evalModelFor(p.pos);return `<div class="card" style="margin-top:14px"><div style="display:flex;align-items:center"><b>Скаутская оценка</b><span style="margin-left:auto;font-size:20px;font-weight:800">${ev?s.overall:'—'}<span class="muted" style="font-size:11px">&nbsp;/5</span></span></div>${ev?`<div class="grid g2" style="margin-top:10px"><div class="chartbox sm"><canvas id="pfRadar"></canvas></div><div>${model.cats.map(c=>`<div class="evrow"><span class="lbl">${esc(c.label)}</span><span class="bar"><i style="width:${(s.cats[c.key]||0)/5*100}%;background:${evColor(s.cats[c.key]||0)}"></i></span><span class="vv">${s.cats[c.key]?round1(s.cats[c.key]):'—'}</span></div>`).join('')}</div></div>`:'<p class="muted" style="margin-top:6px">Игрок ещё не оценён скаутами.</p>'}<div class="row" style="margin-top:10px"><button class="btn sm" onclick="CRM.modules.scouting.evaluate('${id}','team')">Оценить</button></div></div>`;})()}
       <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.profiles.edit('${id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.profiles.del('${id}')">Удалить из команды</button></div>`;
     } else if(tab==='matches'){
       body=CRM.modules.matches.profilePane(id);
@@ -692,6 +799,7 @@ CRM.modules.profiles={
       </div>`;
     }
     CRM.modal.open(CRM.modal.frame('Профиль игрока',head+body));
+    if(tab==='overview'&&isEvaluated(p)) CRM.modules.scouting._drawReportRadar(p,'pfRadar');
   },
   edit(id){
     const p=id?playerById(id):{};
@@ -706,6 +814,10 @@ CRM.modules.profiles={
       <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}
         <div style="flex:1"><label class="fld">Статус</label><select id="pf_status">${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${p&&p.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>
       </div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1"><label class="fld">Тип контракта</label><select id="pf_contract">${['','Тренировочный','Двусторонний','Односторонний','Молодёжный','Просмотровый'].map(c=>`<option value="${c}" ${p&&p.contract===c?'selected':''}>${c||'—'}</option>`).join('')}</select></div>
+        ${f('agent','Агент',p&&p.agent)}
+      </div>
       <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="pf_note" rows="2">${esc(p&&p.note||'')}</textarea></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.profiles.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
     `));
@@ -714,10 +826,10 @@ CRM.modules.profiles={
     const v=(n)=>{const e=document.getElementById('pf_'+n);return e?e.value.trim():'';};
     const scout=CRM.store.get('scout')||[];
     let p=id?scout.find(x=>x.id===id):null;
-    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),age:v('age'),h:v('h'),w:v('w'),status:v('status'),note:v('note')};
+    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),age:v('age'),h:v('h'),w:v('w'),status:v('status'),contract:v('contract'),agent:v('agent'),note:v('note')};
     data.name=(data.surname+' '+data.firstName).trim();
     if(!data.surname&&!data.firstName){ CRM.toast('Укажите имя'); return; }
-    if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0}},data); scout.push(p); }
+    if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),eval:{},skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0}},data); scout.push(p); }
     CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
   del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить игрока из команды?',danger:true,onOk:()=>{ let scout=CRM.store.get('scout')||[]; scout=scout.filter(p=>p.id!==id); CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалён'); }}); }
