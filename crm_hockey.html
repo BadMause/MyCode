@@ -294,6 +294,17 @@ function playerFirstName(p){ if(!p) return ''; return p.firstName || (p.name||''
 function playerName(p){ if(!p) return '—'; return p.name || ((p.surname||'')+' '+(p.firstName||'')).trim() || '—'; }
 function playerLabel(p){ if(!p) return '—'; const n=p.number?('#'+p.number+' '):''; return n+playerName(p); }
 function gradeColor(g){ const m={green:'#22c55e',purple:'#8b5cf6',red:'#ef4444',yellow:'#eab308',white:'#e5e7eb','A':'#1d9e75','A+':'#1d9e75','A-':'#1d9e75','B':'#0071e3','B+':'#0071e3','B-':'#0a84ff','C':'#ba7517','C+':'#ba7517','C-':'#cf8a2a','D':'#e24b4a','F':'#e24b4a'}; return m[g]||'#888780'; }
+/* age from DOB + contract-expiry color gradation (analogous to the Scout grade tiers) */
+function ageFromDob(dob){ const d=parseLocalDate(dob); if(!d) return null; const t=new Date(); let a=t.getFullYear()-d.getFullYear(); const m=t.getMonth()-d.getMonth(); if(m<0||(m===0&&t.getDate()<d.getDate()))a--; return a>=0&&a<120?a:null; }
+function monthsUntil(s){ const d=parseLocalDate(s); if(!d) return null; return (d-new Date())/(1000*60*60*24*30.44); }
+function contractTier(exp){ const m=monthsUntil(exp);
+  if(m==null) return {key:'none',color:'#c9c9cf',label:'Без даты'};
+  if(m<0)   return {key:'expired',color:'#7a1f1f',label:'Истёк'};
+  if(m<=3)  return {key:'urgent', color:'#e24b4a',label:'< 3 мес'};
+  if(m<=12) return {key:'soon',   color:'#ba7517',label:'< 1 года'};
+  if(m<=24) return {key:'mid',    color:'#0071e3',label:'1–2 года'};
+  return            {key:'long',   color:'#1d9e75',label:'> 2 лет'}; }
+function contractChip(exp){ const t=contractTier(exp); const fg=t.key==='none'?'#6e6e73':t.color; return `<span class="pill" style="border-color:transparent;background:${t.color}22;color:${fg}"><span class="gdot" style="width:9px;height:9px;background:${t.color}"></span>${t.label}</span>`; }
 
 function sectionTitle(num,title,desc,actions){
   return `<div class="sec-title">
@@ -323,7 +334,7 @@ CRM.store = (function(){
       preseason:{ plan:[], details:[], fatigue:[], seasonPlan:'', seasonDetails:'', cal:{start:'',end:'',seasonEnd:''} },
       notes:[],
       settings:{ coach:'', team:'Моя команда', league:'', season:'2025/26', norms:defaultNorms() },
-      scoutTarget:{}, scoutPriorities:{},
+      scoutTarget:{}, scoutPriorities:{}, scoutLineup:{},
       state:{ seedOpp10:false }
     };
   }
@@ -368,6 +379,8 @@ CRM.store = (function(){
     if(!p.eval||typeof p.eval!=='object'||Array.isArray(p.eval)) p.eval={};
     if(p.status===undefined) p.status='active';
     if(!p.name) p.name=((p.surname||'')+' '+(p.firstName||'')).trim();
+    if(p.dob===undefined) p.dob='';
+    if(p.contractExpiry===undefined) p.contractExpiry='';
   }
   function load(){
     try{ const raw=localStorage.getItem(CRM.LSKEY); data = raw? migrate(JSON.parse(raw)) : defaults(); }
@@ -593,14 +606,14 @@ function gradeTier(key){ return GRADE_TIERS.find(t=>t.key===key)||null; }
 function gradeChip(key){ const t=gradeTier(key); if(!t) return '<span class="gchip" style="background:#e5e7eb;color:#666">— нет тира</span>'; const dark=(key==='white'||key==='yellow'); return '<span class="gchip" style="background:'+t.color+';color:'+(dark?'#0a0e17':'#fff')+'">'+esc(t.label)+'</span>'; }
 
 CRM.modules.scouting={
-  esc:esc, _cmp:[], _drag:null,
+  esc:esc, _cmp:[], _drag:null, _selEst:null, _dragEst:null,
   render(el,params){
     const view=params.view||'list';
-    const tabs=[['list','Кандидаты'],['grades','Градация'],['priorities','Приоритеты'],['compare','Сравнение']];
+    const tabs=[['list','Кандидаты'],['grades','Градация'],['priorities','Приоритеты'],['estimated','Примерный состав'],['compare','Сравнение']];
     const nav=`<div class="seg" style="margin-bottom:14px">${tabs.map(t=>`<button class="${view===t[0]?'active':''}" onclick="CRM.router.go('scouting',{view:'${t[0]}'})">${t[1]}</button>`).join('')}</div>`;
     el.innerHTML=sectionTitle('02','Скаутинг','База кандидатов на просмотр — отдельно от основной команды',
       `<button class="btn primary" onclick="CRM.modules.scouting.edit()">+ Кандидат</button>`)+nav+
-      (view==='grades'?this.paneGrades():view==='priorities'?this.panePriorities():view==='compare'?this.paneCompare():this.paneList(params));
+      (view==='grades'?this.paneGrades():view==='priorities'?this.panePriorities():view==='estimated'?this.paneEstimated():view==='compare'?this.paneCompare():this.paneList(params));
     if(view==='compare') this._drawCompare();
   },
   /* ---------- LIST ---------- */
@@ -755,7 +768,32 @@ CRM.modules.scouting={
     const p=scoutById(id); if(!p) return;
     CRM.ui.confirm({title:'В команду',message:playerName(p)+' будет добавлен(а) в состав (с сохранением оценки).',okLabel:'Добавить',onOk:()=>{ const scout=CRM.store.get('scout')||[]; scout.push(Object.assign({},p,{id:uuid(),status:'active'})); CRM.store.set('scout',scout); CRM.modal.close(); CRM.toast(playerName(p)+' добавлен(а) в команду'); }});
   },
-  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить кандидата из базы?',danger:true,onOk:()=>{ let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; Object.keys(pr).forEach(g=>{pr[g]=(pr[g]||[]).filter(x=>x!==id);}); CRM.store.set('scoutPriorities',pr); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); }}); }
+  del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить кандидата из базы?',danger:true,onOk:()=>{ let db=CRM.store.get('scoutDB')||[]; db=db.filter(p=>p.id!==id); CRM.store.set('scoutDB',db); const pr=CRM.store.get('scoutPriorities')||{}; Object.keys(pr).forEach(g=>{pr[g]=(pr[g]||[]).filter(x=>x!==id);}); CRM.store.set('scoutPriorities',pr); const sl=CRM.store.get('scoutLineup')||{}; Object.keys(sl).forEach(k=>{ if(sl[k]===id) delete sl[k]; }); CRM.store.set('scoutLineup',sl); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалено'); }}); },
+  /* ---------- ESTIMATED COMPOSITION (assign candidates to a formation) ---------- */
+  _estEligible(key,id){ const p=scoutById(id); if(!p) return false; if(key[0]==='g') return p.pos==='G'; if(key[0]==='d') return p.pos==='D'; return p.pos!=='G'; },
+  _estSlot(key){
+    const place=CRM.store.get('scoutLineup')||{}; const id=place[key]; const p=id?scoutById(id):null;
+    const elig=this._selEst&&!id&&this._estEligible(key,this._selEst); const picked=this._selEst&&id===this._selEst;
+    return `<div class="rslot${id?' filled':''}${elig?' eligible':''}${picked?' picked':''}" ondragover="CRM.modules.scouting.estSlotOver(event,this)" ondragleave="this.classList.remove('dragover')" ondrop="CRM.modules.scouting.estSlotDrop(event,'${key}',this)" onclick="CRM.modules.scouting.estSlotClick('${key}')" ${p?`draggable="true" ondragstart="CRM.modules.scouting.estDragStart(event,'${id}')"`:''}><span class="pos">${ROSTER_SLOTS.label(key)}</span>${p?`<span class="pl">${esc(playerSurname(p))} <span class="muted" style="font-weight:600">${POS_LABEL[p.pos]||''}</span></span><button class="x" title="Убрать" onclick="event.stopPropagation();CRM.modules.scouting.estAssign('${key}','')">×</button>`:`<span class="pl muted">—</span>`}</div>`;
+  },
+  paneEstimated(){
+    const db=CRM.store.get('scoutDB')||[]; const place=CRM.store.get('scoutLineup')||{}; const used=Object.values(place).filter(Boolean);
+    const fwd=`<div class="ice"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:6px">НАПАДЕНИЕ</div>${[1,2,3,4].map(n=>`<div class="rline">${['L','C','R'].map(pp=>this._estSlot('f'+n+pp)).join('')}</div>`).join('')}</div>`;
+    const def=`<div class="ice"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:6px">ЗАЩИТА</div>${[1,2,3,4].map(n=>`<div class="rline">${['L','R'].map(pp=>this._estSlot('d'+n+pp)).join('')}</div>`).join('')}<div class="muted" style="font-size:11px;font-weight:700;margin:8px 0 6px">ВРАТАРИ</div><div class="rline">${ROSTER_SLOTS.gk.map(g=>this._estSlot(g)).join('')}</div></div>`;
+    const grp=(title,filt)=>{ const l=db.filter(p=>filt(p)&&used.indexOf(p.id)<0).sort((a,b)=>evalScore(b).overall-evalScore(a).overall); return `<div style="margin-bottom:8px"><span class="muted" style="font-size:11px;font-weight:700">${title}</span><div class="poolzone" ondragover="event.preventDefault()" ondrop="CRM.modules.scouting.estPoolDrop(event)">${l.length?l.map(p=>`<span class="pchip${this._selEst===p.id?' sel':''}" draggable="true" ondragstart="CRM.modules.scouting.estDragStart(event,'${p.id}')" onclick="CRM.modules.scouting.estPoolClick('${p.id}')">${gradeChip(p.grade)} ${esc(playerName(p))} <span class="muted">${POS_LABEL[p.pos]||''} · ${isEvaluated(p)?evalScore(p).overall:'—'}</span></span>`).join(''):'<span class="muted" style="font-size:12px">—</span>'}</div></div>`; };
+    return `<p class="muted" style="font-size:13px;margin-bottom:10px">Разместите кандидатов из базы скаутинга по позициям предполагаемого состава. Перетащите карточку на ячейку или кликните кандидата, затем ячейку. Данные хранятся отдельно (<code>scoutLineup</code>) и не влияют на основной состав.</p>
+      <div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn" onclick="CRM.modules.scouting.estClear()">Очистить</button></div>
+      <div class="grid g2">${fwd}${def}</div>
+      <div class="card" style="margin-top:14px"><b>Кандидаты</b> <span class="muted" style="font-size:12px">(не размещённые; по амплуа и оценке)</span>${grp('Нападающие',p=>p.pos!=='G'&&p.pos!=='D')}${grp('Защитники',p=>p.pos==='D')}${grp('Вратари',p=>p.pos==='G')}</div>`;
+  },
+  estAssign(key,id){ const place=CRM.store.get('scoutLineup')||{}; if(id){ for(const k in place){ if(place[k]===id&&k!==key) delete place[k]; } place[key]=id; } else { delete place[key]; } CRM.store.set('scoutLineup',place); this._selEst=null; CRM.router.render(); },
+  estPoolClick(id){ this._selEst=(this._selEst===id?null:id); CRM.router.render(); },
+  estSlotClick(key){ const place=CRM.store.get('scoutLineup')||{}; if(this._selEst){ if(this._selEst===place[key]){ this._selEst=null; CRM.router.render(); return; } if(this._estEligible(key,this._selEst)){ this.estAssign(key,this._selEst); } else CRM.toast('Кандидат не подходит на эту позицию'); return; } if(place[key]){ this._selEst=place[key]; CRM.router.render(); } },
+  estDragStart(e,id){ this._dragEst=id; try{e.dataTransfer.setData('text/plain',id);e.dataTransfer.effectAllowed='move';}catch(_){} },
+  estSlotOver(e,el){ e.preventDefault(); if(el&&el.classList) el.classList.add('dragover'); },
+  estSlotDrop(e,key,el){ e.preventDefault(); if(el&&el.classList) el.classList.remove('dragover'); const id=this._dragEst; this._dragEst=null; if(!id) return; if(!this._estEligible(key,id)){ CRM.toast('Кандидат не подходит на эту позицию'); return; } this.estAssign(key,id); },
+  estPoolDrop(e){ e.preventDefault(); const id=this._dragEst; this._dragEst=null; if(!id) return; const place=CRM.store.get('scoutLineup')||{}; for(const k in place){ if(place[k]===id) delete place[k]; } CRM.store.set('scoutLineup',place); CRM.router.render(); },
+  estClear(){ CRM.ui.confirm({title:'Очистить',message:'Очистить предполагаемый состав?',danger:true,okLabel:'Очистить',onOk:()=>{ CRM.store.set('scoutLineup',{}); this._selEst=null; CRM.router.render(); CRM.toast('Очищено'); }}); }
 };
 
 /* ===================================================================
@@ -771,29 +809,49 @@ CRM.modules.profiles={
     el.innerHTML=sectionTitle('03','Игроки команды','Профили, статистика и медкарта',
       `<button class="btn primary" onclick="CRM.modules.profiles.edit()">+ Игрок</button>`)+
     `<div class="seg" style="margin-bottom:14px">${['','G','D','C','LW','RW'].map(p=>`<button class="${fpos===p?'active':''}" onclick="CRM.router.go('profiles',${p?`{pos:'${p}'}`:'null'})">${p?POS_LABEL[p]:'All'}</button>`).join('')}</div>
-    <div class="card" style="padding:0">${list.length?`<table><thead><tr><th>#</th><th>Игрок</th><th>Pos</th><th class="num">Возр.</th><th>Shot</th><th class="num">GP</th><th class="num">P</th><th>Status</th></tr></thead><tbody>
-      ${list.map(p=>{const ag=CRM.modules.matches.playerAgg(p.id);return `<tr style="cursor:pointer" onclick="CRM.modules.profiles.open('${p.id}')">
-        <td><b>${esc(p.number||'')}</b></td><td><b>${esc(playerName(p))}</b></td><td>${POS_LABEL[p.pos]||''}</td>
-        <td class="num">${esc(p.age||'')}</td><td>${p.shot||''}</td><td class="num">${ag.gp}</td><td class="num"><b>${ag.pts}</b></td>
-        <td><span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span></td></tr>`;}).join('')}
-    </tbody></table>`:'<div class="empty">Команда пуста. Добавьте игроков или перенесите из скаутинга.</div>'}</div>`;
+    ${list.length?`<div class="grid g3">${list.map(p=>{const ag=CRM.modules.matches.playerAgg(p.id);const t=contractTier(p.contractExpiry);const age=ageFromDob(p.dob);return `<div class="card" style="cursor:pointer;border-left:3px solid ${t.color}" onclick="CRM.modules.profiles.open('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px">${esc(p.number||'#')}</div>
+        <div style="min-width:0;flex:1"><b>${esc(playerName(p))}</b><div class="muted" style="font-size:12px">${POS_FULL[p.pos]||''}${age!=null?' · '+age+' л.':''} · ${p.shot||'—'}</div></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${contractChip(p.contractExpiry)}${p.contract?`<span class="pill">${esc(p.contract)}</span>`:''}</div>
+      <div class="grid g3" style="margin-top:10px;gap:6px">
+        <div class="kpi" style="padding:8px 10px"><div class="v" style="font-size:16px">${ag.gp}</div><div class="l">GP</div></div>
+        <div class="kpi" style="padding:8px 10px"><div class="v" style="font-size:16px">${ag.pts}</div><div class="l">Pts</div></div>
+        <div class="kpi" style="padding:8px 10px"><div class="v" style="font-size:16px">${ag.avgRating||'—'}</div><div class="l">Rtg</div></div>
+      </div></div>`;}).join('')}</div>`:'<div class="empty card">Команда пуста. Добавьте игроков или перенесите из скаутинга.</div>'}`;
   },
   open(id,tab){
     const p=playerById(id); if(!p) return;
-    tab=tab||'overview';
+    tab=tab||'bio';
     const ag=CRM.modules.matches.playerAgg(id);
     const head=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
       <div style="width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${esc(p.number||'#')}</div>
-      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${p.age?'· '+p.age+' лет':''} ${p.shot?'· shot '+p.shot:''}</div><div class="row" style="margin-top:6px;gap:6px">${p.contract?`<span class="pill">${esc(p.contract)}</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}</div></div>
-      <span class="pill ${STATUS_CLASS[p.status]||''}">${STATUS_LABEL[p.status]||'—'}</span>
+      <div style="flex:1;min-width:180px"><h2 style="font-size:20px">${esc(playerName(p))}</h2><div class="muted">${POS_FULL[p.pos]||''} ${(function(){const a=ageFromDob(p.dob);return a!=null?'· '+a+' лет':(p.age?'· '+p.age+' лет':'');})()} ${p.shot?'· shot '+p.shot:''}</div><div class="row" style="margin-top:6px;gap:6px">${p.contract?`<span class="pill">${esc(p.contract)}</span>`:''}${p.agent?`<span class="pill">Агент: ${esc(p.agent)}</span>`:''}</div></div>
+      ${contractChip(p.contractExpiry)}
     </div>
     <div class="tabsrow">
-      <button class="${tab==='overview'?'active':''}" onclick="CRM.modules.profiles.open('${id}','overview')">Обзор</button>
-      <button class="${tab==='matches'?'active':''}" onclick="CRM.modules.profiles.open('${id}','matches')">Матчи</button>
-      <button class="${tab==='med'?'active':''}" onclick="CRM.modules.profiles.open('${id}','med')">Медицина и тесты</button>
+      ${[['bio','BIO'],['stats','Статистика'],['matches','Матчи'],['medical','Медицина'],['physical','Физ. тесты'],['psycho','Психопрофиль'],['scout','Скаут-оценка']].map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="CRM.modules.profiles.open('${id}','${k}')">${l}</button>`).join('')}
     </div>`;
     let body='';
-    if(tab==='overview'){
+    if(tab==='bio'){
+      const age=ageFromDob(p.dob);
+      const cell=(t,d)=>`<div style="flex:1;min-width:150px"><div class="muted" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">${t}</div><div style="font-weight:600;margin-top:3px">${d}</div></div>`;
+      body=`<div class="card"><b>Анкета</b>
+        <div class="row" style="margin-top:10px;gap:14px">
+          ${cell('Дата рождения',(p.dob?fmtDate(p.dob):'—')+(age!=null?' · '+age+' лет':''))}
+          ${cell('Рост / вес',(p.h?p.h+' см':'—')+' · '+(p.w?p.w+' кг':'—'))}
+          ${cell('Хват',p.shot==='L'?'Левый':p.shot==='R'?'Правый':'—')}
+        </div>
+        <div class="row" style="margin-top:14px;gap:14px">
+          ${cell('Тип контракта',esc(p.contract||'—'))}
+          ${cell('Контракт до',(p.contractExpiry?fmtDate(p.contractExpiry):'—')+' &nbsp;'+contractChip(p.contractExpiry))}
+          ${cell('Агент',esc(p.agent||'—'))}
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px"><b>Заметка</b><p style="margin-top:6px;white-space:pre-wrap">${esc(p.note||'—')}</p></div>
+      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.profiles.edit('${id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.profiles.del('${id}')">Удалить из команды</button></div>`;
+    } else if(tab==='stats'){
       body=`<div class="grid g3" style="margin-bottom:14px">
         <div class="kpi"><div class="v">${ag.gp}</div><div class="l">Games played</div></div>
         <div class="kpi"><div class="v">${ag.gpPre}</div><div class="l">Preseason</div></div>
@@ -809,25 +867,24 @@ CRM.modules.profiles={
           <div class="kpi"><div class="v">${ag.pts}</div><div class="l">Points</div></div>
           <div class="kpi"><div class="v">${ag.pm>=0?'+':''}${ag.pm}</div><div class="l">+/−</div></div>
         </div>
-      </div>
-      ${(function(){const ev=isEvaluated(p),s=evalScore(p),model=evalModelFor(p.pos);return `<div class="card" style="margin-top:14px"><div style="display:flex;align-items:center"><b>Скаутская оценка</b><span style="margin-left:auto;font-size:20px;font-weight:800">${ev?s.overall:'—'}<span class="muted" style="font-size:11px">&nbsp;/5</span></span></div>${ev?`<div class="grid g2" style="margin-top:10px"><div class="chartbox sm"><canvas id="pfRadar"></canvas></div><div>${model.cats.map(c=>`<div class="evrow"><span class="lbl">${esc(c.label)}</span><span class="bar"><i style="width:${(s.cats[c.key]||0)/5*100}%;background:${evColor(s.cats[c.key]||0)}"></i></span><span class="vv">${s.cats[c.key]?round1(s.cats[c.key]):'—'}</span></div>`).join('')}</div></div>`:'<p class="muted" style="margin-top:6px">Игрок ещё не оценён скаутами.</p>'}<div class="row" style="margin-top:10px"><button class="btn sm" onclick="CRM.modules.scouting.evaluate('${id}','team')">Оценить</button></div></div>`;})()}
-      <div class="row" style="margin-top:16px"><button class="btn" onclick="CRM.modules.profiles.edit('${id}')">Редактировать</button><button class="btn danger" onclick="CRM.modules.profiles.del('${id}')">Удалить из команды</button></div>`;
+      </div>`;
     } else if(tab==='matches'){
       body=CRM.modules.matches.profilePane(id);
-    } else {
-      const phys=(CRM.store.get('physical')||[]).filter(r=>r.playerId===id);
-      const psy=(CRM.store.get('psycho')||[]).filter(r=>r.playerId===id);
-      const med=(CRM.store.get('medical')||[]).filter(r=>r.playerId===id);
-      body=`<div class="card"><b>Травмы и статус</b>
-        ${med.length?`<table style="margin-top:8px"><tbody>${med.map(m=>`<tr><td>${fmtDate(m.date)}</td><td><b>${esc(m.diagnosis||m.type||'—')}</b></td><td><span class="pill ${STATUS_CLASS[m.status]||''}">${STATUS_LABEL[m.status]||''}</span></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Записей нет</p>'}
-      </div>
-      <div class="grid g2" style="margin-top:14px">
-        <div class="card"><b>Физические тесты</b>${phys.length?`<table style="margin-top:8px"><tbody>${phys.slice(-5).reverse().map(r=>`<tr><td>${fmtDateShort(r.date)}</td><td class="muted">${esc((r.results&&Object.keys(r.results).length)||0)} показателей</td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Нет данных</p>'}</div>
-        <div class="card"><b>Психотесты</b>${psy.length?`<table style="margin-top:8px"><tbody>${psy.slice(-5).reverse().map(r=>`<tr><td>${fmtDateShort(r.date)}</td><td class="muted">${esc(r.note||'')||'—'}</td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:6px">Нет данных</p>'}</div>
-      </div>`;
+    } else if(tab==='medical'){
+      const M=CRM.modules.medical; const med=(CRM.store.get('medical')||[]).filter(r=>r.playerId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      body=`<div class="card" style="padding:0">${med.length?`<table><thead><tr><th></th><th>Дата</th><th>Травма</th><th>Лечение</th><th>Status</th><th>Возврат</th></tr></thead><tbody>${med.map(r=>{const left=M._daysLeft(r);return `<tr><td><span class="gdot" style="background:${M.statusColor(r.status)}"></span></td><td>${fmtDateShort(r.date)}</td><td>${esc([r.injuryType,r.bodyPart].filter(Boolean).join(' · ')||r.diagnosis||'—')}${r.diagnosis&&(r.injuryType||r.bodyPart)?`<div class="muted" style="font-size:11px">${esc(r.diagnosis)}</div>`:''}</td><td class="muted" style="font-size:12px">${esc(r.treatment||'—')}</td><td><span class="pill ${STATUS_CLASS[r.status]||''}">${STATUS_LABEL[r.status]||''}</span></td><td>${r.returnDate?fmtDateShort(r.returnDate)+(left!=null?` <span class="muted">(${left} дн.)</span>`:''):'—'}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">Медицинских записей нет.</div>'}</div>
+      <div class="row" style="margin-top:12px"><button class="btn" onclick="CRM.modules.medical.add(null,'${id}')">+ Медзапись</button></div>`;
+    } else if(tab==='physical'){
+      const PH=CRM.modules.physical; const norms=CRM.store.get('settings.norms')||[]; const phys=(CRM.store.get('physical')||[]).filter(r=>r.playerId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      body=`<div class="card" style="padding:0">${phys.length?`<table><thead><tr><th>Дата</th>${norms.map(n=>`<th class="num">${esc(n.name.split(' ')[0])}</th>`).join('')}</tr></thead><tbody>${phys.map(r=>`<tr><td>${fmtDateShort(r.date)}</td>${norms.map(n=>{const v=(r.results||{})[n.id];const md=PH.medal(n,v);return `<td class="num">${v==null||v===''?'—':esc(v)} ${md?PH.medalPill(md):''}</td>`;}).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty">Нет данных физического тестирования.</div>'}</div>`;
+    } else if(tab==='psycho'){
+      const PS=CRM.modules.psycho; const psy=(CRM.store.get('psycho')||[]).filter(r=>r.playerId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      body=psy.length?psy.map(r=>{const sc=r.scores||{};const vd=PS.validity(r);return `<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center"><b>${fmtDate(r.date)}</b><span class="pill ${vd.cls}" style="margin-left:auto">Достоверность ${vd.pct}%</span></div><div style="margin-top:10px">${PS.PARAMS.map(([k,l])=>{const b=PS.band(sc[k]);const col=b[1]==='good'?'#22c55e':b[1]==='accent'?'#0071e3':'#ef4444';return `<div class="evrow"><span class="lbl">${esc(l)}</span><span class="bar"><i style="width:${num(sc[k])*10}%;background:${col}"></i></span><span class="vv">${num(sc[k])}</span></div>`;}).join('')}</div>${r.note?`<p class="muted" style="margin-top:8px;white-space:pre-wrap">${esc(r.note)}</p>`:''}</div>`;}).join(''):'<div class="empty card">Психопрофиль не заполнен.</div>';
+    } else { /* scout */
+      body=`${(function(){const ev=isEvaluated(p),s=evalScore(p),model=evalModelFor(p.pos);return `<div class="card"><div style="display:flex;align-items:center"><b>Скаутская оценка</b><span style="margin-left:auto;font-size:22px;font-weight:800">${ev?s.overall:'—'}<span class="muted" style="font-size:11px">&nbsp;/5</span></span></div>${ev?`<div class="grid g2" style="margin-top:10px"><div class="chartbox sm"><canvas id="pfRadar"></canvas></div><div>${model.cats.map(c=>`<div class="evrow"><span class="lbl">${esc(c.label)}</span><span class="bar"><i style="width:${(s.cats[c.key]||0)/5*100}%;background:${evColor(s.cats[c.key]||0)}"></i></span><span class="vv">${s.cats[c.key]?round1(s.cats[c.key]):'—'}</span></div>`).join('')}</div></div>`:'<p class="muted" style="margin-top:6px">Игрок ещё не оценён скаутами.</p>'}<div class="row" style="margin-top:10px"><button class="btn sm" onclick="CRM.modules.scouting.evaluate('${id}','team')">Оценить</button></div></div>`;})()}`;
     }
     CRM.modal.open(CRM.modal.frame('Профиль игрока',head+body));
-    if(tab==='overview'&&isEvaluated(p)) CRM.modules.scouting._drawReportRadar(p,'pfRadar');
+    if(tab==='scout'&&isEvaluated(p)) CRM.modules.scouting._drawReportRadar(p,'pfRadar');
   },
   edit(id){
     const p=id?playerById(id):{};
@@ -837,15 +894,18 @@ CRM.modules.profiles={
       <div class="row" style="margin-top:10px">
         <div style="flex:1"><label class="fld">Position</label><select id="pf_pos">${['C','LW','RW','D','G'].map(x=>`<option value="${x}" ${p&&p.pos===x?'selected':''}>${POS_FULL[x]}</option>`).join('')}</select></div>
         <div style="flex:1"><label class="fld">Shot</label><select id="pf_shot"><option value="L" ${p&&p.shot==='L'?'selected':''}>Left</option><option value="R" ${p&&p.shot==='R'?'selected':''}>Right</option></select></div>
-        ${f('age','Возраст',p&&p.age,'number')}
+        ${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}
       </div>
-      <div class="row" style="margin-top:10px">${f('h','Рост, см',p&&p.h,'number')}${f('w','Вес, кг',p&&p.w,'number')}
-        <div style="flex:1"><label class="fld">Статус</label><select id="pf_status">${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${p&&p.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1;min-width:150px"><label class="fld">Дата рождения</label><input id="pf_dob" type="date" value="${esc((p&&p.dob)||'')}" oninput="var a=ageFromDob(this.value);document.getElementById('pf_ageHint').textContent=(a==null?'возраст —':'возраст: '+a)"></div>
+        <div style="flex:0 0 140px"><label class="fld">&nbsp;</label><div class="pill" id="pf_ageHint" style="height:36px;justify-content:center">${(function(){var a=ageFromDob(p&&p.dob);return a==null?'возраст —':'возраст: '+a;})()}</div></div>
       </div>
       <div class="row" style="margin-top:10px">
         <div style="flex:1"><label class="fld">Тип контракта</label><select id="pf_contract">${['','Тренировочный','Двусторонний','Односторонний','Молодёжный','Просмотровый'].map(c=>`<option value="${c}" ${p&&p.contract===c?'selected':''}>${c||'—'}</option>`).join('')}</select></div>
-        ${f('agent','Агент',p&&p.agent)}
+        <div style="flex:1;min-width:150px"><label class="fld">Контракт до</label><input id="pf_contractExpiry" type="date" value="${esc((p&&p.contractExpiry)||'')}" oninput="document.getElementById('pf_cChip').innerHTML=contractChip(this.value)"></div>
+        <div style="flex:0 0 130px"><label class="fld">Градация</label><div id="pf_cChip" style="height:36px;display:flex;align-items:center">${contractChip((p&&p.contractExpiry)||'')}</div></div>
       </div>
+      <div class="row" style="margin-top:10px">${f('agent','Агент',p&&p.agent)}</div>
       <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="pf_note" rows="2">${esc(p&&p.note||'')}</textarea></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" onclick="CRM.modules.profiles.save('${id||''}')">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>
     `));
@@ -854,10 +914,12 @@ CRM.modules.profiles={
     const v=(n)=>{const e=document.getElementById('pf_'+n);return e?e.value.trim():'';};
     const scout=CRM.store.get('scout')||[];
     let p=id?scout.find(x=>x.id===id):null;
-    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),age:v('age'),h:v('h'),w:v('w'),status:v('status'),contract:v('contract'),agent:v('agent'),note:v('note')};
+    const dob=v('dob'); const derivedAge=ageFromDob(dob);
+    const data={surname:v('surname'),firstName:v('firstName'),number:v('number'),pos:v('pos'),shot:v('shot'),dob:dob,age:derivedAge!=null?String(derivedAge):((p&&p.age)||''),h:v('h'),w:v('w'),contract:v('contract'),contractExpiry:v('contractExpiry'),agent:v('agent'),note:v('note')};
     data.name=(data.surname+' '+data.firstName).trim();
     if(!data.surname&&!data.firstName){ CRM.toast('Укажите имя'); return; }
-    if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),eval:{},skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0}},data); scout.push(p); }
+    /* status is intentionally NOT written here — it is owned by the Medical block (syncStatus). */
+    if(p){ Object.assign(p,data); } else { p=Object.assign({id:uuid(),eval:{},skills:{skating:0,size:0,iq:0,puck:0,shot:0,offense:0,defense:0},status:'active'},data); scout.push(p); }
     CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
   },
   del(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить игрока из команды?',danger:true,onOk:()=>{ let scout=CRM.store.get('scout')||[]; scout=scout.filter(p=>p.id!==id); CRM.store.set('scout',scout); CRM.modal.close(); CRM.router.render(); CRM.toast('Удалён'); }}); }
@@ -1326,14 +1388,14 @@ CRM.modules.roster={
     return `<div class="rslot${pid?' filled':''}${elig?' eligible':''}${picked?' picked':''}" ondragover="CRM.modules.roster.slotDragOver(event,this)" ondragleave="this.classList.remove('dragover')" ondrop="CRM.modules.roster.slotDrop(event,'${key}',this)" onclick="CRM.modules.roster.slotClick('${key}')" ${p?`draggable="true" ondragstart="CRM.modules.roster.slotDragStart(event,'${key}')"`:''}><span class="pos">${ROSTER_SLOTS.label(key)}</span>${p?`<span class="pl">${esc(playerName(p))}</span><button class="x" title="Убрать" onclick="event.stopPropagation();CRM.modules.roster.assign('${key}','')">×</button>`:`<span class="pl muted">—</span>`}</div>`;
   },
   paneLineup(){
-    const fwd=`<div class="card"><b>Нападение</b><div style="margin-top:8px">${[1,2,3,4].map(n=>`<div style="margin-bottom:8px"><div class="muted" style="font-size:10px;font-weight:700;margin-bottom:3px">ЗВЕНО ${n}</div><div class="rline">${['L','C','R'].map(pp=>this._slotBox('f'+n+pp)).join('')}</div></div>`).join('')}</div></div>`;
-    const def=`<div class="card"><b>Защита и вратари</b><div style="margin-top:8px">${[1,2,3,4].map(n=>`<div style="margin-bottom:8px"><div class="muted" style="font-size:10px;font-weight:700;margin-bottom:3px">ПАРА ${n}</div><div class="rline">${['L','R'].map(pp=>this._slotBox('d'+n+pp)).join('')}</div></div>`).join('')}<div class="muted" style="font-size:10px;font-weight:700;margin:6px 0 3px">ВРАТАРИ</div><div class="rline">${ROSTER_SLOTS.gk.map(g=>this._slotBox(g)).join('')}</div></div></div>`;
-    return `<p class="muted" style="font-size:13px;margin-bottom:10px">Перетащите игрока из пула на позицию (или кликните игрока, затем подсветившуюся ячейку). Клик по занятой ячейке — взять для перестановки; × — убрать в пул.</p><div class="grid g2">${fwd}${def}</div>${this._poolView()}`;
+    const fwd=`<div class="ice"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:6px">НАПАДЕНИЕ</div>${[1,2,3,4].map(n=>`<div class="rline">${['L','C','R'].map(pp=>this._slotBox('f'+n+pp)).join('')}</div>`).join('')}</div>`;
+    const def=`<div class="ice"><div class="muted" style="font-size:11px;font-weight:700;margin-bottom:6px">ЗАЩИТА</div>${[1,2,3,4].map(n=>`<div class="rline">${['L','R'].map(pp=>this._slotBox('d'+n+pp)).join('')}</div>`).join('')}<div class="muted" style="font-size:11px;font-weight:700;margin:8px 0 6px">ВРАТАРИ</div><div class="rline">${ROSTER_SLOTS.gk.map(g=>this._slotBox(g)).join('')}</div></div>`;
+    return `<p class="muted" style="font-size:13px;margin-bottom:10px">Площадка в стиле «Матч-день»: перетащите игрока из пула на позицию (или кликните игрока, затем подсветившуюся ячейку). Клик по занятой ячейке — взять для перестановки; × — убрать в пул.</p><div class="grid g2">${fwd}${def}</div>${this._poolView()}`;
   },
   _poolView(){
     const used=Object.values(CRM.store.get('roster.lines')||{}).filter(Boolean);
     const avail=(CRM.store.get('scout')||[]).filter(p=>p.status!=='injured'&&p.status!=='suspended'&&used.indexOf(p.id)<0);
-    const grp=(title,filt)=>{ const l=avail.filter(filt); return `<div style="margin-bottom:6px"><span class="muted" style="font-size:11px;font-weight:700">${title}</span><div class="poolzone" ondragover="event.preventDefault()" ondrop="CRM.modules.roster.poolDrop(event)">${l.length?l.map(p=>`<span class="pchip${this._selPool===p.id?' sel':''}" draggable="true" ondragstart="CRM.modules.roster.poolDragStart(event,'${p.id}')" onclick="CRM.modules.roster.poolClick('${p.id}')">${esc(playerName(p))} <span class="muted">${POS_LABEL[p.pos]||''}</span></span>`).join(''):'<span class="muted" style="font-size:12px">—</span>'}</div></div>`; };
+    const grp=(title,filt)=>{ const ord=['G','D','C','LW','RW']; const l=avail.filter(filt).sort((a,b)=>{const d=ord.indexOf(a.pos)-ord.indexOf(b.pos);return d||playerSurname(a).localeCompare(playerSurname(b));}); return `<div style="margin-bottom:6px"><span class="muted" style="font-size:11px;font-weight:700">${title}</span><div class="poolzone" ondragover="event.preventDefault()" ondrop="CRM.modules.roster.poolDrop(event)">${l.length?l.map(p=>`<span class="pchip${this._selPool===p.id?' sel':''}" draggable="true" ondragstart="CRM.modules.roster.poolDragStart(event,'${p.id}')" onclick="CRM.modules.roster.poolClick('${p.id}')">${esc(playerName(p))} <span class="muted">${POS_LABEL[p.pos]||''}</span></span>`).join(''):'<span class="muted" style="font-size:12px">—</span>'}</div></div>`; };
     return `<div class="card" style="margin-top:14px"><b>Пул игроков</b> <span class="muted" style="font-size:12px">(не в составе; травмированные/дисквалифицированные скрыты)</span>${grp('Нападающие',p=>p.pos!=='G'&&p.pos!=='D')}${grp('Защитники',p=>p.pos==='D')}${grp('Вратари',p=>p.pos==='G')}</div>`;
   },
   assign(key,pid){ const lines=CRM.store.get('roster.lines')||{}; if(pid){ for(const k in lines){ if(lines[k]===pid&&k!==key) lines[k]=''; } } lines[key]=pid; CRM.store.set('roster.lines',lines); CRM.router.render(); },
