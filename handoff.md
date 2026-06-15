@@ -1,302 +1,248 @@
 # HANDOFF — Hockey Coach CRM
 
-> Документ для переноса контекста в другой чат. Здесь: что это за проект, карта приложения
-> и его логики, что сделано и что осталось. Глубокая спецификация — в `BLUEPRINT.md`
-> (этот файл — практический «где мы сейчас» + живая карта логики).
+> Полный конспект для переноса в другой чат: что за проект, карта логики, что сделано, что
+> обсуждалось, что осталось. Самодостаточный — новый чат может работать только по нему + по коду.
 >
-> Дата: 2026-06-14. Репозиторий: **BadMause/MyCode**.
-> Рабочая ветка: **`claude/admiring-carson-kv5qmv`** (синхронизирована с `claude/busy-lamport-7lnt8o`,
-> обе указывают на один коммит). Карта логики ведётся ЗДЕСЬ, не как блок в приложении.
+> **Дата:** 2026-06-15 · **Репозиторий:** `BadMause/MyCode` · **Ветка:** `claude/admiring-carson-kv5qmv`
+> · **PR:** #1 (https://github.com/BadMause/MyCode/pull/1 — пуши в ветку обновляют его, новый PR не создавать).
+> Глубокая спецификация — в `BLUEPRINT.md`. Этот файл — практический «где мы сейчас».
 
 ---
 
 ## 0. TL;DR
 
-- **Что это:** один автономный офлайн-файл `crm_hockey.html` (~1930 строк, vanilla JS, без сборки,
-  Chart.js встроен). CRM для хоккейного тренера: игроки, скаутинг, составы, матчи, статистика,
-  соперники, физика/психология/медицина, предсезонка, календарь, аналитика, заметки, настройки.
-- **Хранилище:** `localStorage`, ключ **`crm_hockey_v1`** (namespace `CRM`).
-- **Как запустить:** открыть `crm_hockey.html` двойным кликом в браузере. Сервер не нужен.
-- **Блоков сейчас: 15** (см. §2.3). Блок «Map»/расширяемость **удалён** (см. §3, сессия 2).
-- **Принципы (не нарушать):** один владелец на сущность; одна точка создания; двусторонние связи
-  не рвём; даты — строки `YYYY-MM-DD`; все строки через `esc()`; новый блок =
-  `CRM.modules.x` + строка в `CRM.TABS` + иконка в `CRM.ICONS`; диалоги — только `CRM.ui` (не нативные).
+- **Что это:** один автономный офлайн-файл **`crm_hockey.html`** (~2300 строк, vanilla JS, без сборки,
+  Chart.js встроен). CRM для хоккейного тренера.
+- **Хранилище:** `localStorage`, ключ **`crm_hockey_v1`**, namespace `window.CRM`.
+- **Запуск:** открыть `crm_hockey.html` двойным кликом в браузере. Сервер не нужен. Бэкап — в
+  Settings → экспорт/импорт JSON.
+- **Состояние:** всё ТЗ заказчика (милстоуны A–I) **выполнено** в этой сессии. 15 блоков. Блок «Map»
+  удалён (карта логики ведётся здесь, а не в приложении).
+- **Принципы (не нарушать):** один владелец на сущность; данные только через `CRM.store.get/set`;
+  даты — строки `YYYY-MM-DD`; все строки через `esc()`; события — только `onclick`/`ondrag*` атрибуты
+  (внутри модалок `<script>` НЕ исполняется); диалоги — только `CRM.ui.confirm/formModal` (не нативные);
+  новый блок = `CRM.modules.x` + строка в `CRM.TABS` + иконка в `CRM.ICONS`.
 
 ---
 
-## 1. Файлы и git
+## 1. ФАЙЛЫ И GIT
 
 | Файл | Что это |
 |---|---|
 | `crm_hockey.html` | Само приложение (единственный рабочий файл). |
 | `BLUEPRINT.md` | Спецификация архитектуры (ownership, инварианты, потоки данных). |
 | `handoff.md` | Этот файл — статус + живая карта логики. |
-| `.gitignore` | Игнорит `.shots/` (локальные скриншоты). |
+| `.gitignore` | Игнорит `.shots/`. |
 
-**Коммиты (новые → старые):**
+**Коммиты сессии 2 (новые → старые):**
 ```
-(эта сессия)  Remove in-app Map/extensibility block; keep logic map in handoff.md
-fa5817e  Add handoff.md — session summary + app/logic map for chat transfer
-c924d75  Translate hockey terms & abbreviations to English
-5251d9b  Fix tab crash on non-string dates; English menu, positions, statuses
-bc522ae  Add safe block-extension layer + live in-app architecture map   (частично откатан)
-34725c0  Add empty-state guards for physical/psycho/medical add forms
-3155554  Add .gitignore for local screenshot artifacts
-73b435f  Inline Chart.js 4.4.1 for full offline use
-51c1956  Build offline Hockey Coach CRM (crm_hockey.html)
+de8a64a  Periodization: rename + key milestones + planner JSON import (G)
+2c9e8b6  Calendar: monthly grid + day detail + Organizational Schedule (H)
+7d9124c  Physical Assessments, Mental Fitness Evaluation, Medical color-coding (E/F/I)
+245557d  Match: goal-zone tagging on clickable rink + tag stats (D2)
+3ce2307  Match: card previews, pre-match planning, period/team stats, shootout (D1)
+230eba9  Roster: interactive drag-drop lineup board, tactics/staff/history tabs (C)
+36e2cf3  Scouting: position-specific evaluation engine, color grades, priorities, compare (A+B)
+5bdbd48  Remove in-app Map/extensibility block; keep logic map in handoff.md
+fa5817e  Add handoff.md (база сессии 2)
 ```
-PR **не** создавался.
+**До сессии 2:** `c924d75` (перевод хоккейных терминов), `5251d9b` (фикс краша дат + англ. меню),
+`bc522ae` (слой расширяемости + Map — позже откатан), `34725c0`/`3155554`/`73b435f`/`51c1956` (старт).
+Всё запушено в `origin/claude/admiring-carson-kv5qmv` → PR #1.
 
 ---
 
 ## 2. КАРТА ПРИЛОЖЕНИЯ (логика)
 
 ### 2.1 Инфраструктура (namespace `CRM`)
-Всё висит на `window.CRM`. Номера строк актуальны, но при правках смещаются — проверяй grep’ом.
+Номера строк — ориентир (могут смещаться, ищи grep’ом).
 
 | Объект | Строка | Назначение |
 |---|---|---|
-| `const CRM` | 186 | `{ modules:{}, LSKEY:"crm_hockey_v1" }` |
-| `CRM.TABS` | 189 | Массив `[id,num,label,desc]` — порядок и подписи сайдбара (15 блоков). |
-| `CRM.ICONS` | ~206 | SVG-иконки по id блока. |
-| Хелперы | ~229 | `uuid, esc, parseLocalDate, localYmd, normYmd, fmtDate, fmtDateShort, num, clamp, avg, round1`. |
-| Константы | ~277 | `POS_LABEL, POS_FULL, STATUS_LABEL, STATUS_CLASS` (амплуа/статусы — на английском). |
-| `CRM.store` | ~282 | Стор: `load, get(path), set(path,val), save, exportJson, importJson, resetAll, defaults, defaultNorms`. Внутри `migrate()` (add-only миграции + нормализация дат). |
-| `CRM.toast` | 362 | Тосты. |
-| `CRM.modal` | 369 | `open(html), close(), frame(title,body)`. `<script>` внутри modal НЕ исполняется → события только через `onclick`. |
-| `CRM.modalNav` | 388 | Стек «назад» для модалок (`wrap, back, reset`, максимум 12). |
-| `CRM.router` | 403 | `parse(), go(name,params), render()`. Маршрут — из `location.hash`; ошибки модуля ловятся в try/catch. |
-| `CRM.boot` | 436 | Точка входа (`DOMContentLoaded`): `store.load()` → шапка → сайдбар → `render()`. |
-| `CRM.ui` | 1874 | **Диалоги вместо нативных** (оставлены при удалении слоя расширяемости): `confirm({title,message,danger,okLabel,onOk})`, `formModal({title,fields,onSubmit,submitLabel,note})`, `ok/cancel/submit`. Оверлей `#dialog`. Поля: `text/number/date/textarea/select/checkbox`. |
+| `const CRM` | 215 | `{ modules:{}, LSKEY:"crm_hockey_v1" }` |
+| `CRM.TABS` | 218 | `[id,num,label,desc]` × 15 — сайдбар. |
+| `CRM.ICONS` | ~235 | SVG-иконки блоков. |
+| Хелперы | ~245 | `uuid, esc, parseLocalDate, localYmd, normYmd, fmtDate, fmtDateShort, num, clamp, avg, round1`. |
+| `MONTHS_RU`, `monthMatrix`, `monthGridHtml` | ~262 | Генерик месячная сетка (исп. в Physical и Calendar). |
+| `POS_LABEL/POS_FULL/STATUS_LABEL/STATUS_CLASS` | ~290 | Амплуа/статусы (англ.). |
+| `gradeColor` | 296 | Цвет по грейду (цвет-тиры + старые буквы). |
+| `playerById/scoutById/playerName/playerSurname/playerLabel` | ~280 | Доступ к игрокам. |
+| `sectionTitle/chartOpts/makeChart` | ~300 | Заголовок, опции и фабрика Chart.js. |
+| `CRM.store` | ~315 | `load/get(path)/set(path,val)/save/exportJson/importJson/resetAll/defaults/defaultNorms`; внутри `migrate()` (add-only + нормализация дат + миграция beep→cooper). |
+| `CRM.toast` | ~395 | Тосты. |
+| `CRM.modal` | 406 | `open(html)/close()/frame(title,body)`. `<script>` внутри НЕ исполняется. |
+| `CRM.modalNav` | ~420 | Стек «назад» для модалок. |
+| `CRM.router` | 440 | `parse()/go(name,params)/render()`. Маршрут из `location.hash`; ошибки модулей ловятся в try/catch → маркер `Ошибка модуля`. |
+| `CRM.boot` | 473 | Точка входа (`DOMContentLoaded`): `store.load()` → шапка → сайдбар → `render()`. |
+| `EVAL_MODEL` + `evalScore/isEvaluated/evColor/posGroup/evalModelFor` | 550 | Движок скаут-оценки (см. §2.5). |
+| `GRADE_TIERS` + `gradeTier/gradeChip` | 585 | Цветовые тиры грейда (см. §2.5). |
+| `CRM.ui` | 2246 | Диалоги вместо нативных: `confirm({title,message,danger,okLabel,onOk})`, `formModal({title,fields,onSubmit})`. Поля: `text/number/date/textarea/select/checkbox`. Оверлей `#dialog`. |
 
-> Удалено в сессии 2: `CRM.registry`, `CRM.registerModule`, `CRM.ownerOf`, `CRM.unregisterModule`,
-> `CRM.CORE_META`, `CRM.customBlocks`, `CRM.registerCustomBlocks`, блок 16 «Map». `CRM.ui` оставлен.
+> Удалено в сессии 2: `CRM.registry/registerModule/ownerOf/unregisterModule/CORE_META/customBlocks/
+> registerCustomBlocks` и блок 16 «Map». Оставлен только `CRM.ui`.
 
-### 2.2 Блоки (15)
-Строки — начало `CRM.modules.X={...}`.
+### 2.2 Блоки (15) — начало `CRM.modules.X={...}`
 
-| # | id (label) | Строка | Владеет (store) | Создаёт |
+| # | id (label) | Строка | Владеет (store) | Кратко |
 |---|---|---|---|---|
-| 01 | dashboard (Dashboard) | 448 | — (read-only) | — |
-| 02 | scouting (Scouting) | 567 | `scoutDB, scoutTarget, scoutPriorities` | кандидата + оценку (EVAL_MODEL@522, GRADE_TIERS@557) |
-| 03 | profiles (Players) | 736 | `scout[]` | игрока (+контракт/агент, зеркало оценки) |
-| 04 | roster (Lines) | 1179 | `roster.*` (+`staff`) | состав/звено/историю/штаб (табы, drag-drop) |
-| 05 | matches (Games) | 873 | `matches[]` (+ пишет `opponents[].lineups`) | матч (карточки, предматч, зоны голов) |
-| 06 | stats (Stats) | 1197 | — | — |
-| 07 | opponents (Opponents) | 1246 | `opponents[], playoffBracket` | соперника, его игру |
-| 08 | physical (Assessments) | ~1690 | `physical[]` | физтест (табы: таблица/динамика/календарь) |
-| 09 | psycho (Mental) | ~1735 | `psycho[]` | психотест (+lie-scale достоверности, отчёт) |
-| 10 | preseason (Periodization) | ~1868 | `preseason{}` (+`milestones`) | план/детали/усталость/вехи |
-| 11 | calendar (Calendar) | ~2003 | `calendar[]` | событие (месяц/список/оргплан, день) |
-| 12 | medical (Medical) | ~1808 | `medical[]` (+ пишет `scout[].status`) | травму (цвет-доска, тип/часть, восстановление) |
-| 13 | analytics (Analytics) | 1736 | — | — |
-| 14 | notes (Notes) | 1763 | `notes[]` | заметку |
-| 15 | settings (Settings) | 1794 | `settings{}` | — (нормативы, экспорт/импорт JSON) |
+| 01 | dashboard (Dashboard) | 485 | — (read-only) | KPI, алерты, форма |
+| 02 | scouting (Scouting) | 595 | `scoutDB, scoutTarget, scoutPriorities` | кандидаты + **оценка** (см. §3.A) |
+| 03 | profiles (Players) | 764 | `scout[]` | игроки команды + контракт/агент + зеркало оценки |
+| 04 | roster (Lines) | 1311 | `roster.*` (+`staff`) | drag-drop состав, штаб, история (см. §3.C) |
+| 05 | matches (Games) | 887 | `matches[]` (+ пишет `opponents[].lineups`) | карточки, предматч, зоны голов (см. §3.D) |
+| 06 | stats (Stats) | 1437 | — | командная/инд. статистика |
+| 07 | opponents (Opponents) | 1486 | `opponents[], playoffBracket` | соперники, плей-офф |
+| 08 | physical (Assessments) | 1676 | `physical[]` | тесты/динамика/календарь (см. §3.E) |
+| 09 | psycho (Mental) | 1759 | `psycho[]` | оценка + достоверность (см. §3.F) |
+| 10 | preseason (Periodization) | 1868 | `preseason{}` (+`milestones`) | Бомпа + вехи + импорт (см. §3.G) |
+| 11 | calendar (Calendar) | 2026 | `calendar[]` | месяц/список/оргплан (см. §3.H) |
+| 12 | medical (Medical) | 1808 | `medical[]` (+ пишет `scout[].status`) | цвет-доска, травмы (см. §3.I) |
+| 13 | analytics (Analytics) | 2108 | — | графики |
+| 14 | notes (Notes) | 2135 | `notes[]` | заметки |
+| 15 | settings (Settings) | 2166 | `settings{}` | нормативы, экспорт/импорт JSON |
 
 ### 2.3 Владение и потоки данных (стрелка = «пишет в»)
 ```
-opponents ──► matches[]              (createGamePair → matches._create*)
-matches   ──► opponents[].lineups    (syncOppLineup*)
+opponents ──► matches[]              (createGamePair)
+matches   ──► opponents[].lineups    (updOppSlot/syncOppLineup — заглушка)
 matches  ◄──► roster.history.matchId / matches.lineupId   (двусторонняя — чистить обе стороны)
-medical   ──► scout[].status
-scouting  ──► scout[]                (promoteToTeam* → profiles._create*)
-profiles  ──► scout[]                (владелец)
-ЧИТАТЕЛИ (никуда не пишут): dashboard, stats, analytics, calendar
+medical   ──► scout[].status         (syncStatus)
+scouting  ──► scout[]                (toTeam — мост кандидат→команда)
+scouting/profiles ──► scout/scoutDB.eval  (общий движок scouting.evaluate(id,'db'|'team'))
+ЧИТАТЕЛИ: dashboard, stats, analytics, calendar
 ```
-`*` — канон BLUEPRINT, в коде ещё НЕ внедрён (см. §4).
 
-### 2.4 Схема localStorage (`store.defaults()`)
+### 2.4 Схема localStorage (`store.defaults()`, с полями сессии 2)
 ```js
 {
-  scout:[], scoutDB:[],
-  roster:{ lines:{}, special:{}, history:[], showSpecial:false },
-  matches:[], opponents:[],
-  playoffBracket:{r8:[],r4:[],r2:[],f:[]},
-  physical:[], psycho:[], practice:[], calendar:[], medical:[],
-  preseason:{ plan:[], details:[], fatigue:[], seasonPlan:'', seasonDetails:'',
-              cal:{start:'',end:'',seasonEnd:''} },
+  scout:[],            // игроки команды: {id,surname,firstName,number,pos,shot,age,h,w,status,
+                       //   contract,agent,note,eval:{'<cat>.<param>':1..5},skills,name}
+  scoutDB:[],          // кандидаты: то же + grade(цвет-тир),gkNotes,team (без contract/status медкарты)
+  roster:{ lines:{<slot>:pid}, special:{}, history:[], showSpecial, staff:{g1:{title,members[]},g2:{...}} },
+  matches:[],          // {id,date,opp,oppId,home,playoff,preseason,score,rating,notes,lineupId,
+                       //   prep:{tasks,oppLines,officials[],oppStrengths,oppWeaknesses,planA,planB,ppTactics,pkTactics},
+                       //   result:{finished,ppGoals,ppAttempts,pkGoalsAgainst,pkTimes,gk,playerStats,
+                       //     comboRatings,periods[],team{shots/sog/fo/hits/blocks},shootout{happened,ours,theirs,goalieId},goals[]}}
+  opponents:[], playoffBracket:{r8,r4,r2,f},
+  physical:[],         // {id,playerId,date,results:{<normId>:num}}  (norm 'beep'→'cooper' мигрирован)
+  psycho:[],           // {id,playerId,date,scores:{...},lie:{l1,l2,l3},note}
+  practice:[], calendar:[],  // calendar event: {id,date,title,kind('тренировка'|...|'оргплан'),note}
+  medical:[],          // {id,playerId,date,injuryType,bodyPart,diagnosis,status,returnDate,treatment,statusNote}
+  preseason:{ plan[7][7]:{phase,intensity,minutes}, details[7][7], fatigue[7], cal:{start,end,seasonEnd},
+              seasonPlan, seasonDetails, milestones:[{id,date,title,note}] },
   notes:[],
   settings:{ coach, team, league, season, norms:[{id,name,lower,gold,silver,bronze}] },
-  scoutTarget:{}, scoutPriorities:{},
+  scoutTarget:{}, scoutPriorities:{ F:[ids], D:[ids], G:[ids] },  // приоритеты по позиции (drag-drop)
   state:{ seedOpp10:false }
 }
 ```
 
-### 2.5 Инварианты (проверять перед сдачей)
+### 2.5 Движок скаут-оценки (ядро милстоуна A)
+- **`EVAL_MODEL`** (стр. 550): `{ F:{label,cats:[{key,label,params:[[key,label],...]}]}, D:{...}, G:{...} }` —
+  data-driven категории→параметры по позиции, шкала 1–5. **Чтобы изменить таксономию — править только этот объект.**
+- `posGroup(pos)` → 'F'|'D'|'G'; `evalModelFor(pos)` → модель.
+- Хранение: `player.eval['<catKey>.<paramKey>'] = 1..5`.
+- `evalScore(p)` → `{overall(среднее всех параметров), cats:{catKey:среднее}, scored, total}`.
+- `isEvaluated(p)` → есть ли хоть один балл. `evColor(v)` — цвет шкалы.
+- **`GRADE_TIERS`** (стр. 585): цвет-тиры (= картинка 1): `green`(топ-5/ключ.звено), `purple`(5–10),
+  `red`(скорость/размер), `yellow`(ролевой/PK), `white`(давление/роль). `gradeChip(key)` рендерит плашку.
+  Грейд — ручной тир, отдельно от вычисляемого балла.
+
+### 2.6 Инварианты (проверять перед сдачей)
 1. `roster.history[].matchId` ⇄ `matches[].lineupId` согласованы; удаление чистит обе стороны.
-2. `matches[]` пополняется только через `matches._create` (канон BLUEPRINT, ещё не внедрён).
-3. `scout[].status` пишет только `medical`.
-4. `scoutDB`(кандидаты) ↔ `scout`(команда) — мост только `promoteToTeam`.
-5. Статистика читается только из `result.finished===true`.
-6. Даты — `YYYY-MM-DD` строки (через `parseLocalDate`/`normYmd`); все строки через `esc()`.
+2. `scout[].status` пишет только `medical` (`syncStatus`).
+3. `scoutDB`(кандидаты) ↔ `scout`(команда) — мост только `scouting.toTeam`.
+4. Статистика читается только из `result.finished===true`.
+5. Даты — `YYYY-MM-DD` строки (через `parseLocalDate`/`normYmd`); все строки через `esc()`.
+6. Позиция в составе: G→только G, D→только D, F-слот→любой не-G (`roster._eligible`).
 
-### 2.6 Конвенции
-- Один HTML-файл, без сборки. Новый блок = `CRM.modules.x` + строка в `CRM.TABS` + иконка в `CRM.ICONS`.
-- События — только `onclick`-атрибуты (внутри `modal.open()`/`ui` `<script>` не исполняется).
-- Данные — только через `CRM.store.get/set`.
-- Миграции — add-only (новые поля с дефолтами), пользовательские данные не перезаписывать.
-- Никакого нативного `prompt/confirm` — только `CRM.ui.confirm/formModal`.
-
----
-
-## 3. ИСТОРИЯ ИЗМЕНЕНИЙ
-
-### Сессия 2 (2026-06-14, текущая)
-- **Синхронизация веток:** `claude/admiring-carson-kv5qmv` (рабочая ветка этой сессии) была на
-  пресессионном `34725c0`; fast-forward’нута на `fa5817e` (состояние из handoff). Обе ветки совпадают.
-- **Удалён блок «Map» и слой расширяемости** (по запросу пользователя: «Map убери из системы — это для
-  тебя, веди карту логики в Handoff.md»). Вырезаны `registry/registerModule/ownerOf/unregisterModule/
-  CORE_META/customBlocks/registerCustomBlocks` и сам блок 16; убраны `customBlocks/custom` из стора и
-  миграции; из `boot` убран вызов `registerCustomBlocks`. **`CRM.ui` (диалоги) оставлен** — он нужен
-  везде. Проверено: синтаксис OK, 15 вкладок рендерятся, фикс дат работает (см. §5).
-- **Принято большое ТЗ** на переработку модулей (см. §4) + два файла-донора к поглощению
-  (`scout_database_3.html`, `preseason_planner_v15_2.html`).
-- **Скаутинг (02) переработан полностью** (milestone A) + профили (03) частично (B):
-  - Движок оценки `EVAL_MODEL` (стр. 522) — data-driven категории→параметры по позиции (F/D/G),
-    шкала 1–5; `evalScore` (overall = среднее всех параметров + среднее по категориям), `isEvaluated`,
-    `evColor`. Чтобы изменить таксономию — править только `EVAL_MODEL`.
-  - Цветовые тиры `GRADE_TIERS` (стр. 557): green/purple/red/yellow/white (= картинка 1), `gradeChip`.
-  - `CRM.modules.scouting` (стр. 567): вкладки **Кандидаты / Градация / Приоритеты (drag-drop) /
-    Сравнение**; позиционно-зависимая форма оценки (`evaluate`/`saveEval`), свёрнуто-развёрнутый отчёт
-    (`<details>` по категориям + радар), статус «Оценён/Не оценён», промоут `toTeam`.
-  - Профили (03): добавлены **тип контракта + агент**, зеркало скаут-оценки (радар + категории) и
-    кнопка «Оценить» (общий движок: `scouting.evaluate(id,'team')`).
-  - Проверено headless-харнессом: все вкладки + scouting list/grades/priorities/compare + отчёт +
-    формы оценки (F/D/G) + drag-reorder + зеркало в профиле + матем. балла (27/7=3.9).
-- **Состав (04) переработан** (milestone C): табы **Состав / Тактика / Штаб / История**.
-  - Интерактивная доска drag-and-drop (`_slotBox`/`_placeFromDrag`/пул) — перетаскивание и
-    клик-постановка, проверка позиции (`_eligible`), своп ячеек, пул незанятых игроков.
-  - Тактика: подсказки ПП/ПК (читают eval через `_skill`), спецбригады, лучшие сочетания.
-  - Штаб: две редактируемые группы (`roster.staff.g1/g2`: title + members).
-  - История разделена на **матчевые / тренировочные**; связь матч↔состав сохранена.
-  - Проверено харнессом: lineup/tactics/staff/history + assign/eligibility/move/poolDrop/split.
-- **Матчи (05) переработаны** (milestone D, 2 коммита):
-  - Список — карточки (как профили). Предматч (`_prepPane`): судьи (`prep.officials`), сильные/слабые
-    стороны соперника, План A/B, тактика ПП/ПК (`prep.*`, сохраняются вместе `savePrep`).
-  - Итоги (`_resultPane`/`_collectResult`): счёт по периодам (`result.periods`), командная статистика
-    (`result.team`: броски/створ/вбрасывания/хиты/блокшоты), буллиты (`result.shootout`).
-  - **Зоны голов** (вкладка): клик по SVG-площадке (`rinkClick`→норм. координаты) ставит точку
-    забитого/пропущенного; теги способа (`GOAL_TAGS`); агрегация `goalStats`; правка/удаление точек.
-  - `ensureExt` бэкфилит все новые поля у старых матчей. Отчёт показывает периоды/командную стату/буллиты/план.
-  - Проверено: карточки/предматч/судьи/командная стата/периоды/буллиты/отчёт/зоны(rink/теги/стата/edit/del).
-- **Модули E–I переработаны** (milestones E/F/G/H/I):
-  - **Physical (08) → «Assessments»:** bip-test → Cooper (миграция id+записей); фильтр травм/ограничений
-    при вводе; табы Результаты/Динамика (line+doughnut, период)/Календарь (сетка дат тестов).
-  - **Psycho (09) → «Mental Fitness Evaluation»:** lie-scale достоверности (`validity`), отчёт с радаром
-    и текстовой интерпретацией.
-  - **Periodization (10):** переименован; ключевые вехи (`preseason.milestones`); импорт JSON планировщика
-    (`importPlanner`/`doImport`). Движок Бомпы (фазы/нагрузка/конфликты/усталость) уже был.
-  - **Calendar (11):** месячная сетка с индикаторами + день-детал + «Оргплан» (печатаемые расписания).
-  - **Medical (12):** цвет-доска здоровья (🟢🟡🔴), тип травмы + часть тела + лечение + срок восстановления.
-  - Общий helper `monthMatrix`/`monthGridHtml` (исп. в Physical и Calendar). Всё проверено харнессом.
-- **Итог сессии 2: весь roadmap §4 (A–I) выполнен.** Коммиты: map-removal, scouting, roster, match×2,
-  E/F/I, calendar, periodization — все запушены в `claude/admiring-carson-kv5qmv`.
-
-### Сессия 1 (предыдущая)
-- `bc522ae` — слой расширяемости + блок Map (в сессии 2 откатан, кроме `CRM.ui`).
-- `5251d9b` — фикс краша вкладок на нестроковых датах (`normYmd` + нормализация в `migrate`);
-  английское меню/амплуа/статусы.
-- `c924d75` — перевод хоккейных терминов/сокращений на английский (проза оставлена на русском).
+### 2.7 Конвенции
+- Один HTML-файл, без сборки. Новый блок = `CRM.modules.x` + `CRM.TABS` + `CRM.ICONS`.
+- Внутри-блочные подвиды — через `params.view` и `CRM.router.go('<id>',{view:'...'})`.
+- События — только инлайн-атрибуты (`onclick`, `ondragstart/over/drop`, `onchange`).
+- Миграции — add-only; пользовательские данные не перезаписывать.
 
 ---
 
-## 4. ЧТО ОСТАЛОСЬ / ROADMAP (большое ТЗ, сессия 2)
+## 3. ЧТО СДЕЛАНО В СЕССИИ 2 (милстоуны A–I)
 
-Заказчик прислал детальное ТЗ + визуальные референсы (3 картинки: цветовая философия линий;
-недельное расписание «Магнитогорск»; точки/зоны голов на льду). Сводка задач по модулям:
+Перед фичами: **синхронизация веток** (рабочая ветка была на пресессионном коммите — fast-forward на
+состояние из handoff) и **удаление блока Map** (по запросу: «Map убрать из системы, карту логики вести
+в Handoff.md»). `CRM.ui` оставлен.
 
-**A. Scout (02) — переработка** ✅ СДЕЛАНО (сессия 2)
-- Индивидуальные профили; **разные формы оценки для защитников и нападающих**.
-- Статус **«Оценён» / «Не оценён»**.
-- Оценка = категории качеств → подпараметры; **общий балл = среднее по подпараметрам**; вид свёрнутый
-  (collapsable) и развёрнутый.
-- **Цветовая градация** рейтингов (предустановленные схемы по грейду) — отдельная вкладка.
-- **Вкладка приоритетов по позициям** — drag-and-drop порядок.
-- **Сравнение игроков** по всем параметрам (side-by-side).
-- Донор/референс: `scout_database_3.html` (`mhl_scout_players_v1`, `mhl_scout_roster_v1`, `mhl_compare_sel`).
-
-**B. Player Profiles (03)** ✅ контракт/агент + зеркало оценки сделаны; источники данных уже были
-- Зеркало scout-профиля + источники: тесты, медицина, психология, статистика, матчи, состав.
-- Без «статуса»; добавить **«тип контракта»** и **«агент»**. (Health-статус оставлен — он завязан на Medical.)
-
-**C. Roster (04)** ✅ СДЕЛАНО (сессия 2)
-- Порядок: **нападающие → защитники → вратари**.
-- Интерактивный ростер снизу: клик подсвечивает позицию; **drag-and-drop** перестановка.
-- Тактические комбинации/подсказки — **вынести в отдельную вкладку** (убрать из основного вида).
-- **Тренерский штаб**: две группы, видимые/редактируемые.
-- Связь листов состава с планом игры; **история составов: «тренировка» / «матч»**.
-- Цветовая философия линий (картинка 1): зелёный=топ-5 лиги/ключевое звено, фиолетовый=5-10,
-  красный=скорость/размер, жёлтый/белый=ролевые/PK/прессинг.
-
-**D. Match (05)** ✅ СДЕЛАНО (сессия 2; зоны = клик по SVG-площадке, теги способа гола)
-- **Превью матчей карточками** (как профили).
-- Предматч: наш состав; состав соперника (ред.); **судьи** (имена/роли/юрисдикция); сильные/слабые
-  стороны соперника; **план A / план B** с визуальной перестановкой пар и звеньев; тактика **PP/PK**.
-- Запись матча: счёт, по периодам, **буллиты** (стрелки/вратари/исходы: гол/мимо).
-- Стата игрока: **G / A / +− / PIM**, успешные действия в **PP/PK** с таймингом и контекстом
-  (большинство/меньшинство).
-- Командная стата: броски, броски в створ, выигранные вбрасывания, хиты, блокшоты, **% PP/PK** —
-  отдельные вкладки.
-- **Зоны голов** (картинка 3): отмечать точки забитых/пропущенных; **тег гола** (5x5, PP, PK, тип
-  броска, добивание, приём, в переходе…) — теги в отдельную вкладку статистики; **правка после ввода**.
-
-**E. Physical → «Physical Assessments» (08)** ✅ СДЕЛАНО (сессия 2)
-- Тесты: прыжок в длину, подтягивания, **Cooper test** (переименовать bip-test). Фильтр: скрывать
-  больных/ограниченных. Ввод → синхрон с профилем; **календарный вид** дат тестов.
-- Сравнение истории, прогресс/регресс по игроку и команде; **линейные + круговые графики**, фильтр по периодам.
-
-**F. Psycho → «Mental Fitness Evaluation» (09)** ✅ СДЕЛАНО (сессия 2)
-- Тесты с **защитой от нечестности** (косвенные вопросы / проверки валидности).
-- Привязка результата к профилю; текстовая оценка + сводка балла.
-
-**G. Preseason → «Periodization» (10)** ✅ СДЕЛАНО (сессия 2)
-- **Интегрировать `preseason_planner_v15_2.html`** (ps9p/d/f/c): фазы сезона, тренировочные блоки, вехи;
-  редактирование; сохранить дизайн/логику планировщика.
-
-**H. Calendar (11)** ✅ СДЕЛАНО (сессия 2)
-- **Месячный вид**; компактные индикаторы (матч / отдых / тренировка).
-- Вкладка **«Организационное расписание»** (картинка 2): заметки/распечатки по датам; расширенный
-  дневной вид с несколькими активностями; правка + печать.
-
-**I. Medical (12)** ✅ СДЕЛАНО (сессия 2)
-- Цветовой статус: **красный=травма, жёлтый=ограничение, зелёный=здоров**.
-- Типы травм (низ/верх тела); детали (ушибы, переломы, сотрясения, болезни, прочее+описание);
-  **сроки восстановления**, тип лечения; редактирование в медкарте.
-
-**J. Сделано в сессии 2:** удалён in-app Map; карта логики ведётся в этом файле.
-
-**Старый технический долг (BLUEPRINT §2/§10):** канон `matches._create`, `scouting.promoteToTeam`,
-реальный `syncOppLineup` (сейчас заглушка); реальная аналитика на `playerMatchHistory`; экспорт PDF/CSV
-+ `@media print`; ⌘K-поиск по матчам/заметкам.
+- **A. Scouting (02) + B. Profiles (03)** — `36e2cf3`. Движок `EVAL_MODEL` (поз.-зависимые формы D/F/G),
+  табы **Кандидаты / Градация (цвет-тиры) / Приоритеты (HTML5 drag-and-drop по позиции) / Сравнение
+  (side-by-side + радар)**, свёрнуто-развёрнутый отчёт (`<details>` + радар), статус Оценён/Не оценён,
+  промоут `toTeam`. Профили: + **тип контракта + агент**, зеркало оценки (общий `scouting.evaluate(id,'team')`).
+- **C. Roster (04)** — `230eba9`. Табы **Состав / Тактика / Штаб / История**. Интерактивная drag-drop доска
+  (`_slotBox/_placeFromDrag`/пул, клик-постановка, проверка позиции, своп). Тактика (подсказки ПП/ПК из eval,
+  спецбригады, лучшие сочетания). Штаб (две группы `roster.staff`). История split матч/тренировка.
+- **D. Match (05)** — `3ce2307` (D1) + `245557d` (D2). Список карточками. Предматч: судьи, силы/слабости
+  соперника, План A/B, тактика ПП/ПК. Итоги: счёт по периодам, командная стата, буллиты. **Зоны голов:**
+  клик по SVG-площадке (`rinkClick`), теги способа (`GOAL_TAGS`), агрегация `goalStats`. `ensureExt` бэкфилит.
+- **E. Physical → «Assessments» (08)** — `7d9124c`. bip-test → **Cooper** (миграция id+записей); ввод
+  исключает травмированных/ограниченных; табы Результаты / Динамика (line+doughnut, период) / Календарь.
+- **F. Psycho → «Mental Fitness Evaluation» (09)** — `7d9124c`. lie-scale достоверности (`validity` %),
+  отчёт с радаром, баллами по уровням и текстовой интерпретацией.
+- **G. Periodization (10)** — `de8a64a`. Переименование; **ключевые вехи** (`preseason.milestones`);
+  **импорт JSON планировщика** (`importPlanner/doImport`, ключи plan/details/fatigue/cal или ps9p/d/f/c).
+  Движок Бомпы (фазы, нагрузка, детектор конфликтов, индекс усталости, автопостроение) уже был.
+- **H. Calendar (11)** — `2c9e8b6`. Месячная сетка с цветными индикаторами + день-детал + **Оргплан**
+  (печатаемые расписания, картинка 2). Helper `monthGridHtml`.
+- **I. Medical (12)** — `7d9124c`. Цвет-доска здоровья (🟢🟡🔴 по игрокам), тип травмы + часть тела +
+  лечение + срок восстановления (обратный отсчёт), быстрое добавление по игроку.
 
 ---
 
-## 5. КАК ТЕСТИРОВАТЬ (воспроизводимо)
+## 4. ЧТО ОБСУЖДАЛОСЬ (решения)
 
-Браузера в окружении нет, поэтому через Node:
-1. **Синтаксис:** выдрать `<script>`-блок приложения (с `const CRM = window.CRM`) в `/tmp/app.js` и
-   `node --check /tmp/app.js`.
-2. **Рантайм (headless-харнесс):** замокать `window/document/localStorage/Chart/location` (forgiving
-   Proxy-элемент с настоящими `innerHTML/textContent`), выполнить скрипт через indirect-eval `(0,eval)`,
-   затем:
-   - `CRM.boot()`, прогнать `CRM.router.render()` по всем `CRM.TABS` (15) — проверить, что в
-     `#appRoot.innerHTML` нет маркера `Ошибка модуля` (router ловит ошибки модулей в try/catch);
-   - засеять `localStorage` записями с «битыми» датами (number/timestamp/{}), вызвать `store.load()` и
-     убедиться, что `migrate` нормализует их в строки и вкладки не падают;
-   - проверить, что `CRM.modules.map/registry/registerModule/customBlocks` отсутствуют, а `CRM.ui` есть.
-
-Последний прогон (сессия 2): синтаксис OK; 15 вкладок рендерятся без ошибок (пустой стор + битые даты);
-Map/расширяемость отсутствуют; `CRM.ui` на месте.
+- **Ветки:** работа идёт в `claude/admiring-carson-kv5qmv` (синхронизирована с `claude/busy-lamport-7lnt8o`).
+- **Map:** убран из приложения по запросу; карта логики — в этом файле.
+- **Таксономия скаут-оценки:** заказчик сначала выбрал «вставлю свои категории», затем сказал «делай всё» →
+  использована **моя предложенная** таксономия (data-driven, легко заменить — см. §2.5 и §5).
+- **Шкала параметров:** 1–5.
+- **«сделай всё по очереди»** → выполнены все милстоуны A–I подряд, каждый с коммитом и проверкой.
+- **PDF не читаются** в окружении (нет тулинга/сети) — делалось по 3 присланным картинкам:
+  (1) цветовая философия линий → грейды/ростер; (2) расписание «Магнитогорск» → Calendar/Оргплан;
+  (3) точки/зоны голов на льду → Match «Зоны голов».
+- **PR #1** создан из Claude Code UI; пуши в ветку обновляют его (новый PR не создавать).
 
 ---
 
-## 6. БЫСТРЫЙ СТАРТ ДЛЯ НОВОГО ЧАТА (можно вставить как первый промпт)
+## 5. ЧТО ОСТАЛОСЬ / СЛЕДУЮЩИЕ ШАГИ
 
-> Контекст: офлайн-CRM `crm_hockey.html` в репо BadMause/MyCode, ветка
-> `claude/admiring-carson-kv5qmv`. Архитектура и правила — в `BLUEPRINT.md` и `handoff.md`.
-> Принципы: один владелец на сущность; новый блок = `CRM.modules.x` + строка в `CRM.TABS` + иконка;
-> данные через `CRM.store.get/set`; даты `YYYY-MM-DD`; строки через `esc()`; диалоги через
-> `CRM.ui.confirm/formModal` (не нативные); НЕ возвращать блок «Map» (карта логики живёт в handoff.md).
-> Прочитай `handoff.md` (особенно §4 — текущий roadmap) и `BLUEPRINT.md`. Задача: <…>.
+1. **Точные категории оценки** заказчика → заменить объект `EVAL_MODEL` (стр. 550). Движок/UI/радары/сравнение
+   останутся как есть.
+2. **Технический долг BLUEPRINT** (не входил в это ТЗ): канон `matches._create` / `scouting.promoteToTeam` /
+   реальный `syncOppLineup` (сейчас заглушка ~стр. 905); реальная аналитика (блок 13) на `playerMatchHistory`;
+   экспорт PDF/CSV + `@media print`; ⌘K-поиск по матчам/заметкам.
+3. **Опционально:** полный английский интерфейс (сейчас переведены термины + меню; проза/кнопки на русском);
+   визуальная доска «План A/B» в матче (сейчас текстом).
 
-Перед сдачей любой правки: прогнать инварианты §2.5 и (если правил JS) синтаксис/рендер по §5.
+---
+
+## 6. КАК ТЕСТИРОВАТЬ (воспроизводимо, без браузера)
+
+1. **Синтаксис:** выдрать второй `<script>` (с `const CRM`) в `/tmp/app.js`, `node --check /tmp/app.js`.
+2. **Рантайл (headless-харнесс):** замокать `window/document/localStorage/Chart/location` (forgiving
+   Proxy-элемент с настоящими `innerHTML`), выполнить скрипт через indirect-eval `(0,eval)`, затем:
+   `CRM.boot()` → прогнать `CRM.router.render()` по всем `CRM.TABS` (нет маркера `Ошибка модуля`);
+   засеять `localStorage` и проверить миграции (даты, beep→cooper); прогнать подвиды и методы каждого модуля
+   (scouting eval/drag/compare; roster доска; matches зоны/итоги; physical charts/cal; psycho validity;
+   medical board; calendar month/org; periodization milestones/import).
+3. Последний прогон сессии 2: синтаксис OK; все 15 вкладок + все новые пути — без ошибок.
+
+> Браузера в окружении нет — визуальные баги ловятся только вручную. Если что-то выглядит не так:
+> назвать вкладку + что видно.
+
+---
+
+## 7. БЫСТРЫЙ СТАРТ ДЛЯ НОВОГО ЧАТА (вставить как первый промпт)
+
+> Контекст: офлайн-CRM `crm_hockey.html` в репо BadMause/MyCode, ветка `claude/admiring-carson-kv5qmv`
+> (PR #1 — пуши обновляют его). Архитектура и правила — в `handoff.md` (особенно §2 карта, §2.5 движок
+> оценки) и `BLUEPRINT.md`. Принципы: один владелец на сущность; данные через `CRM.store.get/set`; даты
+> `YYYY-MM-DD`; строки через `esc()`; диалоги `CRM.ui.confirm/formModal`; новый блок = `CRM.modules.x` +
+> `CRM.TABS` + `CRM.ICONS`; НЕ возвращать блок «Map». Всё ТЗ A–I выполнено. Прочитай `handoff.md`. Задача: <…>.
+
+Перед сдачей правки: прогнать инварианты §2.6 и (если правил JS) синтаксис/рендер по §6.
