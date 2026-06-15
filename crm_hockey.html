@@ -191,6 +191,140 @@ label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-
 .mcell .mtext{display:block;font-size:10px;margin-top:2px;line-height:1.2}
 .mcell .mtag{display:block;font-size:9px;margin-top:2px;padding:1px 4px;border-radius:4px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 code{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:.92em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+/* ===================== 10 — PRESEASON PLANNER (ported, scoped to #preRoot, themed to system) ===================== */
+#preRoot{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);font-size:13px}
+#preRoot *{box-sizing:border-box}
+#preRoot h1{font-size:21px;font-weight:700;margin-bottom:2px;letter-spacing:-.3px}
+#preRoot select{font-size:11px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:100%;cursor:pointer}
+#preRoot input[type=number]{font-size:11px;padding:4px 7px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+#preRoot input[type=range]{width:100%;cursor:pointer;height:4px;accent-color:var(--accent)}
+#preRoot input[type=text],#preRoot input[type=date]{font-size:11px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:100%}
+#preRoot textarea{font-size:12px;padding:7px 9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical;width:100%}
+#preRoot button{cursor:pointer;font-family:inherit}
+#preRoot .btn{border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:12px;padding:7px 14px}
+#preRoot .btn:hover{border-color:#c9c9cf;background:var(--panel2)}
+#preRoot .btn-p{background:var(--accent);color:#fff;border-color:var(--accent)}
+#preRoot .btn-p:hover{background:#005ec4}
+#preRoot .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+#preRoot .be{background:#FCEBEB;color:#A32D2D}
+#preRoot .bw{background:#FAEEDA;color:#854F0B}
+/* NAV */
+#preRoot .topbar{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+#preRoot .nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+#preRoot .nav-btn{border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--ink2);font-size:13px;font-weight:600;padding:8px 14px;margin-bottom:-1px}
+#preRoot .nav-btn.active{background:var(--panel);color:var(--accent);border-color:var(--line)}
+#preRoot .view{display:none}
+#preRoot .view.on{display:block}
+/* WEEK TABS */
+#preRoot .wtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+#preRoot .wtab{border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);font-size:12px;font-weight:600;padding:6px 12px}
+#preRoot .wtab.active{color:#fff}
+#preRoot .phdr{border-left:3px solid;border-radius:10px;padding:9px 14px;margin-bottom:12px;font-size:13px;font-weight:700}
+/* TIP */
+#preRoot .tip-box{border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#preRoot .tip-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.6;margin-bottom:3px}
+#preRoot .tip-txt{font-size:11px;line-height:1.6;color:var(--ink2)}
+#preRoot .pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+#preRoot .pill{display:inline-block;border:none;font-size:10px;padding:2px 8px;border-radius:20px}
+/* CHART */
+#preRoot .chart-box{background:var(--panel);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+/* DAY GRID */
+#preRoot .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+#preRoot .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:var(--shadow)}
+#preRoot .card.off{background:var(--panel2);opacity:.65}
+#preRoot .card.err{border-color:var(--bad)}
+#preRoot .card.warn{border-color:var(--warn)}
+#preRoot .card.spec{border-color:#9C59D1;background:#FAF5FF}
+#preRoot .day-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+#preRoot .dname{font-size:12px;font-weight:700;color:var(--ink)}
+#preRoot .ddate{font-size:10px;color:var(--ink2);margin-top:1px}
+#preRoot .off-btn{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--ink2);flex-shrink:0}
+#preRoot .off-btn.on{background:rgba(0,113,227,.1);color:var(--accent);border-color:transparent}
+#preRoot .lbl{font-size:10px;color:var(--ink2);margin:5px 0 2px;font-weight:600}
+#preRoot .hrz-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block;margin-top:2px}
+#preRoot .day-sum{background:var(--panel2);border-radius:8px;padding:5px 8px;margin-top:5px;display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap}
+#preRoot .spre-row{display:flex;align-items:center;gap:5px;margin-top:5px;padding:4px 7px;background:var(--panel2);border-radius:8px}
+#preRoot .sdot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);cursor:pointer;transition:.1s;flex-shrink:0}
+#preRoot .sdot.on{border-color:transparent}
+#preRoot .add-s2{margin-top:6px;width:100%;font-size:10px;padding:5px;border-radius:7px;border:1px dashed #c9c9cf;background:transparent;color:var(--ink2)}
+#preRoot .s2-blk{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+#preRoot .s2h{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+#preRoot .rm-s2{font-size:10px;color:#A32D2D;border:none;background:transparent}
+#preRoot .cf{font-size:10px;padding:3px 6px;border-radius:5px;margin-top:3px;line-height:1.4}
+#preRoot .cf-err{background:#FCEBEB;color:#791F1F}
+#preRoot .cf-warn{background:#FAEEDA;color:#633806}
+#preRoot .det-btn{margin-top:6px;width:100%;font-size:10px;padding:5px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--ink2);font-weight:600}
+#preRoot .reset-btn{margin-top:3px;width:100%;font-size:10px;padding:3px;border-radius:6px;border:none;background:transparent;color:#c9c9cf}
+#preRoot .reset-btn:hover{color:#A32D2D}
+/* OVERVIEW */
+#preRoot .ov-grid{display:grid;gap:6px;margin-top:8px}
+#preRoot .ov-cell{cursor:pointer;padding:6px 4px;border-radius:9px;text-align:center;border:1px solid transparent}
+/* MODAL (planner own overlays) */
+#preRoot .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1100;overflow-y:auto;padding:24px 16px}
+#preRoot .modal-box{max-width:680px;margin:0 auto;background:var(--panel);border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+#preRoot .modal-hdr{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}
+#preRoot .modal-title{font-size:16px;font-weight:700}
+#preRoot .modal-sub{font-size:11px;color:var(--ink2);margin-top:2px}
+#preRoot .modal-close{font-size:22px;background:none;border:none;color:var(--ink2);line-height:1;padding:0 4px}
+#preRoot .modal-body{padding:16px 20px;max-height:76vh;overflow-y:auto}
+#preRoot .mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+#preRoot .mtab{border-radius:9px;border:1px solid var(--line);background:transparent;font-size:12px;padding:6px 12px;color:var(--ink2);font-weight:600}
+#preRoot .mtab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#preRoot .mtab.spec{border-color:#9C59D1;color:#9C59D1}
+#preRoot .mtab.spec.active{background:#9C59D1;color:#fff}
+#preRoot .ice-blk{background:#EEF7FF;border-radius:10px;border:1px solid #C8DFF5;padding:10px 12px;margin-bottom:8px}
+#preRoot .gym-blk{background:var(--panel2);border-radius:10px;border:1px solid var(--line);padding:9px 12px;margin-bottom:6px}
+#preRoot .add-blk{width:100%;font-size:11px;padding:6px;border-radius:8px;border:1px dashed #c9c9cf;background:transparent;color:var(--ink2);margin-top:4px}
+#preRoot .sec-title{display:block;font-size:12px;font-weight:700;color:var(--ink);margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+#preRoot .apply-btn{width:100%;margin-top:8px;padding:9px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700}
+#preRoot .modal-sum{background:var(--panel2);border-radius:10px;padding:10px 14px;margin-top:10px}
+/* FATIGUE */
+#preRoot .fat-params{margin-bottom:10px}
+#preRoot .fat-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+#preRoot .fat-lbl{font-size:11px;min-width:160px;flex-shrink:0;line-height:1.4;color:var(--ink2)}
+#preRoot .fat-stars{display:flex;gap:3px;align-items:center}
+#preRoot .star{font-size:20px;cursor:pointer;color:var(--line);transition:.1s}
+#preRoot .star.on{color:#F5A623}
+#preRoot .star-rst{font-size:11px;color:#c9c9cf;border:none;background:transparent;margin-left:3px;padding:0}
+#preRoot .star-rst:hover{color:#A32D2D}
+#preRoot .hist-item{background:var(--panel2);border-radius:9px;border:1px solid var(--line);padding:10px 14px;margin-bottom:8px}
+/* STATS */
+#preRoot .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+#preRoot .stat-card{background:var(--panel);border-radius:12px;border:1px solid var(--line);padding:14px}
+#preRoot .stat-title{font-size:13px;font-weight:700;margin-bottom:10px}
+#preRoot .stat-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:12px;gap:6px}
+#preRoot .stat-row:last-child{border:none}
+#preRoot .stat-bar{height:6px;border-radius:3px;flex-shrink:0}
+/* REF */
+#preRoot .ref-sect{background:var(--panel);border-radius:12px;border:1px solid var(--line);padding:16px;margin-bottom:14px}
+#preRoot .ref-title{font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+#preRoot .ref-h2{font-size:13px;font-weight:700;margin:14px 0 6px;color:var(--ink)}
+#preRoot .ref-p{font-size:12px;color:var(--ink2);line-height:1.7;margin-bottom:6px}
+#preRoot .ref-tbl{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+#preRoot .ref-tbl th{background:var(--panel2);padding:6px 9px;text-align:left;font-weight:700;color:var(--ink);border:1px solid var(--line)}
+#preRoot .ref-tbl td{padding:5px 9px;border:1px solid var(--line);color:var(--ink2);line-height:1.5;vertical-align:top}
+#preRoot .ref-tbl tr:nth-child(even) td{background:var(--panel2)}
+#preRoot .rule-box{border-left:3px solid var(--bad);background:#FFF8F8;border-radius:0 8px 8px 0;padding:8px 12px;margin:8px 0;font-size:11px;line-height:1.6}
+#preRoot .tip-box-r{border-left:3px solid var(--good);background:#F0FAF5;border-radius:0 8px 8px 0;padding:8px 12px;margin:8px 0;font-size:11px;line-height:1.6}
+/* CAL */
+#preRoot .cal-box{background:var(--panel);border-radius:12px;border:1px solid var(--line);padding:14px;margin-bottom:14px}
+/* PRINT */
+#preRoot .po{display:none}
+@media print{
+  #preRoot .no-print,#preRoot .screen{display:none!important}
+  #preRoot .po{display:block!important}
+  #preRoot .ph{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:8px;margin-bottom:10px}
+  #preRoot .ph-t{font-size:14px;font-weight:700}
+  #preRoot .ph-s{font-size:10px;color:#555;margin-top:2px}
+  #preRoot .ph-r{text-align:right;font-size:10px}
+  #preRoot .pdays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #preRoot .pday{border:1px solid #ccc;border-radius:5px;padding:7px;page-break-inside:avoid}
+  #preRoot .pday-h{display:flex;justify-content:space-between;font-size:10px;font-weight:700;border-bottom:1px solid #eee;padding-bottom:3px;margin-bottom:4px}
+  #preRoot .pitem{font-size:8px;color:#444;border-left:2px solid #ddd;padding-left:4px;margin-bottom:2px}
+  #preRoot .psum{display:flex;justify-content:space-between;font-size:9px;font-weight:600;border-top:1px solid #eee;padding-top:3px;margin-top:3px}
+  #preRoot .pcf{font-size:8px;color:#791F1F;background:#FCEBEB;padding:1px 4px;border-radius:2px;margin-top:2px}
+}
+
 </style>
 </head>
 <body>
@@ -1928,157 +2062,9 @@ CRM.modules.medical={
    10 — PRESEASON (Bompa periodization)
    =================================================================== */
 CRM.modules.preseason={
-  WEEKS:7, DAYS:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
-  PHASES:[
-    {key:'aerobic',name:'Аэробная база',color:'#1D9E75'},
-    {key:'transition',name:'Переход',color:'#BA7517'},
-    {key:'gcap',name:'G-cap (ёмкость)',color:'#D85A30'},
-    {key:'gpower',name:'G-power (мощность)',color:'#E24B4A'},
-    {key:'taper',name:'Подводка (Taper)',color:'#888780'}
-  ],
-  phaseObj(k){ return this.PHASES.find(p=>p.key===k)||null; },
-  ensure(){
-    const ps=CRM.store.get('preseason')||{};
-    if(!Array.isArray(ps.plan)||ps.plan.length!==this.WEEKS){ const old=ps.plan||[]; ps.plan=[]; for(let w=0;w<this.WEEKS;w++){ ps.plan[w]=[]; for(let d=0;d<7;d++){ ps.plan[w][d]=(old[w]&&old[w][d])||{phase:'',intensity:0,minutes:0}; } } }
-    if(!Array.isArray(ps.details)||ps.details.length!==this.WEEKS){ const old=ps.details||[]; ps.details=[]; for(let w=0;w<this.WEEKS;w++){ ps.details[w]=[]; for(let d=0;d<7;d++){ ps.details[w][d]=(old[w]&&old[w][d])||''; } } }
-    if(!Array.isArray(ps.fatigue)||ps.fatigue.length!==this.WEEKS){ const old=ps.fatigue||[]; ps.fatigue=[]; for(let w=0;w<this.WEEKS;w++)ps.fatigue[w]=old[w]||0; }
-    if(!ps.cal)ps.cal={start:'',end:'',seasonEnd:''};
-    if(ps.seasonPlan==null)ps.seasonPlan=''; if(ps.seasonDetails==null)ps.seasonDetails='';
-    if(!Array.isArray(ps.milestones))ps.milestones=[];
-    CRM.store.set('preseason',ps); return ps;
-  },
-  dayCat(load){ if(load<=0)return 0; if(load<=420)return 1; if(load<=840)return 2; if(load<=1260)return 3; return 4; }
-  ,catLabel(c){ return ['Отдых','Лёгкий','Средний','Высокий','Пиковый'][c]; }
-  ,catColor(c){ return ['#f0f0f3','#e3f3ec','#fdf2e0','#fbe7df','#f8d4d4'][c]; },
-  load(cell){ return num(cell&&cell.intensity)*num(cell&&cell.minutes); },
   render(el){
-    const ps=this.ensure();
-    el.innerHTML=sectionTitle('10','Периодизация','Periodization · 7-недельный микроцикл по Бомпе',
-      `<button class="btn" onclick="CRM.modules.preseason.importPlanner()">Импорт</button>
-      <button class="btn" onclick="CRM.modules.preseason.fatigueTest()">Тест усталости</button>
-      <button class="btn" onclick="CRM.modules.preseason.autobuild()">Автопостроение</button>
-      <button class="btn" onclick="window.print()">Печать</button>`)+
-    `<div class="card" style="margin-bottom:14px"><div class="row">
-      <div style="flex:1"><label class="fld">Preseason start</label><input type="date" value="${ps.cal.start||''}" onchange="CRM.modules.preseason.setCal('start',this.value)"></div>
-      <div style="flex:1"><label class="fld">Preseason end</label><input type="date" value="${ps.cal.end||''}" onchange="CRM.modules.preseason.setCal('end',this.value)"></div>
-      <div style="flex:1"><label class="fld">Season end</label><input type="date" value="${ps.cal.seasonEnd||''}" onchange="CRM.modules.preseason.setCal('seasonEnd',this.value)"></div>
-    </div></div>
-    <div class="card" style="margin-bottom:14px"><b>Фазы Бомпы</b><div class="row" style="margin-top:8px;gap:8px">
-      ${this.PHASES.map(p=>`<span class="pill" style="background:${p.color}1a;color:${p.color};border-color:transparent">● ${p.name}</span>`).join('')}
-    </div></div>
-    <div class="card" style="padding:0;overflow:auto"><table style="min-width:760px"><thead><tr><th>Неделя</th>${this.DAYS.map(d=>`<th class="num">${d}</th>`).join('')}<th class="num">Σ нагр.</th><th class="num">Уст.</th></tr></thead><tbody>
-      ${ps.plan.map((week,w)=>{
-        const weekLoad=week.reduce((s,c)=>s+this.load(c),0);
-        return `<tr><td><b>${w+1}</b></td>${week.map((cell,d)=>{
-          const ld=this.load(cell); const cat=this.dayCat(ld); const ph=this.phaseObj(cell.phase);
-          return `<td class="num" style="cursor:pointer;background:${this.catColor(cat)};border-left:3px solid ${ph?ph.color:'transparent'}" onclick="CRM.modules.preseason.editCell(${w},${d})" title="${ph?ph.name:''} · ${this.catLabel(cat)}">
-            ${ld?`<div style="font-weight:700">${ld}</div><div style="font-size:10px;color:var(--ink2)">${num(cell.intensity)}×${num(cell.minutes)}</div>`:'<span class="muted">+</span>'}</td>`;
-        }).join('')}<td class="num"><b>${weekLoad}</b></td><td class="num">${ps.fatigue[w]||'—'}</td></tr>`;
-      }).join('')}
-    </tbody></table></div>
-    ${this.conflictsView(ps)}
-    ${this.statsView(ps)}
-    ${this.milestonesView(ps)}
-    <div class="card" style="margin-top:14px"><b>План на сезон (поддержание)</b>
-      <textarea rows="4" style="margin-top:8px" onchange="CRM.modules.preseason.setSeason('seasonPlan',this.value)">${esc(ps.seasonPlan||'')}</textarea></div>`;
-  },
-  setCal(k,v){ const ps=this.ensure(); ps.cal[k]=v; CRM.store.set('preseason',ps); },
-  setSeason(k,v){ const ps=this.ensure(); ps[k]=v; CRM.store.set('preseason',ps); CRM.toast('Сохранено'); },
-  editCell(w,d){
-    const ps=this.ensure(); const cell=ps.plan[w][d]; const note=ps.details[w][d]||'';
-    CRM.modal.open(CRM.modal.frame(`Неделя ${w+1}, ${this.DAYS[d]}`,`
-      <div><label class="fld">Фаза</label><select id="pc_phase"><option value="">— нет —</option>${this.PHASES.map(p=>`<option value="${p.key}" ${cell.phase===p.key?'selected':''}>${p.name}</option>`).join('')}</select></div>
-      <div class="row" style="margin-top:10px"><div style="flex:1"><label class="fld">Интенсивность (1–10)</label><input id="pc_int" type="number" min="0" max="10" value="${num(cell.intensity)}"></div>
-      <div style="flex:1"><label class="fld">Минуты</label><input id="pc_min" type="number" min="0" value="${num(cell.minutes)}"></div></div>
-      <div style="margin-top:10px"><label class="fld">Содержание тренировки</label><textarea id="pc_note" rows="3">${esc(note)}</textarea></div>
-      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.saveCell(${w},${d})">Сохранить</button><button class="btn danger" onclick="CRM.modules.preseason.clearCell(${w},${d})">Очистить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
-  },
-  saveCell(w,d){
-    const ps=this.ensure();
-    ps.plan[w][d]={phase:document.getElementById('pc_phase').value,intensity:num(document.getElementById('pc_int').value),minutes:num(document.getElementById('pc_min').value)};
-    ps.details[w][d]=document.getElementById('pc_note').value;
-    CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); CRM.toast('Сохранено');
-  },
-  clearCell(w,d){ const ps=this.ensure(); ps.plan[w][d]={phase:'',intensity:0,minutes:0}; ps.details[w][d]=''; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); },
-  autobuild(){
-    CRM.ui.confirm({title:'Перестроить план',message:'Построить стандартный 7-недельный микроцикл? Текущий план будет перезаписан.',danger:true,okLabel:'Построить',onOk:()=>this._autobuild()});
-  },
-  _autobuild(){
-    const ps=this.ensure();
-    const weekPhase=['aerobic','aerobic','transition','gcap','gpower','gpower','taper'];
-    // microcycle intensity template (Mon..Sun)
-    const tmpl=[ {i:5,m:75},{i:8,m:60},{i:3,m:50},{i:8,m:60},{i:6,m:70},{i:9,m:55},{i:0,m:0} ];
-    const taperScale=0.5;
-    for(let w=0;w<this.WEEKS;w++){ const phase=weekPhase[w]; const isTaper=phase==='taper';
-      for(let d=0;d<7;d++){ const t=tmpl[d]; const intensity=isTaper?Math.max(0,Math.round(t.i*0.7)):t.i; const minutes=isTaper?Math.round(t.m*taperScale):t.m;
-        ps.plan[w][d]={phase:t.i===0?'':phase,intensity:t.i===0?0:intensity,minutes:t.i===0?0:minutes}; }
-    }
-    CRM.store.set('preseason',ps); CRM.router.render(); CRM.toast('План построен');
-  },
-  conflictsView(ps){
-    const warns=[];
-    // flatten with positions
-    const seq=[]; ps.plan.forEach((wk,w)=>wk.forEach((c,d)=>seq.push({w,d,c,load:this.load(c),cat:this.dayCat(this.load(c)),phase:c.phase})));
-    // 1) two+ consecutive peak/high days
-    for(let i=1;i<seq.length;i++){ if(seq[i].cat>=3&&seq[i-1].cat>=3&&!(seq[i].d===0)){ warns.push(`Перегрузка: подряд высокие нагрузки — нед.${seq[i-1].w+1}/${this.DAYS[seq[i-1].d]} и нед.${seq[i].w+1}/${this.DAYS[seq[i].d]}`); } }
-    // 2) phase ordering (G-power before G-cap)
-    const firstOf={}; this.PHASES.forEach(p=>{const idx=seq.findIndex(s=>s.phase===p.key);firstOf[p.key]=idx;});
-    if(firstOf.gpower>=0&&firstOf.gcap>=0&&firstOf.gpower<firstOf.gcap) warns.push('Нарушение Бомпы: фаза G-power начинается раньше G-cap.');
-    if(firstOf.taper>=0&&firstOf.gpower>=0&&firstOf.taper<firstOf.gpower) warns.push('Подводка (Taper) стоит раньше фазы мощности.');
-    // 3) taper should be in last week
-    const lastWeekPhases=(ps.plan[this.WEEKS-1]||[]).map(c=>c.phase).filter(Boolean);
-    if(lastWeekPhases.length&&!lastWeekPhases.includes('taper')) warns.push('В последней неделе нет фазы подводки (Taper).');
-    // 4) peak day without adjacent recovery
-    for(let i=0;i<seq.length;i++){ if(seq[i].cat===4){ const prev=seq[i-1],next=seq[i+1]; const rec=(prev&&prev.cat<=1)||(next&&next.cat<=1); if(!rec) warns.push(`Пиковый день нед.${seq[i].w+1}/${this.DAYS[seq[i].d]} без дня восстановления рядом.`); } }
-    return `<div class="card" style="margin-top:14px"><b>Детектор конфликтов (Бомпа)</b>
-      ${warns.length?`<div style="margin-top:8px">${warns.map(w=>`<div class="pill warn" style="display:block;margin-bottom:6px;text-align:left">⚠ ${esc(w)}</div>`).join('')}</div>`:'<p class="pill good" style="margin-top:8px;display:inline-block">✓ Конфликтов не обнаружено</p>'}</div>`;
-  },
-  statsView(ps){
-    const weekLoads=ps.plan.map(wk=>wk.reduce((s,c)=>s+this.load(c),0));
-    const totalLoad=weekLoads.reduce((s,x)=>s+x,0);
-    const totalMin=ps.plan.reduce((s,wk)=>s+wk.reduce((a,c)=>a+num(c.minutes),0),0);
-    const peak=Math.max(0,...weekLoads); const peakWeek=weekLoads.indexOf(peak)+1;
-    return `<div class="grid g4" style="margin-top:14px">
-      <div class="kpi"><div class="v">${totalLoad}</div><div class="l">Суммарная нагрузка</div></div>
-      <div class="kpi"><div class="v">${Math.round(totalMin/60)} ч</div><div class="l">Объём (часы)</div></div>
-      <div class="kpi"><div class="v">${Math.round(totalLoad/this.WEEKS)}</div><div class="l">Ср. нагр./неделя</div></div>
-      <div class="kpi"><div class="v">${peak}</div><div class="l">Пик (неделя ${peak?peakWeek:'—'})</div></div>
-    </div>`;
-  },
-  fatigueTest(){
-    const params=[['sleep','Сон'],['soreness','Мышечная боль'],['mood','Настроение'],['energy','Энергия'],['stress','Стресс']];
-    CRM.modal.open(CRM.modal.frame('Тест усталости + sPRE',`
-      <div><label class="fld">Неделя</label><select id="ft_week">${Array.from({length:this.WEEKS}).map((_,w)=>`<option value="${w}">Неделя ${w+1}</option>`).join('')}</select></div>
-      <div style="margin-top:12px"><b>sPRE (Borg 1–10)</b><div style="margin-top:6px"><input id="ft_borg" type="number" min="1" max="10" value="5"></div></div>
-      <div style="margin-top:12px"><b>Параметры усталости (1–5)</b>${params.map(([k,l])=>`<div class="row" style="margin:8px 0"><div style="flex:2"><label class="fld">${l}</label></div><div style="flex:1"><input data-ft="${k}" type="number" min="1" max="5" value="3"></div></div>`).join('')}</div>
-      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.saveFatigue()">Сохранить</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
-  },
-  saveFatigue(){
-    const ps=this.ensure(); const w=num(document.getElementById('ft_week').value);
-    const borg=num(document.getElementById('ft_borg').value);
-    let sum=0,n=0; document.querySelectorAll('input[data-ft]').forEach(i=>{sum+=num(i.value);n++;});
-    const idx=Math.round((borg*2 + (sum/n)*2));
-    ps.fatigue[w]=idx; CRM.store.set('preseason',ps); CRM.modal.close(); CRM.router.render(); CRM.toast('Индекс усталости: '+idx);
-  },
-  milestonesView(ps){
-    const ms=(ps.milestones||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    return `<div class="card" style="margin-top:14px"><div style="display:flex;align-items:center"><b>Ключевые вехи</b><button class="btn sm" style="margin-left:auto" onclick="CRM.modules.preseason.addMilestone()">+ Веха</button></div>
-      ${ms.length?`<table style="margin-top:8px"><tbody>${ms.map(m=>`<tr><td style="width:96px">${fmtDateShort(m.date)}</td><td><b>${esc(m.title)}</b></td><td class="muted">${esc(m.note||'')}</td><td style="text-align:right"><button class="btn sm ghost danger" onclick="CRM.modules.preseason.delMilestone('${m.id}')">×</button></td></tr>`).join('')}</tbody></table>`:'<p class="muted" style="margin-top:8px;font-size:12px">Нет вех (контрольные точки, сборы, контрольные матчи, старт сезона).</p>'}</div>`;
-  },
-  addMilestone(){ CRM.ui.formModal({title:'Веха',fields:[{key:'date',label:'Дата',type:'date',value:localYmd()},{key:'title',label:'Название',required:true},{key:'note',label:'Заметка'}],onSubmit:v=>{ const ps=this.ensure(); ps.milestones.push({id:uuid(),date:v.date,title:v.title,note:v.note||''}); CRM.store.set('preseason',ps); CRM.router.render(); CRM.toast('Добавлено'); }}); },
-  delMilestone(id){ CRM.ui.confirm({title:'Удаление',message:'Удалить веху?',danger:true,onOk:()=>{ const ps=this.ensure(); ps.milestones=(ps.milestones||[]).filter(m=>m.id!==id); CRM.store.set('preseason',ps); CRM.router.render(); }}); },
-  importPlanner(){
-    CRM.modal.open(CRM.modal.frame('Импорт из планировщика',`
-      <p class="muted" style="font-size:12px;margin-bottom:8px">Вставьте JSON из preseason_planner (ключи <code>plan/details/fatigue/cal</code> или <code>ps9p/ps9d/ps9f/ps9c</code>). Существующий план будет заменён импортированным.</p>
-      <textarea id="imp_json" rows="8" placeholder='{"plan":[...],"details":[...],"fatigue":[...],"cal":{"start":"","end":""}}'></textarea>
-      <div class="row" style="margin-top:14px"><button class="btn primary" onclick="CRM.modules.preseason.doImport()">Импортировать</button><button class="btn" onclick="CRM.modal.close()">Отмена</button></div>`));
-  },
-  doImport(){
-    let obj; try{ obj=JSON.parse((document.getElementById('imp_json')||{}).value||''); }catch(e){ CRM.toast('Некорректный JSON'); return; }
-    const ps=this.ensure();
-    const plan=obj.plan||obj.ps9p, det=obj.details||obj.ps9d, fat=obj.fatigue||obj.ps9f, cal=obj.cal||obj.ps9c;
-    if(Array.isArray(plan)) ps.plan=plan; if(Array.isArray(det)) ps.details=det; if(Array.isArray(fat)) ps.fatigue=fat; if(cal&&typeof cal==='object') ps.cal=Object.assign({start:'',end:'',seasonEnd:''},cal);
-    CRM.store.set('preseason',ps); this.ensure(); CRM.modal.close(); CRM.router.render(); CRM.toast('Импортировано');
+    el.innerHTML = (typeof PRE_HTML!=="undefined") ? PRE_HTML : '<div class="empty">Планировщик не загружен.</div>';
+    if(typeof window.PRESEASON_MOUNT==="function") window.PRESEASON_MOUNT();
   }
 };
 
@@ -2358,5 +2344,1694 @@ CRM.ui=(function(){
 
 window.addEventListener('DOMContentLoaded',CRM.boot);
 </script>
+<script>
+/* ===================================================================
+   10 — PRESEASON PLANNER (ported; logic preserved; store via CRM; UI scoped to #preRoot)
+   =================================================================== */
+var PRE_HTML = `
+<div id="preRoot">
+<div class="screen">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div>
+    <h1>Предсезонная подготовка</h1>
+    <div style="font-size:12px;color:#777;margin-top:2px">7 недель · sPRE · Детализация · Статистика · Справочник</div>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <span id="eb" class="badge be" style="display:none"></span>
+    <span id="wb" class="badge bw" style="display:none"></span>
+    <button class="btn btn-p" onclick="openAutoBuild()">⚡ Авто</button>
+    <button class="btn" onclick="printWeek()">🖨 Печать</button>
+    <button class="btn" style="color:#A32D2D" onclick="doClear()">Сбросить</button>
+  </div>
+</div>
+
+<!-- MAIN NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="showView('plan',this)">📋 Планирование</button>
+  <button class="nav-btn" onclick="showView('stats',this)">📊 Статистика</button>
+  <button class="nav-btn" onclick="showView('fat',this)">🔴 Усталость</button>
+  <button class="nav-btn" onclick="showView('cal',this)">📅 Календарь</button>
+  <button class="nav-btn" onclick="showView('ref',this)">📖 Справочник</button>
+</div>
+
+<!-- ══ ПЛАНИРОВАНИЕ ══ -->
+<div id="view-plan" class="view on">
+  <div id="wtabs" class="wtabs"></div>
+  <div id="phdr" class="phdr"></div>
+  <div id="tip-box"></div>
+  <div class="chart-box"><div id="chart"></div></div>
+  <div id="dgrid" class="dgrid"></div>
+  <div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #e5e3dc">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">Обзор предсезонки</div>
+    <div id="ovg" class="ov-grid"></div>
+  </div>
+</div>
+
+<!-- ══ СТАТИСТИКА ══ -->
+<div id="view-stats" class="view">
+  <div style="font-size:16px;font-weight:600;margin-bottom:14px">Статистика предсезонки</div>
+  <div id="stats-content"></div>
+</div>
+
+<!-- ══ УСТАЛОСТЬ ══ -->
+<div id="view-fat" class="view">
+  <div style="font-size:16px;font-weight:600;margin-bottom:4px">Тест усталости команды</div>
+  <div style="font-size:12px;color:#888;margin-bottom:12px">Оценки игроков (5 параметров) + sPRE → рекомендация на следующую неделю</div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <span style="font-size:12px;color:#555">Неделя:</span>
+    <div id="fat-wtabs" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+    <div style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px">
+      <div id="fat-params" class="fat-params"></div>
+      <div class="lbl">Заметки тренера</div>
+      <textarea id="fat-notes" rows="3" style="margin-top:4px" placeholder="Субъективные наблюдения..."></textarea>
+      <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="saveFat()">Сохранить оценку</button>
+    </div>
+    <div>
+      <div id="fat-advice" style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px;font-size:12px;line-height:1.7;color:#444;margin-bottom:10px">
+        Введи оценки и нажми «Сохранить».
+      </div>
+      <div id="fat-spre" style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px;font-size:12px;color:#444"></div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">📜 История оценок</div>
+    <div id="fat-hist"></div>
+  </div>
+</div>
+
+<!-- ══ КАЛЕНДАРЬ ══ -->
+<div id="view-cal" class="view">
+  <div style="font-size:16px;font-weight:600;margin-bottom:14px">Настройка календаря</div>
+  <div class="cal-box">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Диапазон предсезонки</div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+      <div><div class="lbl">Дата начала</div><input type="date" id="cal-start" style="width:auto"></div>
+      <div><div class="lbl">Дата первой игры</div><input type="date" id="cal-end" style="width:auto"></div>
+      <button class="btn btn-p" onclick="applyCal()">Применить</button>
+    </div>
+    <div id="cal-info" style="font-size:12px;color:#666"></div>
+  </div>
+  <div id="cal-preview"></div>
+</div>
+
+<!-- ══ СПРАВОЧНИК ══ -->
+<div id="view-ref" class="view">
+  <div style="font-size:16px;font-weight:600;margin-bottom:14px">📖 Методическая база</div>
+
+  <div class="ref-sect">
+    <div class="ref-title">1. Энергетические системы</div>
+    <table class="ref-tbl">
+      <tr><th>Система</th><th>Сокр.</th><th>Работа</th><th>Интенсивность</th><th>Топливо</th><th>Восстановление</th></tr>
+      <tr><td><b>Алактатная</b></td><td>АЛ / АТФ-КрФ</td><td>3–8 сек</td><td>Максимальная (95–100%)</td><td>Фосфокреатин</td><td>95% за 3–5 мин</td></tr>
+      <tr><td><b>G-cap (ёмкость)</b></td><td>Гликолиз длинный</td><td>20–60 сек</td><td>Высокая (80–90%)</td><td>Гликоген → лактат</td><td>30–60 мин</td></tr>
+      <tr><td><b>G-power (мощность)</b></td><td>Гликолиз короткий</td><td>10–20 сек</td><td>Макс-высокая (90–95%)</td><td>Гликоген быстро</td><td>20–40 мин</td></tr>
+      <tr><td><b>Аэробная</b></td><td>O₂</td><td>2+ мин</td><td>Умеренная (60–75%)</td><td>Жиры + гликоген</td><td>24–48 ч</td></tr>
+    </table>
+    <div class="ref-h2">Аэробная работа</div>
+    <div class="ref-p">Работа с кислородом. ЧСС 65–80% макс (≤154 уд/мин). Лактат не накапливается. Основа выносливости и восстановления. Тренируется длинными сменами, катанием, кардио.</div>
+    <div class="ref-h2">Анаэробная работа</div>
+    <div class="ref-p">Работа без кислорода. ЧСС >80% (>165 уд/мин). Делится на алактатную (без лактата, 3–8 сек) и гликолитическую (с лактатом, 10–60 сек). Рывки, борьба, атаки.</div>
+    <div class="ref-h2">Алактатная система (АЛ)</div>
+    <div class="ref-p">Мгновенная энергия. Фосфокреатин расщепляется за 3–8 сек без лактата. Максимальная мощность. После 8 сек включается гликолиз. <b>Тренировать:</b> 3–8с работы, полный отдых 3–5 мин, только качество.</div>
+    <div class="ref-h2">Гликолитическая система</div>
+    <div class="ref-p"><b>G-cap:</b> долго удерживать высокую интенсивность. 20–60 сек, режим 1:2. Тренируем толерантность к лактату.<br><b>G-power:</b> максимальная гликолитическая скорость. 10–20 сек, режим 1:5. Строится ТОЛЬКО после G-cap базы.</div>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">2. Структура предсезонки (Bompa)</div>
+    <div class="ref-p"><i>Нельзя строить мощность без базы. Каждая фаза опирается на предыдущую.</i></div>
+    <table class="ref-tbl">
+      <tr><th>Нед.</th><th>Фаза</th><th>Цель</th><th>ЧСС лёд</th><th>Зал</th><th>Баллоны</th></tr>
+      <tr><td>1–2</td><td style="color:#1D9E75;font-weight:700">Аэробная база</td><td>Капилляры, техника движений</td><td>65–75% (≤154)</td><td>Базовая сила 3×8-12</td><td>40–60с, 1:1, лёгкое</td></tr>
+      <tr><td>3</td><td style="color:#BA7517;font-weight:700">Переход → G-cap</td><td>Лактатная толерантность, силовая прогрессия</td><td>70–80% (≤164)</td><td>Тяжёлая сила 4×5-7</td><td>25–35с, умеренное</td></tr>
+      <tr><td>4–5</td><td style="color:#D85A30;font-weight:700">G-cap (ёмкость)</td><td>Удержание высокой интенсивности</td><td>80–90% (≤180)</td><td>Взрывная мощь 4×3-5</td><td>20–40с, 1:2</td></tr>
+      <tr><td>6</td><td style="color:#E24B4A;font-weight:700">G-power (мощность)</td><td>Максимальная взрывная мощь</td><td>90–95% (≤190)</td><td>Плиометрика 3×3</td><td>8–15с, 1:5</td></tr>
+      <tr><td>7</td><td style="color:#888780;font-weight:700">Taper ↓</td><td>Сохранение качеств, восстановление НС</td><td>Объём −40%</td><td>Поддержка 2×5</td><td>Минимально</td></tr>
+    </table>
+    <div class="rule-box"><b>Железное правило:</b> G-power нельзя до нед. 6. G-cap нельзя до нед. 3. Аэробная база — обязательно 1–2 недели. Нарушение = потеря адаптационного эффекта (Bompa 9.8).</div>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">3. Режимы работы по энергосистемам</div>
+    <table class="ref-tbl">
+      <tr><th>Система</th><th>Работа</th><th>Отдых</th><th>Серий × повт.</th><th>Признак правильного режима</th></tr>
+      <tr><td><b>АЛ</b></td><td>3–8 сек</td><td>3–5 мин (полный)</td><td>4–8 × 3–5</td><td>Каждое повторение как первое. Нет жжения.</td></tr>
+      <tr><td><b>G-cap</b></td><td>20–60 сек</td><td>40–120 сек (1:2)</td><td>3–5 × 6–10</td><td>Лёгкое жжение к концу серии, держит скорость.</td></tr>
+      <tr><td><b>G-power</b></td><td>10–20 сек</td><td>2–4 мин (1:5)</td><td>3–5 × 4–6</td><td>Максимальная скорость каждого повторения.</td></tr>
+      <tr><td><b>Аэробная</b></td><td>45–90 сек</td><td>30–60 сек (1:1)</td><td>10–20</td><td>ЧСС 140–155. Может говорить. Нет жжения.</td></tr>
+      <tr><td><b>Смешанная</b></td><td>30–45 сек</td><td>30–60 сек</td><td>8–12</td><td>ЧСС 155–165. Дискомфорт есть, контролируемый.</td></tr>
+    </table>
+    <div class="ref-h2">Баллоны / жилеты / ворота / парашуты</div>
+    <table class="ref-tbl">
+      <tr><th>Вид</th><th>Что развивает</th><th>Аэробный режим</th><th>G-cap</th><th>G-power</th></tr>
+      <tr><td>Баллоны</td><td>Разгибание бёдер, толчок</td><td>40–60с / 1:1</td><td>20–40с / 1:2</td><td>8–15с / 1:5</td></tr>
+      <tr><td>Ворота</td><td>Взрывное ускорение с сопр.</td><td>—</td><td>20–30с / 1:2</td><td>6–10с / 1:5</td></tr>
+      <tr><td>Жилеты</td><td>Скоростная выносливость с отяг.</td><td>45–60с / 1:1</td><td>25–45с / 1:2</td><td>10–15с / 1:5</td></tr>
+      <tr><td>Парашуты</td><td>Взрывная мощь отталкивания</td><td>—</td><td>—</td><td>8–12с / 1:5</td></tr>
+    </table>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">4. Микроцикл в сезоне</div>
+    <table class="ref-tbl">
+      <tr><th>День</th><th>Тип</th><th>Содержание</th><th>Интенсивность</th><th>Зал</th></tr>
+      <tr><td>D0</td><td>Игра</td><td>Игровой стресс</td><td>Максимум</td><td>—</td></tr>
+      <tr><td>D+1</td><td>Восстановление</td><td>Лёгкое катание ЧСС ≤130</td><td>Очень низкая 1–2б</td><td>Мобилизация, МФР</td></tr>
+      <tr><td>D+2</td><td>Аэробная мощность</td><td>65–75% ЧСС, длинные смены</td><td>Умеренная 2–3б</td><td>Нет / лёгкий верх</td></tr>
+      <tr><td>D+3</td><td>Алактат + сила ног</td><td>3–8с рывки, полный отдых</td><td>Высокая 5–6б</td><td>Split squat, trap bar</td></tr>
+      <tr><td>D+4</td><td>Модельная / тактика</td><td>Тактика соперника</td><td>Средне-высокая 4–5б</td><td>Нет</td></tr>
+      <tr><td>D-1</td><td>Предыгровой</td><td>Активация, техника 2–3с</td><td>Низкая 1–2б</td><td>Только активация</td></tr>
+    </table>
+    <div class="rule-box"><b>Нельзя:</b> сила ног → G-cap подряд · два тяжёлых (≥7б) дня подряд · D-1 с нагрузкой >3б · G-cap + сила ног в один день (Bompa 9.3).</div>
+    <div class="tip-box-r"><b>При тяжёлой команде:</b> D+2 превращается в активное восстановление (лёгкая аэробная 1–2б). D+3 — сокращённый алактат без зала. Лучше недогрузить, чем сорвать восстановление.</div>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">5. Зал: прогрессия (Boyle)</div>
+    <div class="ref-p"><b>Принцип:</b> сначала мобильность → стабильность → базовая сила → максимальная сила → мощь → специальная мощь.</div>
+    <table class="ref-tbl">
+      <tr><th>Фаза</th><th>Цель зала</th><th>Упражнения</th><th>Параметры</th></tr>
+      <tr><td>Нед. 1–2</td><td>Базовая сила</td><td>Bulgarian split squat, RDL, тяга верхнего блока</td><td>3×8-12, умеренный вес</td></tr>
+      <tr><td>Нед. 3</td><td>Максимальная сила</td><td>Trap bar deadlift, тяжёлый болгарский присед</td><td>4×4-6, тяжёлый вес</td></tr>
+      <tr><td>Нед. 4–5</td><td>Взрывная мощь</td><td>Прыжки с ящика, медбол-броски, рывок гири</td><td>4×3-5, максим. скорость</td></tr>
+      <tr><td>Нед. 6</td><td>Макс. мощь</td><td>Плиометрика, санки на максимум</td><td>3×3, взрывная скорость</td></tr>
+      <tr><td>Нед. 7</td><td>Поддержание</td><td>То же что нед. 4–5, объём –50%</td><td>2×4-5, без усилий</td></tr>
+    </table>
+    <div class="rule-box"><b>Нельзя:</b> тяжёлая сила ног (4–6 повт.) + G-cap/G-power на льду в один день. Мышцы ног не восстанавливаются, оба стимула теряют эффект (Bompa 9.3).</div>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">6. Восстановление команды (McArdle)</div>
+    <table class="ref-tbl">
+      <tr><th>Метод</th><th>Когда</th><th>Длительность</th><th>Эффект</th></tr>
+      <tr><td><b>Активное восстановление</b></td><td>D+1 после игры</td><td>15–20 мин, ЧСС ≤130</td><td>Ускоряет вымывание лактата</td></tr>
+      <tr><td><b>Холодные ванны</b></td><td>После игры / тяжёлой тр.</td><td>10–15 мин, 12–15°C</td><td>Снижает воспаление, отёк мышц</td></tr>
+      <tr><td><b>Компрессия</b></td><td>Ночь после игры</td><td>6–8 часов</td><td>Улучшает венозный возврат</td></tr>
+      <tr><td><b>МФР / растяжка</b></td><td>D+1, после тренировки</td><td>15–20 мин</td><td>Снимает миофасциальное напряжение</td></tr>
+      <tr><td><b>Сон</b></td><td>Ежедневно</td><td>8–9 часов</td><td>Основной нейровосстановительный фактор</td></tr>
+      <tr><td><b>Углеводное окно</b></td><td>30–45 мин после нагрузки</td><td>1–1.2 г/кг углеводов</td><td>Ресинтез гликогена, снижение кортизола</td></tr>
+    </table>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">7. sPRE — шкала нагрузки</div>
+    <div class="ref-p">Session RPE — опрос игроков через 30 мин после тренировки: «От 1 до 10, насколько тяжело было?» Среднее = sPRE занятия.</div>
+    <table class="ref-tbl">
+      <tr><th>Балл</th><th>Ощущение</th><th>ЧСС-зона</th><th>Интерпретация</th></tr>
+      <tr><td style="color:#7FC8B5;font-weight:700">1–2</td><td>Очень легко</td><td>≤144</td><td>Восстановительная нагрузка ✅</td></tr>
+      <tr><td style="color:#1D9E75;font-weight:700">3–4</td><td>Умеренно</td><td>145–164</td><td>Средняя нагрузка, норма для технических дней</td></tr>
+      <tr><td style="color:#BA7517;font-weight:700">5–6</td><td>Тяжело</td><td>165–180</td><td>Нагрузочный день, норма для G-cap / силы</td></tr>
+      <tr><td style="color:#D85A30;font-weight:700">7–8</td><td>Очень тяжело</td><td>181–190</td><td>Высокая нагрузка, следи за восстановлением ⚠️</td></tr>
+      <tr><td style="color:#A32D2D;font-weight:700">9–10</td><td>Предел</td><td>&gt;190</td><td>Игра или G-power. Если не игра — пересмотри план 🔴</td></tr>
+    </table>
+    <div class="tip-box-r"><b>Диагностика:</b> если sPRE за неделю >6 при плане 4–5б — перегрузка. Если sPRE <3 при плане 5–6б — занижена интенсивность.</div>
+  </div>
+
+  <div class="ref-sect">
+    <div class="ref-title">8. Пошаговый алгоритм — если потерялся</div>
+    <div class="tip-box-r">
+      <b>Шаг 1.</b> Определи фазу (шапка недели → цвет и название).<br>
+      <b>Шаг 2.</b> Посмотри «Развиваемые качества» в плашке фазы — там задача периода.<br>
+      <b>Шаг 3.</b> Что было вчера? Тяжёлый день (≥5б) → сегодня техника или выходной. Лёгкий → можно нагрузить.<br>
+      <b>Шаг 4.</b> Что завтра? Игра → сегодня ≤3б. Тяжёлый день → не повторяй ту же систему.<br>
+      <b>Шаг 5.</b> Выбери направление льда и вне льда. Поставь интенсивность и объём.<br>
+      <b>Шаг 6.</b> Красные флаги — система сразу покажет конфликты.<br>
+      <b>Шаг 7.</b> sPRE после тренировки — подтверди, что нагрузка соответствует плану.
+    </div>
+    <div class="ref-h2">Шпаргалка: что ставить в зависимости от окна</div>
+    <table class="ref-tbl">
+      <tr><th>Окно между играми</th><th>Рабочее ядро</th><th>Что ставить</th></tr>
+      <tr><td>2 дня</td><td>0</td><td>D+1 восстановление → D-1 предыгровой</td></tr>
+      <tr><td>3 дня</td><td>1</td><td>D+1 → алактат (или D3 если команда тяжёлая) → D-1</td></tr>
+      <tr><td>4 дня</td><td>2</td><td>D+1 → D3 аэробная → D4 алактат+сила → D-1</td></tr>
+      <tr><td>5 дней</td><td>3</td><td>D+1 → D3 → D4 → D5 тактика → D-1</td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- end screen -->
+<div class="po" id="print-out"></div>
+
+<!-- ══ AUTO-BUILD MODAL ══ -->
+<div class="modal-bg" id="ab-modal" onclick="if(event.target===this)closeAB()">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">⚡ Автопостроение предсезонки</div>
+        <div class="modal-sub">Все правила Bompa соблюдены — конфликты исключены</div>
+      </div>
+      <button class="modal-close" onclick="closeAB()">×</button>
+    </div>
+    <div class="modal-body" style="max-height:80vh">
+
+      <!-- WHICH WEEKS -->
+      <div class="sec-title">Какие недели строить</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn" id="ab-all-btn" onclick="setABRange('all')" style="background:#1D9E75;color:#fff;border-color:#1D9E75">Все недели</button>
+        <button class="btn" id="ab-sel-btn" onclick="setABRange('select')">Выбрать недели</button>
+        <button class="btn" id="ab-one-btn" onclick="setABRange('one')">Текущая неделя</button>
+      </div>
+      <div id="ab-week-sel" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:12px"></div>
+
+      <!-- MICROCYCLE PATTERN -->
+      <div class="sec-title">Структура микроцикла</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div id="ab-6-1" onclick="setABMicro('6-1')" style="border:2px solid #1D9E75;background:#E1F5EE;border-radius:10px;padding:10px 12px;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:#1D9E75">6 + 1</div>
+          <div style="font-size:11px;color:#085041;margin-top:3px">6 тренировочных дней<br>1 выходной (воскресенье)</div>
+          <div style="font-size:10px;color:#777;margin-top:4px">Пн–Сб работа, Вс — отдых</div>
+        </div>
+        <div id="ab-3-1" onclick="setABMicro('3-1')" style="border:2px solid #ddd;background:#f9f8f5;border-radius:10px;padding:10px 12px;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:#555">3 + 1</div>
+          <div style="font-size:11px;color:#666;margin-top:3px">3 дня работа, 1 отдых<br>Повторяющийся цикл</div>
+          <div style="font-size:10px;color:#777;margin-top:4px">Пн–Ср работа, Чт — отдых, Пт–Вс работа</div>
+        </div>
+      </div>
+
+      <!-- FRIENDLY MATCHES -->
+      <div class="sec-title">Товарищеские матчи</div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:12px;color:#555;min-width:120px">Количество матчей:</span>
+          <input type="number" id="ab-match-count" min="0" max="20" value="0"
+            style="width:70px;font-size:18px;font-weight:700;text-align:center;padding:5px 8px;border-radius:8px;border:2px solid #ddd;background:#fff"
+            oninput="onABMatchCount(+this.value)"
+            onchange="onABMatchCount(+this.value)">
+          <span style="font-size:12px;color:#888">матч(ей)</span>
+        </div>
+        <div id="ab-match-inputs" style="display:none"></div>
+      </div>
+
+      <!-- PREVIEW BOX -->
+      <div id="ab-preview" style="background:#f9f8f5;border-radius:10px;border:1px solid #e8e6e0;padding:12px;margin-bottom:12px;font-size:12px;color:#555;line-height:1.8"></div>
+
+      <button onclick="runAutoBuild()" style="width:100%;padding:11px;border-radius:8px;border:none;background:#1D9E75;color:#fff;font-size:14px;font-weight:700;cursor:pointer">⚡ Построить план</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL MODAL ══ -->
+<div class="modal-bg" id="preDetModal" onclick="modalBgClick(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="m-title">Детализация</div>
+        <div class="modal-sub" id="m-sub"></div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn" style="font-size:11px;padding:3px 10px" onclick="printDay()">Печать дня</button>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+    <div style="padding:10px 18px;border-top:1px solid #eee;background:#fff;position:sticky;bottom:0">
+      <button onclick="applyDet()" style="width:100%;padding:10px;border-radius:8px;border:none;background:#1D9E75;color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+        ↑ Применить к карточке дня
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+`;
+// ─── DATA CONSTANTS ──────────────────────────────────────────────────────────
+var PH = [
+  {w:[1,2], n:"Аэробная база",    bg:"#E1F5EE", ac:"#1D9E75", tc:"#085041"},
+  {w:[3],   n:"Переход → G-cap",  bg:"#FAEEDA", ac:"#BA7517", tc:"#633806"},
+  {w:[4,5], n:"G-cap (ёмкость)", bg:"#FAECE7", ac:"#D85A30", tc:"#4A1B0C"},
+  {w:[6],   n:"G-power",          bg:"#FCEBEB", ac:"#E24B4A", tc:"#501313"},
+  {w:[7],   n:"Taper ↓",          bg:"#F1EFE8", ac:"#888780", tc:"#2C2C2A"}
+];
+var HR = {
+  1:{hr:"≤135", n:"Восстановление", c:"#7FC8B5"},
+  2:{hr:"136–144", n:"Малая", c:"#1D9E75"},
+  3:{hr:"145–154", n:"Средняя", c:"#BA7517"},
+  4:{hr:"155–164", n:"Средняя+", c:"#C86E10"},
+  5:{hr:"165–170", n:"Высокая", c:"#D85A30"},
+  6:{hr:"171–180", n:"Высокая+", c:"#E04020"},
+  7:{hr:"181–190", n:"Максимальная", c:"#E24B4A"},
+  8:{hr:"191–200", n:"Предельная", c:"#A32D2D"}
+};
+var DN = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+var DN_FULL = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+var MON_RU = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+var MON_SH = ["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+var ICE_DIR = [
+  {id:"", l:"— нет льда —"},
+  {id:"техника", l:"Техника"},
+  {id:"тактика", l:"Тактика"},
+  {id:"техника-тактика", l:"Техника-тактика"},
+  {id:"спец.выносливость", l:"Спец. выносливость"},
+  {id:"игра", l:"⚡ Игра"}
+];
+var GYM_DIR = [
+  {id:"", l:"— нет зала —"},
+  {id:"быстрота", l:"Быстрота"},
+  {id:"сила", l:"Сила"},
+  {id:"мощь", l:"Мощь"},
+  {id:"общая сила", l:"Общая сила"},
+  {id:"общая выносливость", l:"Общая выносливость"},
+  {id:"спец.выносливость", l:"Спец. выносливость"},
+  {id:"кросс", l:"Кросс"},
+  {id:"пробежка", l:"Пробежка"},
+  {id:"вело", l:"Вело"}
+];
+var ESYS = [
+  {id:"aer", l:"Аэробный"},
+  {id:"mix", l:"Смешанный"},
+  {id:"al",  l:"АЛ (АТФ-КрФ)"},
+  {id:"gcap", l:"G-cap"},
+  {id:"gpower", l:"G-power"},
+  {id:"anb", l:"Анаэробный"}
+];
+var RES_TYPES = ["баллоны","ворота","жилеты","парашуты"];
+var FAT_PARAMS = [
+  "Субъективная усталость (1=свежий, 5=выжат)",
+  "Качество движения на льду (1=отлично, 5=плохо)",
+  "Скоростные показатели (1=норма, 5=упали)",
+  "Травмы / жалобы (1=нет, 5=много)",
+  "Мотивация / вовлечённость (1=высокая, 5=низкая)"
+];
+var TIPS = {
+  1:{q:["Аэробная выносливость","Капиллярная сеть","Экономичность","Техника движений"],
+     ice:"65–75% ЧСС · Смены 45–60с · 1–2 балла", gym:"Базовая сила 3×8-12",
+     bal:"Тяги 40–60с · Низкое сопр.", load:"Малая–Средняя · 85–840 б/день"},
+  3:{q:["Лактатная толерантность","Переход к гликолизу","Силовая прогрессия"],
+     ice:"70–80% ЧСС · Смены 30–45с · 2–3 балла", gym:"Тяжёлая сила 4×5-7",
+     bal:"Тяги 25–35с · Умеренное", load:"Средняя · 421–840 б"},
+  4:{q:["Лактатная ёмкость","Удержание высокой интенсивности","Мощь нижней цепи"],
+     ice:"80–90% ЧСС · 20–60с · Режим 1:2 · 3–4 балла", gym:"Взрывные движения 4×3-5",
+     bal:"G-cap тяги 20–40с · 1:2", load:"Средняя–Большая · 421–1260 б"},
+  6:{q:["Взрывная мощь","Спринтерская скорость","Макс. короткие усилия"],
+     ice:"90–95% ЧСС · 10–20с · Полный отдых · 5–6 баллов", gym:"Плиометрика 3×3",
+     bal:"Взрывные тяги 8–15с · Полный отдых", load:"Большая (качество) · 841–1260 б"},
+  7:{q:["Сохранение качеств","Восстановление НС","Поддержание остроты"],
+     ice:"Объём −40% · Короткие острые работы", gym:"Поддержка 2×5",
+     bal:"Минимально", load:"Малая–Средняя · 85–840 б"}
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+var numW = 7;
+var plan = [], details = [], fatigue = [], dates = [];
+var cw = 0, fatW = 0;
+var mW = -1, mD = -1, mS = 1, mTab = "ice";
+var calStart = null;
+
+function mkDay() {
+  return {off:false, dir1:"", i1:2, m1:0, gdir1:"", gm1:0, spre:0,
+          s2:false, dir2:"", i2:2, m2:0, gdir2:"", gm2:0};
+}
+function mkDet() {
+  return {ice1:[],gym1:[],ice2:[],gym2:[],gm1:0,gm2:0,gi1:2,gi2:2,spec1:{res:"",ser:0},spec2:{res:"",ser:0}};
+}
+function mkFat() { return {sc:[0,0,0,0,0], notes:""}; }
+
+function initPlan(nw) {
+  numW = nw || 7;
+  plan = [];details = [];fatigue = [];dates = [];
+  for (var w = 0; w < numW; w++) {
+    plan.push([]);details.push([]);
+    for (var d = 0; d < 7; d++) { plan[w].push(mkDay()); details[w].push(mkDet()); }
+    fatigue.push(mkFat());
+    dates.push(new Array(7).fill(""));
+  }
+}
+
+function load() {
+  var PS = (CRM.store.get('preseason')) || {};
+  if (PS.plan && PS.plan.length && PS.plan[0] && PS.plan[0][0] && typeof PS.plan[0][0].i1 === 'number') plan = PS.plan; else initPlan(7);
+  if (PS.details && PS.details.length) details = PS.details;
+  if (PS.fatigue && PS.fatigue.length) fatigue = PS.fatigue;
+  if (PS.cal) { calStart = PS.cal.start || null;
+    var _cs = document.getElementById('cal-start'), _ce = document.getElementById('cal-end');
+    if (calStart && _cs) { _cs.value = calStart; computeDates(); }
+    if (PS.cal.end && _ce) _ce.value = PS.cal.end; }
+  numW = plan.length;
+  while (details.length < numW) { details.push([]); for (var d=0;d<7;d++) details[details.length-1].push(mkDet()); }
+  while (fatigue.length < numW) fatigue.push(mkFat());
+  while (dates.length < numW) dates.push(new Array(7).fill(""));
+  // patch missing fields
+  for (var w=0;w<numW;w++) for (var d=0;d<7;d++) {
+    if (!plan[w][d]) plan[w][d] = mkDay();
+    if (!details[w][d]) details[w][d] = mkDet();
+    if (!details[w][d].spec1) details[w][d].spec1 = {res:"",ser:0};
+    if (!details[w][d].spec2) details[w][d].spec2 = {res:"",ser:0};
+    if (details[w][d].gi1 === undefined) details[w][d].gi1 = 2;
+    if (details[w][d].gi2 === undefined) details[w][d].gi2 = 2;
+    if (!details[w][d].ice1) details[w][d].ice1 = [];
+    if (!details[w][d].gym1) details[w][d].gym1 = [];
+    if (!details[w][d].ice2) details[w][d].ice2 = [];
+    if (!details[w][d].gym2) details[w][d].gym2 = [];
+    if (plan[w][d].spre === undefined) plan[w][d].spre = 0;
+  }
+  render();
+}
+
+function sv() {
+  try {
+    var _endV = (document.getElementById('cal-end')||{}).value || '';
+    CRM.store.set('preseason', {plan:plan, details:details, fatigue:fatigue, cal:{start:calStart||'', end:_endV}});
+  } catch(e) {}
+}
+
+function doClear() {
+  CRM.ui.confirm({title:'Сброс', message:'Сбросить весь план периодизации?', danger:true, okLabel:'Сбросить', onOk:function(){
+    initPlan(7); calStart = null;
+    CRM.store.set('preseason', {plan:plan, details:details, fatigue:fatigue, cal:{start:'', end:''}});
+    var ce=document.getElementById('cal-end'); if(ce) ce.value='';
+    var cs=document.getElementById('cal-start'); if(cs) cs.value='';
+    render();
+    var ci=document.getElementById('cal-info'); if(ci) ci.innerHTML='';
+  }});
+}
+
+// ─── VIEW SWITCHING ──────────────────────────────────────────────────────────
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('view-' + id).classList.add('on');
+  btn.classList.add('active');
+  if (id === 'stats') renderStats();
+  if (id === 'fat') { renderFatTabs(); renderFatUI(); renderFatHist(); }
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
+function applyCal() {
+  var s = document.getElementById('cal-start').value;
+  var e = document.getElementById('cal-end').value;
+  if (!s || !e) { CRM.toast('Введи обе даты'); return; }
+  var ds = new Date(s), de = new Date(e);
+  if (de <= ds) { CRM.toast('Дата первой игры должна быть после начала'); return; }
+  var diff = Math.ceil((de - ds) / 86400000);
+  var nw = Math.max(3, Math.min(10, Math.ceil(diff / 7)));
+  calStart = s;
+  while (plan.length < nw) {
+    var wr = []; var dr = [];
+    for (var d=0;d<7;d++){wr.push(mkDay());dr.push(mkDet());}
+    plan.push(wr); details.push(dr); fatigue.push(mkFat());
+  }
+  if (plan.length > nw) { plan = plan.slice(0,nw); details = details.slice(0,nw); fatigue = fatigue.slice(0,nw); }
+  numW = nw;
+  computeDates();
+  document.getElementById('cal-info').innerHTML = '✅ ' + diff + ' дней → <b>' + nw + ' недель</b>';
+  renderCalPreview();
+  sv(); render();
+}
+
+function computeDates() {
+  if (!calStart) return;
+  var base = new Date(calStart);
+  dates = [];
+  for (var w=0;w<numW;w++) {
+    dates.push([]);
+    for (var d=0;d<7;d++) {
+      var dt = new Date(base);
+      dt.setDate(base.getDate() + w*7 + d);
+      dates[w].push({sh: dt.getDate() + ' ' + MON_SH[dt.getMonth()],
+                     full: DN_FULL[d] + ', ' + dt.getDate() + ' ' + MON_RU[dt.getMonth()]});
+    }
+  }
+}
+
+function renderCalPreview() {
+  var box = document.getElementById('cal-preview');
+  var h = '<div style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px">';
+  h += '<div style="font-size:13px;font-weight:600;margin-bottom:10px">Даты по неделям</div>';
+  for (var w=0;w<numW;w++) {
+    var ph = getPhase(w);
+    h += '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:' + ph.ac + ';margin-bottom:4px">Неделя ' + (w+1) + ' — ' + ph.n + '</div>';
+    h += '<div style="display:flex;gap:5px;flex-wrap:wrap">';
+    for (var d=0;d<7;d++) {
+      var dt = dates[w] && dates[w][d] ? dates[w][d] : null;
+      h += '<div style="font-size:11px;padding:3px 8px;border-radius:6px;background:' + ph.bg + ';color:' + ph.tc + '">';
+      h += '<b>' + DN[d] + '</b>' + (dt ? ' ' + dt.sh : '') + '</div>';
+    }
+    h += '</div></div>';
+  }
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+// ─── PHASE ───────────────────────────────────────────────────────────────────
+function getPhase(w) {
+  var wn = w + 1, nw = numW;
+  if (nw <= 4) {
+    if (wn === 1) return PH[0]; if (wn === 2) return PH[1];
+    if (wn <= nw-1) return PH[2]; return PH[4];
+  }
+  if (nw <= 6) {
+    if (wn <= 2) return PH[0]; if (wn === 3) return PH[1];
+    if (wn <= nw-1) return PH[2]; return PH[4];
+  }
+  if (wn <= 2) return PH[0]; if (wn === 3) return PH[1];
+  if (wn <= 5) return PH[2]; if (wn === nw-1) return PH[3];
+  if (wn === nw) return PH[4]; return PH[2];
+}
+function getTip(w) {
+  var ph = getPhase(w);
+  if (ph === PH[0]) return TIPS[1]; if (ph === PH[1]) return TIPS[3];
+  if (ph === PH[2]) return TIPS[4]; if (ph === PH[3]) return TIPS[6]; return TIPS[7];
+}
+
+// ─── CALCS ───────────────────────────────────────────────────────────────────
+function sInt(day, n) { return n===1 ? day.i1 : day.i2; }
+function sMins(day, n) { return (n===1 ? day.dir1 : day.dir2) ? (n===1 ? day.m1 : day.m2) : 0; }
+function sPts(day, n) { return sInt(day,n) * sMins(day,n); }
+function dPts(day) { if (day.off) return 0; return sPts(day,1) + (day.s2 ? sPts(day,2) : 0); }
+function dMins(day) {
+  if (day.off) return 0;
+  return sMins(day,1) + (day.s2 ? sMins(day,2) : 0) + (day.gdir1 ? day.gm1 : 0) + (day.s2&&day.gdir2 ? day.gm2 : 0);
+}
+function dCat(pts) {
+  if (!pts) return null;
+  if (pts <= 420) return {l:"Малая", c:"#1D9E75", bc:"#B8E8D8"};
+  if (pts <= 840) return {l:"Средняя", c:"#BA7517", bc:"#F5D89A"};
+  if (pts <= 1260) return {l:"Большая", c:"#D85A30", bc:"#F5C4B0"};
+  return {l:"Максимальная", c:"#A32D2D", bc:"#F5B8B8"};
+}
+function sCatS(pts, ice) {
+  if (!pts) return null;
+  var f = ice ? {low:"Техника, тактика",mid:"Тех.-тактическая",high:"Тех.-тактическая, спец. выносл.",max:"Тактика, спец. выносливость"}
+              : {low:"Быстрота, общая сила",mid:"Сила, мощь",high:"Скор.-силовая, макс. сила",max:"Силовая выносливость"};
+  if (pts <= 180) return {l:"Малая", c:"#1D9E75", bc:"#B8E8D8", f:f.low};
+  if (pts <= 360) return {l:"Средняя", c:"#BA7517", bc:"#F5D89A", f:f.mid};
+  if (pts <= 540) return {l:"Большая", c:"#D85A30", bc:"#F5C4B0", f:f.high};
+  return {l:"Максимальная", c:"#A32D2D", bc:"#F5B8B8", f:f.max};
+}
+function ptCol(pts) { var c = dCat(pts); return c ? c.c : "#D3D1C7"; }
+function detMins(items) { return (items||[]).reduce(function(a,it){return a+(it.mins||0);},0); }
+function detPts(items) { return (items||[]).reduce(function(a,it){return a+(it.int||1)*(it.mins||0);},0); }
+function weekSPRE(w) {
+  var days = plan[w].filter(function(d){return !d.off && d.spre>0;});
+  if (!days.length) return 0;
+  return Math.round(days.reduce(function(a,d){return a+d.spre;},0)/days.length*10)/10;
+}
+
+// ─── CONFLICTS ───────────────────────────────────────────────────────────────
+function getCF() {
+  var R = {};
+  for (var w=0;w<numW;w++) for (var d=0;d<7;d++) {
+    var k = w+'-'+d, day = plan[w][d]; R[k] = [];
+    if (!day || day.off) continue;
+    var ph = getPhase(w);
+    if (day.dir1==="спец.выносливость" && (day.gdir1==="сила"||day.gdir1==="мощь") && sInt(day,1)>=5)
+      R[k].push({lv:"err", msg:"Спец. выносливость + сила/мощь в один день (Bompa 9.3)"});
+    if (ph===PH[0] && sInt(day,1)>=5)
+      R[k].push({lv:"err", msg:"Интенсивность ≥5 в фазе «Аэробная база»"});
+    if (ph===PH[4] && dPts(day)>840)
+      R[k].push({lv:"warn", msg:"Taper: " + dPts(day) + "б — снизи нагрузку"});
+    if (d > 0) {
+      var pd = plan[w][d-1];
+      if (pd && !pd.off) {
+        if (dPts(pd)>=600 && dPts(day)>=600)
+          R[k].push({lv:"err", msg:"Два тяжёлых дня подряд (≥600б)"});
+        if (pd.dir1==="игра" && dPts(day)>420)
+          R[k].push({lv:"warn", msg:"После игры нагрузка >420б"});
+        if (day.dir1==="игра" && dPts(pd)>420)
+          R[k].push({lv:"warn", msg:"Перед игрой вчера >420б"});
+      }
+    }
+  }
+  return R;
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function soArr(arr, val) {
+  return arr.map(function(o){
+    return '<option value="'+pesc(o.id||'')+'"'+(((o.id||'')===(val||''))?' selected':'')+'>'+pesc(o.l)+'</option>';
+  }).join('');
+}
+function pesc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function dateShort(w,d) { return dates[w]&&dates[w][d] ? (dates[w][d].sh||dates[w][d]) : ''; }
+function dateFull(w,d)  { return dates[w]&&dates[w][d] ? (dates[w][d].full||dates[w][d]) : ''; }
+
+// ─── AUTOBUILDER ─────────────────────────────────────────────────────────────
+// ─── AUTO BUILD SYSTEM ───────────────────────────────────────────────────────
+var AB = {
+  range: 'all',       // 'all' | 'select' | 'one'
+  selWeeks: [],       // which weeks when range='select'
+  micro: '6-1',      // '6-1' | '3-1'
+  matches: 0,         // number of friendly matches
+  matchWeeks: []      // [{week, day}]
+};
+
+function openAutoBuild() {
+  AB.selWeeks = [];
+  AB.matchWeeks = [];
+  AB.matches = 0;
+  var mc = document.getElementById('ab-match-count');
+  if (mc) mc.value = 0;
+  setABRange('all');
+  setABMicro('6-1');
+  setABMatches(0);
+  renderABWeekSel();
+  updateABPreview();
+  document.getElementById('ab-modal').style.display = 'block';
+}
+function closeAB() { document.getElementById('ab-modal').style.display = 'none'; }
+
+function setABRange(r) {
+  AB.range = r;
+  if (r === 'one') AB.selWeeks = [cw];
+  ['all','sel','one'].forEach(function(x){
+    var b = document.getElementById('ab-'+x+'-btn');
+    if (b) { b.style.background = r===x ? '#1D9E75' : ''; b.style.color = r===x ? '#fff' : ''; b.style.borderColor = r===x ? '#1D9E75' : ''; }
+  });
+  document.getElementById('ab-week-sel').style.display = r==='select' ? 'flex' : 'none';
+  updateABPreview();
+}
+
+function renderABWeekSel() {
+  var el = document.getElementById('ab-week-sel'); el.innerHTML = '';
+  for (var w=0;w<numW;w++) {
+    (function(ww){
+      var ph = getPhase(ww);
+      var btn = document.createElement('button');
+      btn.className = 'btn'; btn.id = 'ab-ws-'+ww;
+      btn.textContent = 'Н'+(ww+1)+' '+ph.n.split(' ')[0];
+      var on = AB.selWeeks.indexOf(ww)>=0;
+      btn.style.cssText = on?'background:'+ph.ac+';color:#fff;border-color:'+ph.ac:'';
+      btn.onclick = function(){
+        var idx = AB.selWeeks.indexOf(ww);
+        if(idx>=0) AB.selWeeks.splice(idx,1); else AB.selWeeks.push(ww);
+        renderABWeekSel(); updateABPreview();
+      };
+      el.appendChild(btn);
+    })(w);
+  }
+}
+
+function setABMicro(m) {
+  AB.micro = m;
+  var s61 = document.getElementById('ab-6-1'), s31 = document.getElementById('ab-3-1');
+  if (m==='6-1') {
+    s61.style.borderColor='#1D9E75';s61.style.background='#E1F5EE';s61.querySelector('div').style.color='#1D9E75';
+    s31.style.borderColor='#ddd';s31.style.background='#f9f8f5';s31.querySelector('div').style.color='#555';
+  } else {
+    s31.style.borderColor='#1D9E75';s31.style.background='#E1F5EE';s31.querySelector('div').style.color='#1D9E75';
+    s61.style.borderColor='#ddd';s61.style.background='#f9f8f5';s61.querySelector('div').style.color='#555';
+  }
+  updateABPreview();
+}
+
+function onABMatchCount(n) {
+  if (isNaN(n) || n < 0) n = 0;
+  AB.matches = n;
+  while (AB.matchWeeks.length < n) AB.matchWeeks.push({week:0, day:5});
+  AB.matchWeeks = AB.matchWeeks.slice(0, n);
+  var el = document.getElementById('ab-match-inputs');
+  el.style.display = n > 0 ? 'block' : 'none';
+  if (n > 0) renderMatchInputs();
+  updateABPreview();
+}
+
+function setABMatches(n) { onABMatchCount(n); }
+
+function renderMatchInputs() {
+  var el = document.getElementById('ab-match-inputs'); el.innerHTML='';
+  var h='<div style="background:#EAF4FD;border-radius:8px;padding:10px 12px;margin-top:6px">';
+  h+='<div style="font-size:11px;font-weight:600;color:#185FA5;margin-bottom:8px">Укажи недели и дни матчей:</div>';
+  for(var i=0;i<AB.matches;i++){
+    var mw = AB.matchWeeks[i]||{week:0,day:5};
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+    h+='<span style="font-size:11px;color:#555;min-width:60px">Матч '+(i+1)+':</span>';
+    h+='<span style="font-size:11px;color:#888">Неделя</span>';
+    h+='<select style="width:80px" onchange="setMatchWeek('+i+',\'week\',+this.value)">';
+    for(var w=0;w<numW;w++) h+='<option value="'+w+'"'+(w===mw.week?' selected':'')+'>Нед '+(w+1)+'</option>';
+    h+='</select>';
+    h+='<span style="font-size:11px;color:#888">День</span>';
+    h+='<select style="width:90px" onchange="setMatchWeek('+i+',\'day\',+this.value)">';
+    var dnames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    dnames.forEach(function(dn,di){ h+='<option value="'+di+'"'+(di===mw.day?' selected':'')+'>'+dn+'</option>'; });
+    h+='</select>';
+    h+='</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function setMatchWeek(i,field,val){
+  if(!AB.matchWeeks[i]) AB.matchWeeks[i]={week:0,day:5};
+  AB.matchWeeks[i][field]=val;
+  updateABPreview();
+}
+
+function getABWeeks() {
+  if(AB.range==='all') { var ws=[]; for(var w=0;w<numW;w++) ws.push(w); return ws; }
+  if(AB.range==='one') return [cw];
+  return AB.selWeeks.slice().sort(function(a,b){return a-b;});
+}
+
+function updateABPreview() {
+  var ws = getABWeeks();
+  var el = document.getElementById('ab-preview'); if(!el) return;
+  var h = '';
+  h += '📋 <b>Недели:</b> '+(ws.length?ws.map(function(w){return 'Н'+(w+1);}).join(', '):'не выбраны')+'<br>';
+  h += '🗓 <b>Микроцикл:</b> '+(AB.micro==='6-1'?'6 тренировочных + 1 выходной (Вс)':'3 тренировочных + 1 выходной, повтор')+'<br>';
+  h += '⚽ <b>Матчей:</b> '+AB.matches+(AB.matches>0?' ('+AB.matchWeeks.map(function(m){return 'Н'+(m.week+1)+' '+DN[m.day];}).join(', ')+')':'')+'<br>';
+  h += '<br><span style="color:#1D9E75;font-weight:600">Правила Bompa которые применяются:</span><br>';
+  h += '✓ G-cap/G-power не ставится на нед. 1–2<br>';
+  h += '✓ G-power только с нед. 6<br>';
+  h += '✓ Сила ног и G-cap/G-power никогда в один день<br>';
+  h += '✓ Два тяжёлых (≥5б) дня никогда подряд<br>';
+  h += '✓ День перед матчем — низкий (≤2б)<br>';
+  h += '✓ День после матча — восстановление (≤2б)<br>';
+  h += '✓ Taper: объём −40%, интенсивность сохраняется';
+  el.innerHTML = h;
+}
+
+// ─── CORE BUILD ALGORITHM ────────────────────────────────────────────────────
+function runAutoBuild() {
+  var ws = getABWeeks();
+  if(!ws.length){CRM.toast('Выбери хотя бы одну неделю');return;}
+
+  // Index matches by week+day for fast lookup
+  var matchMap = {};
+  AB.matchWeeks.forEach(function(m){ matchMap[m.week+'-'+m.day]=true; });
+
+  for(var wi=0;wi<ws.length;wi++){
+    var w = ws[wi];
+    var ph = getPhase(w), wn = w+1;
+
+    // Determine rest days pattern
+    // 6+1: day 6 (Sun) is rest
+    // 3+1: day 3 (Thu) is rest, day 6-7 flexible
+    var restDays31 = {3:true, 6:true}; // Thu and Sun
+
+    // Phase params
+    var isAer   = ph===PH[0];  // aerobic base
+    var isTrans = ph===PH[1];  // transition
+    var isGcap  = ph===PH[2];  // g-cap
+    var isGpow  = ph===PH[3];  // g-power
+    var isTaper = ph===PH[4];  // taper
+
+    // Build day plan without conflicts
+    var days = [];
+    for(var d=0;d<7;d++) days.push(null);
+
+    // Step 1: Mark matches
+    for(var d=0;d<7;d++){
+      if(matchMap[w+'-'+d]){
+        days[d] = {off:false,dir1:"игра",i1:8,m1:60,gdir1:"",gm1:0,spre:0,s2:false,dir2:"",i2:2,m2:0,gdir2:"",gm2:0};
+      }
+    }
+
+    // Step 2: Mark rest days
+    for(var d=0;d<7;d++){
+      if(days[d]) continue;
+      var isRest = AB.micro==='6-1' ? d===6 : (d===3||d===6);
+      if(isRest){
+        var day = mkDay(); day.off=true; days[d]=day;
+      }
+    }
+
+    // Step 3: Mark post-match recovery days (D+1 after match)
+    for(var d=0;d<7;d++){
+      if(days[d]&&!days[d].off&&days[d].dir1==="игра"){
+        var next=d+1;
+        if(next<7&&!days[next]){
+          var rec=mkDay();rec.dir1="техника";rec.i1=1;rec.m1=0;rec.gdir1="";rec.gm1=0;
+          days[next]=rec;
+        }
+      }
+    }
+
+    // Step 4: Mark pre-match activation days (D-1 before match)
+    for(var d=0;d<7;d++){
+      if(days[d]&&!days[d].off&&days[d].dir1==="игра"){
+        var prev=d-1;
+        if(prev>=0&&!days[prev]){
+          var pre=mkDay();pre.dir1="техника";pre.i1=1;pre.m1=0;pre.gdir1="";pre.gm1=0;
+          days[prev]=pre;
+        }
+      }
+    }
+
+    // Step 5: Fill remaining days with phase-appropriate training
+    // Phase templates: array of day types to rotate through available slots
+    // Each entry: {dir1, i1, gdir1, allowAfterHeavy}
+    // "heavy" = i1 >= 5
+
+    var phDays; // training day recipes for this phase
+
+    if(isAer){
+      // Aerobic base: max intensity 4, no gly work
+      phDays=[
+        {dir1:"техника-тактика",i1:2,gdir1:"общая сила",   note:"аэробная база + сила"},
+        {dir1:"техника",        i1:1,gdir1:"",              note:"технический"},
+        {dir1:"техника-тактика",i1:3,gdir1:"общая выносливость", note:"аэробная + выносл."},
+        {dir1:"техника-тактика",i1:2,gdir1:"общая сила",   note:"повтор аэробной"},
+        {dir1:"техника",        i1:1,gdir1:"быстрота",      note:"быстрота"},
+        {dir1:"тактика",        i1:2,gdir1:"",              note:"тактика"},
+      ];
+    } else if(isTrans){
+      phDays=[
+        {dir1:"техника-тактика",i1:3,gdir1:"сила",         note:"переходная + сила"},
+        {dir1:"техника",        i1:2,gdir1:"",              note:"технический"},
+        {dir1:"спец.выносливость",i1:4,gdir1:"мощь",       note:"G-cap + мощь"},
+        {dir1:"тактика",        i1:2,gdir1:"",              note:"тактика"},
+        {dir1:"спец.выносливость",i1:3,gdir1:"",            note:"G-cap без зала"},
+        {dir1:"техника-тактика",i1:2,gdir1:"общая сила",   note:"тех-такт + общая сила"},
+      ];
+    } else if(isGcap){
+      phDays=[
+        {dir1:"спец.выносливость",i1:5,gdir1:"сила",       note:"G-cap высокий + сила"}, // CONFLICT guard below
+        {dir1:"техника",          i1:2,gdir1:"",            note:"восстановительный"},
+        {dir1:"спец.выносливость",i1:5,gdir1:"мощь",       note:"G-cap + мощь"},
+        {dir1:"техника-тактика",  i1:3,gdir1:"",            note:"средний технический"},
+        {dir1:"тактика",          i1:4,gdir1:"",            note:"тактика"},
+        {dir1:"спец.выносливость",i1:4,gdir1:"",            note:"G-cap лёгкий"},
+      ];
+    } else if(isGpow){
+      phDays=[
+        {dir1:"спец.выносливость",i1:6,gdir1:"мощь",       note:"G-power + мощь"},
+        {dir1:"техника",          i1:1,gdir1:"",            note:"восстановительный"},
+        {dir1:"спец.выносливость",i1:6,gdir1:"",            note:"G-power без зала"},
+        {dir1:"техника-тактика",  i1:2,gdir1:"",            note:"лёгкий технический"},
+        {dir1:"тактика",          i1:5,gdir1:"",            note:"модельная тактика"},
+        {dir1:"спец.выносливость",i1:5,gdir1:"быстрота",   note:"G-power + быстрота"},
+      ];
+    } else { // taper
+      phDays=[
+        {dir1:"техника-тактика",i1:3,gdir1:"",              note:"тактика сниженная"},
+        {dir1:"техника",        i1:1,gdir1:"",              note:"лёгкий"},
+        {dir1:"спец.выносливость",i1:5,gdir1:"быстрота",   note:"острая G-power короткая"},
+        {dir1:"техника",        i1:2,gdir1:"",              note:"технический"},
+        {dir1:"тактика",        i1:3,gdir1:"",              note:"предыгровая тактика"},
+        {dir1:"техника",        i1:1,gdir1:"",              note:"активация"},
+      ];
+    }
+
+    // Assign training days in order, with conflict checking
+    var phIdx2 = 0;
+    var lastHeavy = false; // was previous day intensity >= 5?
+    var lastGym = false;   // was previous day leg strength?
+
+    for(var d=0;d<7;d++){
+      if(days[d]) {
+        // Already set (match, rest, pre/post)
+        var td = days[d];
+        lastHeavy = !td.off && td.i1>=5;
+        lastGym = !td.off && (td.gdir1==="сила"||td.gdir1==="мощь");
+        continue;
+      }
+      // Pick next recipe, skip if conflicts
+      var recipe = null;
+      var tries = 0;
+      var pIdx = phIdx2;
+      while(tries < phDays.length){
+        var cand = phDays[(pIdx+tries)%phDays.length];
+        var candHeavy = cand.i1>=5;
+        var candGlyc = cand.dir1==="спец.выносливость"&&cand.i1>=4;
+        var candSL = cand.gdir1==="сила";
+
+        // RULES:
+        // 1. Two heavy days in a row
+        if(lastHeavy && candHeavy) {tries++;continue;}
+        // 2. G-cap/G-power + leg strength same day
+        if(candGlyc && candSL) {tries++;continue;}
+        // 3. Leg strength day before G-cap/G-power (next day)
+        if(lastGym && candGlyc) {tries++;continue;}
+        // All clear
+        recipe = cand; phIdx2=(pIdx+tries+1)%phDays.length; break;
+        tries++;
+      }
+      if(!recipe){
+        // Fallback safe: technical day
+        recipe={dir1:"техника",i1:1,gdir1:"",note:"fallback"};
+        phIdx2=(phIdx2+1)%phDays.length;
+      }
+
+      // Build the day
+      var day = mkDay();
+      day.dir1 = recipe.dir1;
+      day.i1   = isTaper ? Math.min(recipe.i1, 5) : recipe.i1;
+      day.m1   = 0; // always set via detail
+      day.gdir1= recipe.gdir1||"";
+      day.gm1  = 0;
+      days[d] = day;
+      lastHeavy = day.i1>=5;
+      lastGym   = day.gdir1==="сила";
+    }
+
+    // Write to plan
+    for(var d=0;d<7;d++){
+      plan[w][d] = days[d]||mkDay();
+    }
+  }
+
+  sv(); render(); closeAB();
+}
+
+function autoBuild(){ openAutoBuild(); } // keep old name as alias
+
+// ─── RENDER CHART ────────────────────────────────────────────────────────────
+function renderChart() {
+  var MAX = 1500, MH = 72, cf = getCF(), days = plan[cw];
+  var h = '<div style="font-size:12px;color:#666;font-weight:600;margin-bottom:8px">Нагрузка недели (баллы)</div>';
+  h += '<div style="position:relative;height:'+(MH+26)+'px">';
+  [[420,"#1D9E75","420"],[840,"#BA7517","840"],[1260,"#D85A30","1260"]].forEach(function(v){
+    var y = Math.round((1-v[0]/MAX)*MH);
+    h += '<div style="position:absolute;top:'+y+'px;left:0;right:0;border-top:1px dashed '+v[1]+'55;z-index:1"><span style="font-size:9px;color:'+v[1]+';position:absolute;top:-7px;right:0">'+v[2]+'</span></div>';
+  });
+  h += '<div style="position:absolute;inset:0 0 26px 0;display:flex;gap:4px;align-items:flex-end;z-index:2">';
+  days.forEach(function(day,d){
+    var pts = dPts(day), bh = Math.max(2,Math.round(Math.min(pts,MAX)/MAX*MH));
+    var col = day.off ? "#D3D1C755" : ptCol(pts);
+    var hasCf = (cf[cw+'-'+d]||[]).some(function(x){return x.lv==="err";});
+    var isG = !day.off && day.dir1==="игра";
+    h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:'+MH+'px">';
+    h += '<div style="font-size:9px;color:'+col+';font-weight:700;margin-bottom:1px">'+(pts>0?pts:'')+'</div>';
+    h += '<div style="width:100%;height:'+bh+'px;background:'+col+';border-radius:3px 3px 0 0;position:relative;overflow:hidden">';
+    if (isG) h += '<span style="position:absolute;top:1px;width:100%;text-align:center;font-size:7px;color:#fff;font-weight:700">ИГР</span>';
+    if (hasCf) h += '<div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:#E24B4A"></div>';
+    h += '</div></div>';
+  });
+  h += '</div>';
+  h += '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;gap:4px">';
+  days.forEach(function(day,d){
+    var dc = dCat(dPts(day)), isG = !day.off&&day.dir1==="игра";
+    var ds = dateShort(cw,d);
+    h += '<div style="flex:1;text-align:center;font-size:9px;color:'+(isG?"#185FA5":day.off?"#bbb":dc?dc.c:"#888")+';font-weight:'+(isG?700:500)+'">';
+    h += DN[d] + (ds ? '<br>' + ds : '') + (day.off ? '°' : '');
+    h += '</div>';
+  });
+  h += '</div></div>';
+  document.getElementById('chart').innerHTML = h;
+}
+
+// ─── RENDER TIP ──────────────────────────────────────────────────────────────
+function renderTip() {
+  var ph = getPhase(cw), tip = getTip(cw);
+  var fat = fatigue[cw] || mkFat();
+  var sc = fat.sc.filter(function(s){return s>0;});
+  var avg = sc.length ? sc.reduce(function(a,b){return a+b;},0)/sc.length : 0;
+  var h = '<div class="tip-box" style="background:'+ph.bg+';border-color:'+ph.ac+'44">';
+  h += '<div style="grid-column:1/-1"><div class="tip-lbl" style="color:'+ph.ac+'">Развиваемые качества</div><div class="pills">';
+  tip.q.forEach(function(q){ h += '<span class="pill" style="background:'+ph.ac+'18;color:'+ph.tc+'">'+q+'</span>'; });
+  h += '</div></div>';
+  h += '<div class="tip-txt"><div class="tip-lbl" style="color:'+ph.ac+'">ЛЁД</div>'+tip.ice+'</div>';
+  h += '<div class="tip-txt"><div class="tip-lbl" style="color:'+ph.ac+'">ЗАЛ</div>'+tip.gym+'</div>';
+  h += '<div class="tip-txt"><div class="tip-lbl" style="color:'+ph.ac+'">БАЛЛОНЫ</div>'+tip.bal+'</div>';
+  h += '<div class="tip-txt"><div class="tip-lbl" style="color:'+ph.ac+'">НАГРУЗКА</div>'+tip.load+'</div>';
+  if (avg > 0) {
+    var fa = avg<=2?"✅ Команда свежая":avg<=3?"⚠️ Умеренная усталость":avg<=4?"🔴 Высокая усталость — снизи нагрузку":"❌ Критическая — восстановительная неделя";
+    h += '<div class="tip-txt" style="grid-column:1/-1"><div class="tip-lbl" style="color:'+ph.ac+'">ТЕСТ УСТАЛОСТИ (НЕД.'+( cw+1)+')</div><b>'+fa+'</b></div>';
+  }
+  h += '</div>';
+  document.getElementById('tip-box').innerHTML = h;
+}
+
+// ─── RENDER DAYS ─────────────────────────────────────────────────────────────
+function sessHTML(d, n, day) {
+  var dk = n===1?"dir1":"dir2", ik = n===1?"i1":"i2", mk_ = n===1?"m1":"m2";
+  var gdk = n===1?"gdir1":"gdir2", gmk = n===1?"gm1":"gm2";
+  var dirV = day[dk], iV = day[ik], mV = day[mk_], gdV = day[gdk], gmV = day[gmk];
+  var isGame = dirV==="игра", iv = iV, hrz = HR[iv];
+  var h = '<div class="lbl">ЛЁД'+(n>1?' '+n:'')+'</div>';
+  h += '<select onchange="upd('+d+',\''+dk+'\',this.value)">'+soArr(ICE_DIR,dirV)+'</select>';
+  if (dirV && !isGame) {
+    h += '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">';
+    h += '<input type="range" min="1" max="8" value="'+iv+'" step="1" style="flex:1" oninput="upd('+d+',\''+ik+'\',+this.value)">';
+    h += '<span style="font-size:11px;font-weight:700;color:'+hrz.c+';min-width:16px;text-align:right">'+iv+'</span></div>';
+    h += '<div class="hrz-badge" style="background:'+hrz.c+'18;color:'+hrz.c+';border:1px solid '+hrz.c+'44">'+hrz.hr+' · '+hrz.n+'</div>';
+    // Check detail blocks
+    var detKey = n===1?"ice1":"ice2";
+    var gymDetKey = n===1?"gm1":"gm2";
+    var detItems = details[cw][d][detKey]||[];
+    var detTotal = detMins(detItems);
+    var detP = detPts(detItems);
+    var gymDetTotal = details[cw][d][gymDetKey]||0;
+    if (detTotal > 0) {
+      // Detail exists — show detail info, no manual input
+      var cat2 = sCatS(detP, true);
+      h += '<div style="margin-top:4px;padding:4px 8px;background:#EEF7FF;border-radius:6px;border:1px solid #C8DFF5">';
+      h += '<div style="font-size:10px;font-weight:600;color:#185FA5">Лёд: '+detTotal+' мин</div>';
+      if (cat2) h += '<div style="font-size:10px;color:'+cat2.c+'">'+detP+'б · '+cat2.l+'</div>';
+      h += '</div>';
+    } else {
+      // No detail — always show dash, time must come from detail modal
+      h += '<div style="margin-top:4px;padding:4px 8px;background:#f9f8f5;border-radius:6px;border:1px solid #eee;display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:10px;color:#aaa">Лёд: </span>';
+      h += '<span style="font-size:11px;color:#bbb">— мин · заполни детализацию</span>';
+      h += '</div>';
+    }
+  } else if (isGame) {
+    h += '<div style="font-size:10px;font-weight:600;color:#E24B4A;margin-top:3px">Интенсивность: 8б (максимальная)</div>';
+  }
+  h += '<div class="lbl">ВНЕ ЛЬДА'+(n>1?' '+n:'')+'</div>';
+  h += '<select onchange="upd('+d+',\''+gdk+'\',this.value)">'+soArr(GYM_DIR,gdV)+'</select>';
+  if (gdV) {
+    var gymDetKey2 = n===1?"gm1":"gm2";
+    var gymIntKey2 = n===1?"gi1":"gi2";
+    var gymMinsVal = details[cw][d][gymDetKey2]||0;
+    var gymIntVal  = details[cw][d][gymIntKey2]||2;
+    var gymItemsArr = details[cw][d][n===1?"gym1":"gym2"]||[];
+    h += '<div style="margin-top:4px;padding:5px 8px;background:#FDF8F0;border-radius:6px;border:1px solid #F0DFC0">';
+    if (gymMinsVal > 0) {
+      var gic = HR[gymIntVal];
+      var gymPts2 = gymIntVal * gymMinsVal;
+      // load category
+      var gymLvl = gymIntVal<=2?"Малая":gymIntVal<=4?"Средняя":gymIntVal<=6?"Большая":"Максимальная";
+      var gymLvlC = gymIntVal<=2?"#1D9E75":gymIntVal<=4?"#BA7517":gymIntVal<=6?"#D85A30":"#A32D2D";
+      h += '<div style="font-size:11px;font-weight:600;color:'+gymLvlC+'">Вне льда: '+gymMinsVal+' мин · '+gymPts2+'б</div>';
+      h += '<div style="font-size:10px;color:'+gic.c+'">' + gymIntVal + 'б · '+gic.hr+' · '+gymLvl+'</div>';
+      if (gymItemsArr.length) h += '<div style="font-size:10px;color:#aaa">'+gymItemsArr.length+' упр.</div>';
+    } else {
+      h += '<span style="font-size:10px;color:#aaa">Вне льда: — мин (заполни детализацию)</span>';
+    }
+    h += '</div>';
+  }
+  return h;
+}
+
+function spreHTML(d, day) {
+  var v = day.spre || 0;
+  var c = v>=9?"#A32D2D":v>=7?"#D85A30":v>=5?"#BA7517":v>=3?"#1D9E75":v>0?"#7FC8B5":"#ccc";
+  var lbl = v>=9?"Макс":v>=7?"Очень тяжело":v>=5?"Тяжело":v>=3?"Умеренно":v>0?"Легко":"";
+  var h = '<div class="spre-row"><span style="font-size:10px;color:#888;flex-shrink:0">sPRE:</span><div style="display:flex;gap:3px">';
+  for (var n=1;n<=10;n++) {
+    var col = n<=v ? c : '#e8e6e0';
+    h += '<div class="sdot'+(n<=v?' on':'')+'" style="'+(n<=v?'background:'+col+';border-color:'+col:'')+'" onclick="setSPRE('+d+','+n+')"></div>';
+  }
+  h += '</div>';
+  if (v>0) h += '<span style="font-size:11px;font-weight:700;color:'+c+';min-width:16px;text-align:center">'+v+'</span>';
+  if (lbl) h += '<span style="font-size:9px;color:'+c+'">'+lbl+'</span>';
+  h += '</div>';
+  return h;
+}
+
+function renderDays(cf) {
+  var g = document.getElementById('dgrid'); g.innerHTML = '';
+  for (var d=0;d<7;d++) {
+    var day = plan[cw][d], k = cw+'-'+d, dcf = cf[k]||[];
+    var hE = dcf.some(function(x){return x.lv==="err";}), hW = dcf.some(function(x){return x.lv==="warn";});
+    var isSpec = !day.off && (day.dir1==="спец.выносливость"||day.dir2==="спец.выносливость");
+    var cls = 'card' + (day.off?' off':hE?' err':hW?' warn':isSpec?' spec':'');
+    var card = document.createElement('div'); card.className = cls;
+    var df = dateFull(cw,d), ds = dateShort(cw,d);
+    var h = '<div class="day-hdr"><div><div class="dname">'+DN[d]+'</div>';
+    if (df) h += '<div class="ddate">'+df+'</div>';
+    else if (ds) h += '<div class="ddate">'+ds+'</div>';
+    h += '</div><button class="off-btn'+(day.off?' on':'')+'" onclick="tOff('+d+')">'+(day.off?'▶':'Вых')+'</button></div>';
+    if (!day.off) {
+      h += sessHTML(d,1,day);
+      if (!day.s2) {
+        h += '<button class="add-s2" onclick="tS2('+d+',true)">+ Занятие 2</button>';
+      } else {
+        h += '<div class="s2-blk"><div class="s2h"><b style="font-size:11px">Занятие 2</b><button class="rm-s2" onclick="tS2('+d+',false)">✕</button></div>';
+        h += sessHTML(d,2,day) + '</div>';
+      }
+      var pts = dPts(day), mins = dMins(day), dc = dCat(pts);
+      if (pts>0) {
+        h += '<div class="day-sum"><span style="font-size:11px;font-weight:700;color:'+(dc?dc.c:'#888')+'">'+pts+'б · '+mins+'мин</span>';
+        if (dc) h += '<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;border:1px solid '+dc.bc+';background:'+dc.bc+'55;color:'+dc.c+'">'+dc.l+'</span>';
+        h += '</div>';
+      }
+      h += spreHTML(d,day);
+      var hasDet = (details[cw][d].ice1||[]).length>0||(details[cw][d].gym1||[]).length>0||details[cw][d].spec1.ser>0;
+      h += '<button class="det-btn" onclick="openModal('+d+')">'+(hasDet?'📋 Детализация ✓':'📋 Детализация')+'</button>';
+      h += '<button class="reset-btn" onclick="resetDay('+d+')">↺ Сброс дня</button>';
+    }
+    dcf.forEach(function(c){ h += '<div class="cf cf-'+c.lv+'">'+c.msg+'</div>'; });
+    card.innerHTML = h; g.appendChild(card);
+  }
+}
+
+// ─── MAIN RENDER ─────────────────────────────────────────────────────────────
+function render() {
+  var cf = getCF();
+  var te = Object.values(cf).reduce(function(a,v){return a+v.filter(function(x){return x.lv==="err";}).length;},0);
+  var tw = Object.values(cf).reduce(function(a,v){return a+v.filter(function(x){return x.lv==="warn";}).length;},0);
+  var eb = document.getElementById('eb'), wb = document.getElementById('wb');
+  eb.style.display = te>0?'':'none'; if(te>0) eb.textContent = te+' конф.';
+  wb.style.display = tw>0?'':'none'; if(tw>0) wb.textContent = tw+' предупр.';
+  // week tabs
+  var wt = document.getElementById('wtabs'); wt.innerHTML = '';
+  for (var w=0;w<numW;w++) {
+    var ph = getPhase(w);
+    var we = DN.reduce(function(a,_,d){return a+(cf[w+'-'+d]||[]).filter(function(x){return x.lv==="err";}).length;},0);
+    var ww = DN.reduce(function(a,_,d){return a+(cf[w+'-'+d]||[]).filter(function(x){return x.lv==="warn";}).length;},0);
+    var fat = fatigue[w]||mkFat(); var fsc = fat.sc.filter(function(s){return s>0;});
+    var favg = fsc.length ? fsc.reduce(function(a,b){return a+b;},0)/fsc.length : 0;
+    var btn = document.createElement('button'); btn.className = 'wtab' + (cw===w?' active':'');
+    btn.textContent = 'Н'+(w+1)+(we>0?' ✕':ww>0?' ⚠':favg>=4?' 🔴':'');
+    btn.style.borderColor = cw===w ? ph.ac : ph.ac+'44';
+    if (cw===w) btn.style.background = ph.ac;
+    (function(ww_){btn.onclick = function(){cw=ww_;render();};})(w);
+    wt.appendChild(btn);
+  }
+  // phase header
+  var ph = getPhase(cw), phdr = document.getElementById('phdr');
+  phdr.style.cssText = 'border-left:3px solid '+ph.ac+';border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;font-weight:600;background:'+ph.bg+';color:'+ph.tc;
+  var wr = dates[cw]&&dates[cw][0]&&dates[cw][6] ? ' · '+dates[cw][0].sh+'–'+dates[cw][6].sh : '';
+  phdr.textContent = 'Неделя '+(cw+1)+' — '+ph.n+wr;
+  renderTip(); renderChart(); renderDays(cf);
+  // overview
+  var og = document.getElementById('ovg');
+  og.style.gridTemplateColumns = 'repeat('+Math.min(numW,8)+',1fr)'; og.innerHTML = '';
+  for (var w=0;w<numW;w++) {
+    var ph2 = getPhase(w);
+    var wpts = plan[w].reduce(function(a,d){return a+dPts(d);},0);
+    var el = document.createElement('div'); el.className = 'ov-cell';
+    el.style.background = cw===w?'#fff':ph2.bg; el.style.borderColor = cw===w?ph2.ac:'transparent';
+    (function(ww_){el.onclick=function(){cw=ww_;render();};})(w);
+    var we2 = DN.reduce(function(a,_,d){return a+(cf[w+'-'+d]||[]).filter(function(x){return x.lv==="err";}).length;},0);
+    el.innerHTML = '<div style="font-size:11px;font-weight:600;color:'+ph2.ac+'">Н'+(w+1)+'</div>'
+      +'<div style="font-size:9px;color:#888">'+ph2.n.split(' ')[0]+'</div>'
+      +'<div style="font-size:9px;color:'+ptCol(Math.round(wpts/Math.max(1,plan[w].filter(function(d){return !d.off;}).length)))+'">'+(wpts>0?wpts+'б':'')+'</div>'
+      +(we2>0?'<div style="font-size:9px;color:#A32D2D">'+we2+'✕</div>':'');
+    og.appendChild(el);
+  }
+}
+
+// ─── MUTATIONS ───────────────────────────────────────────────────────────────
+function upd(d, f, v) { plan[cw][d][f] = v; sv(); render(); }
+function tOff(d) { plan[cw][d].off = !plan[cw][d].off; sv(); render(); }
+function tS2(d, on) { plan[cw][d].s2 = on; if(!on){plan[cw][d].dir2='';plan[cw][d].gdir2='';} sv(); render(); }
+function resetDay(d) { plan[cw][d] = mkDay(); details[cw][d] = mkDet(); sv(); render(); }
+function setSPRE(d, v) { var cur = plan[cw][d].spre||0; plan[cw][d].spre = (cur===v)?0:v; sv(); render(); }
+
+// ─── FATIGUE ─────────────────────────────────────────────────────────────────
+function renderFatTabs() {
+  var el = document.getElementById('fat-wtabs'); if(!el) return;
+  el.innerHTML = '';
+  for (var w=0;w<numW;w++) {
+    var fat = fatigue[w]||mkFat(), fsc = fat.sc.filter(function(s){return s>0;});
+    var avg = fsc.length ? fsc.reduce(function(a,b){return a+b;},0)/fsc.length : 0;
+    var sp = weekSPRE(w);
+    var btn = document.createElement('button'); btn.className = 'btn'+(fatW===w?' btn-p':'');
+    btn.textContent = 'Н'+(w+1)+(avg>0?' ('+avg.toFixed(1)+')':'')+(sp>0?' sPRE:'+sp:'');
+    (function(ww_){btn.onclick=function(){fatW=ww_;renderFatUI();renderFatHist();};})(w);
+    el.appendChild(btn);
+  }
+}
+function renderFatUI() {
+  var fat = fatigue[fatW]||mkFat();
+  document.getElementById('fat-notes').value = fat.notes||'';
+  var h = '';
+  FAT_PARAMS.forEach(function(p,i){
+    var v = fat.sc[i]||0;
+    h += '<div class="fat-row"><span class="fat-lbl">'+p+'</span><div class="fat-stars" id="fsr-'+i+'">';
+    for(var n=1;n<=5;n++) h += '<span class="star'+(v>=n?' on':'')+'" onclick="setFatStar('+i+','+n+')">★</span>';
+    h += '<button class="star-rst" onclick="setFatStar('+i+',0)" title="Сбросить">✕</button></div></div>';
+  });
+  document.getElementById('fat-params').innerHTML = h;
+  // sPRE summary
+  var spEl = document.getElementById('fat-spre');
+  var sp = weekSPRE(fatW);
+  var sh = '<div style="font-size:12px;font-weight:700;margin-bottom:8px">sPRE недели '+(fatW+1)+'</div>';
+  var spDays = plan[fatW].filter(function(d){return !d.off&&d.spre>0;});
+  if (spDays.length) {
+    sh += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">';
+    for(var d=0;d<7;d++){var day=plan[fatW][d];if(!day.off&&day.spre>0){
+      var c2=day.spre>=7?"#D85A30":day.spre>=5?"#BA7517":"#1D9E75";
+      sh+='<div style="text-align:center;min-width:36px"><div style="font-size:9px;color:#aaa">'+DN[d]+'</div><div style="font-size:15px;font-weight:700;color:'+c2+'">'+day.spre+'</div></div>';
+    }}
+    sh += '</div><div style="font-size:12px">Среднее sPRE: <b style="color:'+(sp>=7?"#D85A30":sp>=5?"#BA7517":"#1D9E75")+'">'+sp+'</b> / 10</div>';
+  } else {
+    sh += '<div style="font-size:11px;color:#aaa">sPRE не заполнен. Отметь оценки в карточках дней.</div>';
+  }
+  spEl.innerHTML = sh;
+}
+function setFatStar(param, val) {
+  if (!fatigue[fatW]) fatigue[fatW] = mkFat();
+  fatigue[fatW].sc[param] = val;
+  var c = document.getElementById('fsr-'+param);
+  if (c) c.querySelectorAll('.star').forEach(function(s,i){s.classList.toggle('on', val>0&&i<val);});
+}
+function saveFat() {
+  var fat = fatigue[fatW]||mkFat();
+  fat.notes = document.getElementById('fat-notes').value;
+  fatigue[fatW] = fat; sv();
+  var sc = fat.sc.filter(function(s){return s>0;});
+  var avg = sc.length ? sc.reduce(function(a,b){return a+b;},0)/sc.length : 0;
+  var sp = weekSPRE(fatW), spNorm = sp>0 ? sp/2 : 0;
+  var combined = avg>0&&sp>0 ? avg*0.6+spNorm*0.4 : avg>0 ? avg : spNorm;
+  var advice = '';
+  if (combined<=0) advice='Нет данных.';
+  else if (combined<=1.5) advice='✅ <b>Команда в отличной форме.</b><br>Следующая неделя: можно добавить +5–10% объёма.';
+  else if (combined<=2.5) advice='✅ <b>Хорошее состояние.</b><br>Следующая неделя: план без изменений.';
+  else if (combined<=3.5) advice='⚠️ <b>Умеренная усталость.</b><br>Следующая неделя: объём G-cap/G-power −10–15%. D2 — выходной. Зал — только поддержка.';
+  else if (combined<=4.5) advice='🔴 <b>Высокая усталость.</b><br>Следующая неделя: убрать один тяжёлый день, заменить аэробной работой. Зал — мобилизация.';
+  else advice='❌ <b>Критическая усталость.</b><br>Следующая неделя: восстановительная. Только техника и лёгкая аэробная. Зал отменить.';
+  document.getElementById('fat-advice').innerHTML = '<div style="font-size:14px;font-weight:700;margin-bottom:6px">Оценка: '+combined.toFixed(1)+'/5</div>'+advice;
+  renderFatTabs(); renderFatHist(); render();
+}
+function renderFatHist() {
+  var el = document.getElementById('fat-hist'); if(!el) return;
+  var h = '';
+  for (var w=numW-1;w>=0;w--) {
+    var fat = fatigue[w]||mkFat();
+    var sc = fat.sc.filter(function(s){return s>0;});
+    var avg = sc.length ? sc.reduce(function(a,b){return a+b;},0)/sc.length : 0;
+    var sp = weekSPRE(w);
+    if (avg<=0 && !fat.notes && sp<=0) continue;
+    var ph = getPhase(w);
+    h += '<div class="hist-item">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    h += '<div><b style="color:'+ph.ac+'">Неделя '+(w+1)+' — '+ph.n+'</b>';
+    if (dates[w]&&dates[w][0]) h += ' <span style="font-size:10px;color:#aaa">'+dates[w][0].sh+'</span>';
+    h += '</div><div style="display:flex;gap:6px">';
+    if (avg>0) {
+      var ac = avg>=4?"#A32D2D":avg>=3?"#854F0B":"#085041";
+      h += '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+(avg>=4?"#FCEBEB":avg>=3?"#FAEEDA":"#E8F6F0")+';color:'+ac+'">Усталость: '+avg.toFixed(1)+'</span>';
+    }
+    if (sp>0) {
+      var sc2 = sp>=7?"#D85A30":sp>=5?"#BA7517":"#1D9E75";
+      h += '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+sc2+'18;color:'+sc2+'">sPRE: '+sp+'</span>';
+    }
+    h += '</div></div>';
+    if (avg>0) {
+      var parts = FAT_PARAMS.map(function(p,i){return fat.sc[i]>0?p.split(' ')[0]+': '+fat.sc[i]:null;}).filter(Boolean);
+      if (parts.length) h += '<div style="font-size:11px;color:#555;margin-bottom:4px">'+parts.join(' · ')+'</div>';
+    }
+    if (fat.notes) h += '<div style="font-size:11px;color:#777;font-style:italic;background:#f9f8f5;padding:4px 8px;border-radius:6px">"'+fat.notes+'"</div>';
+    h += '</div>';
+  }
+  el.innerHTML = h||'<div style="font-size:12px;color:#aaa;text-align:center;padding:16px">История пуста — сохраняй оценки после каждой недели.</div>';
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function renderStats() {
+  var dirMins = {}, dirPts = {}, gymMins = {}, weekPts = [];
+  for (var w=0;w<numW;w++) {
+    var wp = 0;
+    for (var d=0;d<7;d++) {
+      var day = plan[w][d]; if (!day||day.off) continue;
+      if (day.dir1) { dirMins[day.dir1]=(dirMins[day.dir1]||0)+day.m1; dirPts[day.dir1]=(dirPts[day.dir1]||0)+day.i1*day.m1; }
+      if (day.s2&&day.dir2) { dirMins[day.dir2]=(dirMins[day.dir2]||0)+day.m2; dirPts[day.dir2]=(dirPts[day.dir2]||0)+day.i2*day.m2; }
+      if (day.gdir1) gymMins[day.gdir1]=(gymMins[day.gdir1]||0)+day.gm1;
+      if (day.s2&&day.gdir2) gymMins[day.gdir2]=(gymMins[day.gdir2]||0)+day.gm2;
+      wp += dPts(day);
+    }
+    weekPts.push(wp);
+  }
+  var tMins = Object.values(dirMins).reduce(function(a,b){return a+b;},0)||1;
+  var tGym  = Object.values(gymMins).reduce(function(a,b){return a+b;},0)||1;
+  var maxPts = Math.max.apply(null,Object.values(dirPts).concat([1]));
+  var maxWP  = Math.max.apply(null,weekPts.concat([1]));
+
+  function barRows(obj, total, colorFn) {
+    return Object.entries(obj).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+      var pct = Math.round(e[1]/total*100);
+      return '<div class="stat-row"><span style="min-width:120px;color:#555">'+e[0]+'</span>'
+        +'<div style="flex:1;display:flex;align-items:center;gap:6px">'
+        +'<div class="stat-bar" style="width:'+Math.max(2,pct)+'%;background:'+colorFn(e[0])+'"></div>'
+        +'<span style="font-size:10px;color:#888;white-space:nowrap">'+e[1]+'мин · '+pct+'%</span></div></div>';
+    }).join('');
+  }
+
+  var tTrDays = plan.reduce(function(a,w){return a+w.filter(function(d){return !d.off;}).length;},0);
+  var tIceMins = Object.values(dirMins).reduce(function(a,b){return a+b;},0);
+  var tPtsAll  = Object.values(dirPts).reduce(function(a,b){return a+b;},0);
+  var tGymMins = Object.values(gymMins).reduce(function(a,b){return a+b;},0);
+
+  var h = '<div class="stats-grid">';
+  h += '<div class="stat-card"><div class="stat-title">🧊 Лёд — объём по направлениям</div>';
+  h += barRows(dirMins, tMins, function(){return "#378ADD";});
+  h += '</div>';
+  h += '<div class="stat-card"><div class="stat-title">💡 Лёд — баллы по направлениям</div>';
+  h += Object.entries(dirPts).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+    var pct = Math.round(e[1]/maxPts*100), cat = sCatS(e[1]/Math.max(1,dirMins[e[0]]||1)*60,true);
+    return '<div class="stat-row"><span style="min-width:120px;color:#555">'+e[0]+'</span>'
+      +'<div style="flex:1;display:flex;align-items:center;gap:6px">'
+      +'<div class="stat-bar" style="width:'+Math.max(2,pct)+'%;background:'+(cat?cat.c:"#ddd")+'"></div>'
+      +'<span style="font-size:10px;color:#888">'+e[1]+'б</span></div></div>';
+  }).join('');
+  h += '</div>';
+  h += '<div class="stat-card"><div class="stat-title">🏋️ Вне льда — объём по направлениям</div>';
+  h += barRows(gymMins, tGym, function(){return "#BA7517";});
+  h += '</div>';
+  h += '<div class="stat-card"><div class="stat-title">📈 Баллы и sPRE по неделям</div>';
+  h += weekPts.map(function(p,w){
+    var ph = getPhase(w), pct = Math.round(p/maxWP*100), sp = weekSPRE(w);
+    return '<div class="stat-row"><span style="min-width:80px;color:#555">Н'+(w+1)+' '+ph.n.split(' ')[0]+'</span>'
+      +'<div style="flex:1;display:flex;align-items:center;gap:6px">'
+      +'<div class="stat-bar" style="width:'+Math.max(2,pct)+'%;background:'+ph.ac+'"></div>'
+      +'<span style="font-size:10px;color:#888">'+p+'б'+(sp>0?' sPRE:'+sp:'')+'</span></div></div>';
+  }).join('');
+  h += '</div></div>';
+  h += '<div style="background:#fff;border-radius:12px;border:1px solid #e5e3dc;padding:14px">';
+  h += '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Итого предсезонки</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">';
+  [{l:"Тренировочных дней",v:tTrDays,c:"#333"},{l:"Минут на льду",v:tIceMins,c:"#185FA5"},
+   {l:"Минут вне льда",v:tGymMins,c:"#BA7517"},{l:"Суммарные баллы",v:tPtsAll,c:"#D85A30"}].forEach(function(it){
+    h += '<div style="text-align:center;background:#f9f8f5;border-radius:8px;padding:10px">';
+    h += '<div style="font-size:10px;color:#888;margin-bottom:3px">'+it.l+'</div>';
+    h += '<div style="font-size:22px;font-weight:700;color:'+it.c+'">'+it.v+'</div></div>';
+  });
+  h += '</div></div>';
+  document.getElementById('stats-content').innerHTML = h;
+}
+
+// ─── DETAIL MODAL ────────────────────────────────────────────────────────────
+function openModal(d) {
+  mW = cw; mD = d; mS = 1;
+  var day = plan[cw][d];
+  mTab = (day.dir1==="спец.выносливость") ? "spec" : "ice";
+  document.getElementById('m-title').textContent = DN_FULL[d] + ' — Неделя ' + (cw+1);
+  var df = dateFull(cw,d);
+  document.getElementById('m-sub').textContent = df || [day.dir1,day.gdir1].filter(Boolean).join(' / ');
+  renderModal();
+  document.getElementById("preDetModal").style.display = 'block';
+}
+function closeModal() { document.getElementById("preDetModal").style.display = 'none'; }
+function modalBgClick(e) { if (e.target===document.getElementById("preDetModal")) closeModal(); }
+
+function renderModal() {
+  var day = plan[mW][mD], det = details[mW][mD];
+  var iceKey = mS===1?"ice1":"ice2", gymKey = mS===1?"gym1":"gym2";
+  var gmK = mS===1?"gm1":"gm2", spK = mS===1?"spec1":"spec2";
+  var iceItems = det[iceKey]||[], gymItems = det[gymKey]||[];
+  var gmins = det[gmK]||0, specData = det[spK]||{res:"",ser:0};
+  var dirV = mS===1?day.dir1:day.dir2, gdirV = mS===1?day.gdir1:day.gdir2;
+  var isSpec = dirV==="спец.выносливость";
+
+  var h = '<div class="mtabs">';
+  h += '<button class="mtab'+(mS===1?' active':'')+'" onclick="switchMSess(1)">Занятие 1</button>';
+  if (day.s2) h += '<button class="mtab'+(mS===2?' active':'')+'" onclick="switchMSess(2)">Занятие 2</button>';
+  h += '</div>';
+
+  var subTabs = [{id:"ice",l:"🧊 Лёд"},{id:"gym",l:"🏋️ Вне льда"}];
+  if (isSpec) subTabs.push({id:"spec",l:"⚡ Спец. выносливость"});
+  h += '<div class="mtabs">';
+  subTabs.forEach(function(t){
+    h += '<button class="mtab'+(mTab===t.id?' active':'')+(t.id==='spec'?' spec':'')+'" onclick="switchMTab(\''+t.id+'\')">'+t.l+'</button>';
+  });
+  h += '</div>';
+
+  // Direction label: ice tab shows ice direction, gym tab shows gym direction, spec shows spec label
+  if (mTab === "ice" && dirV) {
+    h += '<div style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;margin-bottom:10px;background:'+
+      (isSpec?'#F3EAFF':'#EAF4FD')+';color:'+(isSpec?'#9C59D1':'#185FA5')+'">🧊 Направление на льду: '+dirV+'</div>';
+  }
+  if (mTab === "gym" && gdirV) {
+    h += '<div style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;margin-bottom:10px;background:#FDF8F0;color:#BA7517">🏋️ Направление вне льда: '+gdirV+'</div>';
+  }
+  if (mTab === "spec" && isSpec) {
+    h += '<div style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;margin-bottom:10px;background:#F3EAFF;color:#9C59D1">⚡ Специальная выносливость — '+dirV+'</div>';
+  }
+
+  // ICE TAB
+  if (mTab === "ice") {
+    h += '<div class="sec-title">🧊 Работа на льду — блоки</div>';
+    if (!iceItems.length) h += '<div style="font-size:11px;color:#aaa;text-align:center;padding:8px;background:#f9f8f5;border-radius:8px;margin-bottom:8px">Блоки не добавлены</div>';
+    iceItems.forEach(function(it,i){
+      var iv=it.int||2, mv=it.mins||10, pts=iv*mv, c=HR[iv], pcat=sCatS(pts,true);
+      h += '<div class="ice-blk">';
+      h += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">';
+      h += '<input type="text" value="'+pesc(it.name||'')+'" placeholder="Содержание блока (G-cap смены 30с, разминка...)" style="flex:1;font-size:12px;padding:5px 8px;border-radius:7px;border:1px solid #C8DFF5;background:#fff" onchange="saveIce(\''+iceKey+'\','+i+',\'name\',this.value)">';
+      h += '<select style="width:120px" onchange="saveIce(\''+iceKey+'\','+i+',\'esys\',this.value)">'+soArr(ESYS,it.esys||'aer')+'</select>';
+      h += '<button onclick="rmIce(\''+iceKey+'\','+i+')" style="background:none;border:none;font-size:20px;color:#ccc;flex-shrink:0">×</button></div>';
+      h += '<div style="display:flex;gap:10px;align-items:center">';
+      h += '<div style="flex:1"><div style="font-size:10px;color:#999;margin-bottom:3px">Интенсивность: <b id="iv_'+iceKey+'_'+i+'" style="color:'+c.c+'">'+iv+'б · '+c.hr+' уд/мин · '+c.n+'</b></div>';
+      h += '<input type="range" min="1" max="8" value="'+iv+'" step="1" style="width:100%" oninput="liveSlider(\''+iceKey+'\','+i+',+this.value)" onchange="saveIce(\''+iceKey+'\','+i+',\'int\',+this.value)"></div>';
+      h += '<div style="text-align:center;flex-shrink:0"><div style="font-size:10px;color:#999;margin-bottom:2px">Мин</div>';
+      h += '<input type="number" min="1" max="180" value="'+mv+'" style="width:54px;font-size:14px;font-weight:600;text-align:center;padding:4px;border-radius:7px;border:1px solid #C8DFF5;background:#fff" onchange="saveIce(\''+iceKey+'\','+i+',\'mins\',+this.value)"></div>';
+      h += '<div style="text-align:center;min-width:65px;padding:5px 8px;border-radius:8px;background:'+(pcat?pcat.bc+'44':'#f0f0ee')+'">';
+      h += '<div style="font-size:9px;color:#999">Баллы</div>';
+      h += '<div id="pv_'+iceKey+'_'+i+'" style="font-size:18px;font-weight:700;color:'+(pcat?pcat.c:'#aaa')+';line-height:1">'+pts+'</div>';
+      h += '<div style="font-size:9px;color:'+(pcat?pcat.c:'#aaa')+'">'+(pcat?pcat.l:'')+'</div></div>';
+      h += '</div></div>';
+    });
+    h += '<button class="add-blk" onclick="addIce(\''+iceKey+'\')">+ Блок льда</button>';
+    var itM=detMins(iceItems), itP=detPts(iceItems);
+    if (iceItems.length) {
+      var ic = sCatS(itP,true);
+      h += '<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;background:#E8F6F0;border-radius:7px;margin-top:6px;font-size:11px;font-weight:600;color:#085041">';
+      h += 'Лёд итого: '+itM+' мин · '+itP+' б';
+      if (ic) h += ' <span style="padding:1px 8px;border-radius:20px;background:'+ic.c+';color:#fff">'+ic.l+'</span>';
+      h += '</div>';
+    }
+  }
+
+  // GYM TAB
+  if (mTab === "gym") {
+    // Gym load category data
+    var GYM_LOAD = [
+      {lv:"Малая", c:"#1D9E75", bc:"#E1F5EE", mins_min:45, mins_max:60, int_min:1, int_max:2,
+       energy:"Аэробный", dirs:"Быстрота, общая сила, общая выносливость, координация, гибкость"},
+      {lv:"Средняя", c:"#BA7517", bc:"#FAEEDA", mins_min:60, mins_max:75, int_min:3, int_max:4,
+       energy:"Смешанный", dirs:"Сила, мощь, взрывная сила, скоростно-силовая, нейромышечная активация"},
+      {lv:"Большая", c:"#D85A30", bc:"#FAECE7", mins_min:65, mins_max:80, int_min:5, int_max:6,
+       energy:"Анаэробный", dirs:"Скоростно-силовая, максимальная сила, специальная мощь, силовая выносливость"},
+      {lv:"Максимальная", c:"#A32D2D", bc:"#FCEBEB", mins_min:75, mins_max:90, int_min:7, int_max:8,
+       energy:"Анаэробный", dirs:"Силовая выносливость, специальная выносливость, высокообъёмная гликолитическая"}
+    ];
+    // Gym intensity state stored in det
+    var gimK = mS===1?"gi1":"gi2"; // gym intensity key
+    var gymInt = det[gimK]||2;
+    var gymHrz = HR[gymInt];
+    var gymPts = gmins > 0 ? gymInt * gmins : 0;
+
+    // Determine gym load category
+    function gymLoadCat(mins, intv) {
+      if (!mins || !intv) return null;
+      // Match by intensity range first, then hint on minutes
+      if (intv<=2) return GYM_LOAD[0];
+      if (intv<=4) return GYM_LOAD[1];
+      if (intv<=6) return GYM_LOAD[2];
+      return GYM_LOAD[3];
+    }
+    var glc = gymLoadCat(gmins, gymInt);
+
+    h += '<div class="sec-title">🏋️ Вне льда — упражнения</div>';
+
+    // Intensity selector for gym
+    h += '<div style="background:#FDF8F0;border-radius:10px;border:1px solid #F0DFC0;padding:10px 12px;margin-bottom:10px">';
+    h += '<div style="font-size:10px;color:#999;margin-bottom:4px">Интенсивность вне льда: <b id="gi_lbl" style="color:'+gymHrz.c+'">'+gymInt+' б · '+gymHrz.hr+' уд/мин · '+gymHrz.n+'</b></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<input type="range" min="1" max="8" value="'+gymInt+'" step="1" style="flex:1" oninput="liveGymInt(\''+gimK+'\',+this.value)" onchange="saveDf(\''+gimK+'\',+this.value)">';
+    h += '<span id="gi_val" style="font-size:13px;font-weight:700;color:'+gymHrz.c+';min-width:18px;text-align:right">'+gymInt+'</span></div>';
+    h += '</div>';
+
+    // Exercises
+    if (!gymItems.length) h += '<div style="font-size:11px;color:#aaa;text-align:center;padding:8px;background:#f9f8f5;border-radius:8px;margin-bottom:8px">Упражнения не добавлены</div>';
+    gymItems.forEach(function(it,i){
+      h += '<div class="gym-blk"><div style="display:flex;gap:6px;align-items:center">';
+      h += '<input type="text" value="'+pesc(it.name||'')+'" placeholder="Упражнение (Bulgarian split squat...)" style="flex:1;font-size:12px;padding:5px 8px;border-radius:7px;border:1px solid #e8e6e0;background:#fff" onchange="saveGym(\''+gymKey+'\','+i+',\'name\',this.value)">';
+      h += '<div style="text-align:center;flex-shrink:0"><div style="font-size:9px;color:#999;margin-bottom:1px">Подх.</div>';
+      h += '<input type="number" min="1" max="20" value="'+(it.sets||3)+'" style="width:44px;text-align:center;padding:3px;border-radius:6px;border:1px solid #e8e6e0;background:#fff;font-size:12px" onchange="saveGym(\''+gymKey+'\','+i+',\'sets\',+this.value)"></div>';
+      h += '<div style="text-align:center;flex-shrink:0"><div style="font-size:9px;color:#999;margin-bottom:1px">Повт.</div>';
+      h += '<input type="text" value="'+(it.reps||'10')+'" style="width:60px;text-align:center;padding:3px 5px;border-radius:6px;border:1px solid #e8e6e0;background:#fff;font-size:12px" onchange="saveGym(\''+gymKey+'\','+i+',\'reps\',this.value)"></div>';
+      h += '<button onclick="rmGym(\''+gymKey+'\','+i+')" style="background:none;border:none;font-size:20px;color:#ccc;flex-shrink:0;margin-top:14px">×</button></div></div>';
+    });
+    h += '<button class="add-blk" onclick="addGym(\''+gymKey+'\')">+ Упражнение</button>';
+
+    // Total time input
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#FDF8F0;border-radius:8px;border:1px solid #F0DFC0">';
+    h += '<span style="font-size:11px;color:#633806;font-weight:600">Время вне льда:</span>';
+    h += '<input type="number" min="0" max="180" value="'+gmins+'" style="width:58px;text-align:center;padding:5px;border-radius:7px;border:1px solid #ddd;background:#fff;font-size:15px;font-weight:700" onchange="saveDf(\''+gmK+'\',+this.value)">';
+    h += '<span style="font-size:11px;color:#888">мин · '+gymItems.length+' упр.</span></div>';
+
+    // Load category display
+    if (glc && gmins>0) {
+      h += '<div style="margin-top:8px;border-radius:10px;border:1px solid '+glc.c+'44;background:'+glc.bc+';padding:10px 14px">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
+      h += '<span style="font-size:13px;font-weight:700;color:'+glc.c+'">Нагрузка: '+glc.lv+'</span>';
+      h += '<span style="font-size:11px;font-weight:600;color:'+glc.c+';padding:2px 10px;border-radius:20px;background:'+glc.c+'18">'+gymInt+' б × '+gmins+' мин = '+gymPts+' б</span>';
+      h += '</div>';
+      h += '<div style="font-size:11px;color:#555;margin-bottom:3px">🔋 Режим: <b>'+glc.energy+'</b></div>';
+      h += '<div style="font-size:11px;color:#555;margin-bottom:3px">🎯 Направленность: '+glc.dirs+'</div>';
+      h += '<div style="font-size:10px;color:#888;">⏱ Рекомендуемый объём: '+glc.mins_min+'–'+glc.mins_max+' мин · '+glc.int_min+'–'+glc.int_max+' баллов</div>';
+      // Warning if out of range
+      if (gmins < glc.mins_min || gmins > glc.mins_max) {
+        h += '<div style="margin-top:4px;font-size:10px;color:#854F0B;background:#FAEEDA;padding:3px 8px;border-radius:4px">⚠ '+gmins+' мин выходит за рекомендуемый диапазон '+glc.mins_min+'–'+glc.mins_max+' мин для этой нагрузки</div>';
+      }
+      h += '</div>';
+    } else if (gmins === 0) {
+      h += '<div style="margin-top:8px;font-size:11px;color:#aaa;text-align:center;padding:8px;background:#f9f8f5;border-radius:8px">Введи время занятия — появится категория нагрузки</div>';
+    }
+  }
+
+  // SPEC TAB
+  if (mTab === "spec" && isSpec) {
+    var prevSer = 0, prevW2 = -1, prevD2 = -1;
+    outer: for (var w2=mW;w2>=0;w2--) {
+      for (var d2=(w2===mW?mD-1:6);d2>=0;d2--) {
+        var pd2=plan[w2][d2]; if (!pd2||pd2.off) continue;
+        var pdir2 = mS===1?pd2.dir1:pd2.dir2;
+        if (pdir2==="спец.выносливость") {
+          var psp=details[w2][d2][spK]; if(psp&&psp.ser>0){prevSer=psp.ser;prevW2=w2;prevD2=d2;break outer;}
+        }
+      }
+    }
+    h += '<div style="background:#FAF5FF;border-radius:10px;border:1px solid #D4ADFC;padding:12px 14px">';
+    h += '<div style="font-size:13px;font-weight:700;color:#9C59D1;margin-bottom:10px">⚡ Специальная выносливость</div>';
+    if (prevSer>0) {
+      h += '<div style="background:#fff;border-radius:8px;border:1px solid #D4ADFC;padding:7px 12px;margin-bottom:12px;font-size:11px;color:#666">';
+      h += '<b style="color:#9C59D1">Предыдущее (Н'+(prevW2+1)+', '+DN[prevD2]+'):</b> '+(details[prevW2][prevD2][spK].res||'—')+' · '+prevSer+' серий</div>';
+    }
+    h += '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px">Вид сопротивления</div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+    RES_TYPES.forEach(function(r){
+      h += '<button style="font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid #D4ADFC;background:'+(specData.res===r?'#9C59D1':'transparent')+';color:'+(specData.res===r?'#fff':'#9C59D1')+'" onclick="setSpecRes(\''+spK+'\',\''+r+'\')">'+r+'</button>';
+    });
+    h += '</div>';
+    h += '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">Количество серий</div>';
+    h += '<div style="display:flex;align-items:center;gap:10px">';
+    h += '<input type="number" min="0" max="50" value="'+(specData.ser||0)+'" style="width:70px;font-size:18px;font-weight:700;text-align:center;padding:6px;border-radius:8px;border:1px solid #D4ADFC;background:#fff" onchange="saveSpecSer(\''+spK+'\',+this.value)">';
+    h += '<span style="font-size:12px;color:#888">серий '+(specData.res?'· '+specData.res:'')+'</span>';
+    if (prevSer>0) {
+      var ns = specData.ser||0;
+      var comp = ns>prevSer?'↑ больше':'↓ меньше';
+      h += '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:'+(ns>prevSer?"#E8F6F0":"#FCEBEB")+';color:'+(ns>prevSer?"#085041":"#791F1F")+'">'+(ns===prevSer?'= столько же ('+prevSer+')':comp+' чем прошлый раз ('+prevSer+')')+'</span>';
+    }
+    h += '</div></div>';
+  }
+
+  // Summary
+  var itM2 = detMins(iceItems), itP2 = detPts(iceItems), sc2 = dCat(itP2);
+  var gmins2 = det[gmK]||0;
+  h += '<div class="modal-sum" style="margin-top:10px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+  h += '<b style="font-size:12px">Итого занятие '+mS+'</b>';
+  if (sc2) h += '<span style="padding:1px 10px;border-radius:20px;background:'+sc2.c+';color:#fff;font-size:11px;font-weight:600">'+sc2.l+'</span>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+  [{l:"Лёд",v:itM2+'мин',v2:itP2+'б',c:"#185FA5"},{l:"Вне льда",v:gmins2+'мин',v2:gymItems.length+' упр.',c:"#BA7517"},{l:"Всего",v:(itM2+gmins2)+'мин',v2:itP2+'б',c:sc2?sc2.c:"#555"}].forEach(function(it){
+    h += '<div style="text-align:center;background:#fff;border-radius:8px;padding:6px"><div style="font-size:9px;color:#888">'+it.l+'</div>';
+    h += '<div style="font-size:16px;font-weight:700;color:'+it.c+'">'+it.v+'</div>';
+    h += '<div style="font-size:11px;color:'+(sc2?sc2.c:"#aaa")+'">'+it.v2+'</div></div>';
+  });
+  h += '</div></div>';
+  document.getElementById('m-body').innerHTML = h;
+}
+
+function switchMSess(n){mS=n;var day=plan[mW][mD];mTab=(n===1?day.dir1:day.dir2)==="спец.выносливость"?"spec":"ice";renderModal();}
+function switchMTab(t){mTab=t;renderModal();}
+function saveIce(k,i,f,v){
+  if(details[mW][mD][k]&&details[mW][mD][k][i]!==undefined){
+    details[mW][mD][k][i][f]=v;
+    sv();
+    // always re-render so totals stay up to date
+    renderModal();
+  }
+}
+function liveGymInt(k, v) {
+  details[mW][mD][k] = v; sv();
+  var c = HR[v];
+  var lbl = document.getElementById('gi_lbl');
+  var val = document.getElementById('gi_val');
+  if (lbl) { lbl.textContent = v + ' б · ' + c.hr + ' уд/мин · ' + c.n; lbl.style.color = c.c; }
+  if (val) { val.textContent = v; val.style.color = c.c; }
+  // Re-render modal to update load category
+  renderModal();
+}
+
+function saveGym(k,i,f,v){if(details[mW][mD][k]&&details[mW][mD][k][i]!==undefined){details[mW][mD][k][i][f]=v;sv();}}
+function saveDf(f,v){
+  details[mW][mD][f]=v;
+  if(f==='gm1'){plan[mW][mD].gm1=v;}
+  if(f==='gm2'){plan[mW][mD].gm2=v;}
+  if(f==='gi1'){plan[mW][mD].gi1=v;}
+  if(f==='gi2'){plan[mW][mD].gi2=v;}
+  sv();renderModal();
+  if(mW===cw) render();
+}
+function saveSpecSer(k,v){details[mW][mD][k].ser=v;sv();}
+function setSpecRes(k,r){details[mW][mD][k].res=r;sv();renderModal();}
+function liveSlider(k,i,v){
+  if(!details[mW][mD][k]||!details[mW][mD][k][i])return;
+  details[mW][mD][k][i].int=v;sv();
+  var c=HR[v],el=document.getElementById('iv_'+k+'_'+i);
+  if(el){el.innerHTML=v+'б · '+c.hr+' уд/мин · '+c.n;el.style.color=c.c;}
+  var mv=details[mW][mD][k][i].mins||10,pts=v*mv,pcat=sCatS(pts,true);
+  var pe=document.getElementById('pv_'+k+'_'+i);
+  if(pe){pe.textContent=pts;pe.style.color=pcat?pcat.c:'#aaa';}
+}
+function addIce(k){details[mW][mD][k].push({name:"",esys:"aer",int:2,mins:10});sv();renderModal();}
+function rmIce(k,i){details[mW][mD][k].splice(i,1);sv();renderModal();}
+function addGym(k){details[mW][mD][k].push({name:"",sets:3,reps:"10"});sv();renderModal();}
+function rmGym(k,i){details[mW][mD][k].splice(i,1);sv();renderModal();}
+function applyDet(){
+  var det=details[mW][mD];
+  // Sync session 1
+  var ice1=det.ice1||[], ice2=det.ice2||[];
+  var gm1=det.gm1||0, gm2=det.gm2||0;
+  if (ice1.length) {
+    plan[mW][mD].m1 = detMins(ice1);
+    plan[mW][mD].i1 = Math.max(1,Math.min(8,Math.round(ice1.reduce(function(a,it){return a+(it.int||1);},0)/ice1.length)));
+  }
+  if (gm1>0) { plan[mW][mD].gm1 = gm1; }
+  if (det.gi1) plan[mW][mD].gi1 = det.gi1;
+  // Sync session 2
+  if (plan[mW][mD].s2) {
+    if (ice2.length) {
+      plan[mW][mD].m2 = detMins(ice2);
+      plan[mW][mD].i2 = Math.max(1,Math.min(8,Math.round(ice2.reduce(function(a,it){return a+(it.int||1);},0)/ice2.length)));
+    }
+    if (gm2>0) plan[mW][mD].gm2 = gm2;
+  }
+  sv();
+  if(mW===cw) render();
+  closeModal();
+}
+
+// ─── PRINT ───────────────────────────────────────────────────────────────────
+function printWeek(){buildPrint(cw,-1);window.print();}
+function printDay(){buildPrint(mW,mD);closeModal();window.print();}
+function buildPrint(w,od){
+  var ph=getPhase(w),tip=getTip(w),days=plan[w],det=details[w],cf=getCF();
+  var dp=od>=0?[od]:[0,1,2,3,4,5,6];
+  var wpts=days.reduce(function(a,d){return a+dPts(d);},0);
+  var wmins=days.reduce(function(a,d){return a+dMins(d);},0);
+  var MAX=1500;
+  var h='<div class="ph"><div><div class="ph-t">Предсезонная подготовка · Неделя '+(w+1)+' — '+ph.n+'</div>';
+  h+='<div class="ph-s">'+tip.q.join(", ")+'</div>';
+  h+='<div class="ph-s">'+tip.ice+' | '+tip.gym+'</div></div>';
+  h+='<div class="ph-r"><div style="font-size:13px;font-weight:700">'+wpts+' баллов</div>';
+  h+='<div>'+wmins+' мин · '+days.filter(function(d){return !d.off;}).length+' тр.дней</div>';
+  if(od>=0&&dates[w]&&dates[w][od])h+='<div style="font-weight:700">'+dates[w][od].full+'</div>';
+  h+='</div></div>';
+  if(od<0){
+    h+='<div style="display:flex;gap:5px;height:60px;align-items:flex-end;padding:6px;border:1px solid #ddd;border-radius:4px;margin-bottom:8px">';
+    days.forEach(function(day,d){var pts=dPts(day),bh=Math.max(1,Math.round(Math.min(pts,MAX)/MAX*50)),col=day.off?"#D3D1C7":ptCol(pts),dc=dCat(pts);
+      h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:50px">';
+      h+='<div style="font-size:7px;font-weight:600;text-align:center;color:'+col+'">'+(pts>0?pts:'')+'</div>';
+      h+='<div style="width:100%;height:'+bh+'px;background:'+col+';border-radius:2px 2px 0 0"></div>';
+      h+='<div style="font-size:7px;text-align:center;margin-top:2px;color:'+col+'">'+DN[d]+(day.off?'°':'')+'</div>';
+      h+='<div style="font-size:6px;text-align:center;color:#888">'+(dc?dc.l:'')+'</div></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="pdays">';
+  dp.forEach(function(d){
+    var day=days[d],pts=dPts(day),mins=dMins(day),dc=dCat(pts),dcf=cf[w+'-'+d]||[];
+    var dl=dates[w]&&dates[w][d]?dates[w][d]:{sh:"",full:""};
+    h+='<div class="pday"><div class="pday-h"><span>'+DN_FULL[d]+(dl.sh?' · '+dl.sh:'')+'</span>'+(dc?'<span style="color:'+dc.c+'">'+pts+'б · '+dc.l+'</span>':'')+'</div>';
+    if(day.off){h+='<div style="font-size:9px;color:#888;font-style:italic">Выходной</div>';}
+    else{
+      var pSess=function(n){
+        var dk=n===1?"dir1":"dir2",gdk=n===1?"gdir1":"gdir2";
+        var iiK=n===1?"ice1":"ice2",giK=n===1?"gym1":"gym2",gmK=n===1?"gm1":"gm2",spK2=n===1?"spec1":"spec2";
+        var dV=day[dk],gdV=day[gdk];if(!dV&&!gdV)return'';
+        var sh='<div class="psect"><div style="font-size:9px;font-weight:700;color:#555;margin-bottom:2px">Занятие '+n+' — Лёд</div>';
+        if(dV)sh+='<div class="pitem" style="color:#185FA5">'+dV+' · '+sInt(day,n)+'б · '+sMins(day,n)+'мин</div>';
+        (det[d][iiK]||[]).forEach(function(it){sh+='<div class="pitem">'+pesc(it.name||'—')+' · '+(ESYS.find(function(x){return x.id===it.esys;})||{l:''}).l+' · '+it.int+'б×'+it.mins+'мин='+(it.int*it.mins)+'б</div>';});
+        var sp2=det[d][spK2]||{};if(sp2.res||sp2.ser>0)sh+='<div class="pitem" style="color:#9C59D1">'+sp2.res+' · '+sp2.ser+' серий</div>';
+        if(gdV){sh+='<div style="font-size:9px;font-weight:700;color:#555;margin:3px 0 2px">Вне льда</div>';
+          sh+='<div class="pitem" style="color:#BA7517">'+gdV+(det[d][gmK]?' · '+det[d][gmK]+'мин':'')+'</div>';
+          (det[d][giK]||[]).forEach(function(it){sh+='<div class="pitem">'+pesc(it.name||'—')+' · '+(it.sets||3)+'×'+(it.reps||10)+'</div>';});}
+        sh+='</div>';return sh;
+      };
+      h+=pSess(1);if(day.s2)h+=pSess(2);
+      h+='<div class="psum"><span>'+mins+'мин · '+pts+'б</span>'+(dc?'<span style="color:'+dc.c+'">'+dc.l+'</span>':'')+'</div>';
+      dcf.forEach(function(c){h+='<div class="pcf">'+(c.lv==="err"?"⚠":"→")+' '+c.msg+'</div>';});
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  document.getElementById('print-out').innerHTML=h;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.PRESEASON_MOUNT = function(){ try{ load(); }catch(e){ console.warn("preseason mount", e); } };
+</script>
+
 </body>
 </html>
