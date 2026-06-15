@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hockey CRM — Enhancement Mockup</title>
+<style>
+/* ===== Design tokens (mirror crm_hockey.html) ===== */
+:root{
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#fbfbfd; --ink:#1d1d1f; --ink2:#6e6e73;
+  --line:#e3e3e6; --accent:#0071e3; --accent2:#0a84ff; --good:#1d9e75; --warn:#ba7517;
+  --bad:#e24b4a; --r:14px; --shadow:0 1px 3px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);
+  color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+h1,h2,h3{margin:0}
+
+/* ===== Layout ===== */
+.sidebar{width:230px;flex:0 0 230px;background:var(--panel);border-right:1px solid var(--line);
+  height:100vh;position:sticky;top:0;display:flex;flex-direction:column;gap:4px;padding:16px 12px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 14px}
+.brand b{font-size:15px}
+.brand small{display:block;color:var(--ink2);font-size:11px;font-weight:500}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0071e3,#0a84ff);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.tab{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;color:var(--ink2);
+  font-weight:600;font-size:13px;cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:.12s}
+.tab:hover{background:var(--panel2);color:var(--ink)}
+.tab.active{background:rgba(0,113,227,.1);color:var(--accent)}
+.tab .num{margin-left:auto;font-size:10px;color:#b5b5ba;font-weight:700}
+main{flex:1;min-width:0;padding:26px clamp(14px,3vw,34px)}
+
+/* ===== Primitives ===== */
+.sec-title{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.sec-title .badge{width:40px;height:40px;flex:0 0 40px;border-radius:11px;
+  background:linear-gradient(135deg,#0071e3,#0a84ff);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:15px;box-shadow:0 4px 12px rgba(0,113,227,.3)}
+.sec-title h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+.sec-title p{color:var(--ink2);font-size:13px;margin-top:2px}
+.sec-title .actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .v{font-size:21px;font-weight:800;line-height:1.1}
+.kpi .l{color:var(--ink2);font-size:12px;font-weight:500;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;transition:.12s}
+.btn:hover{border-color:#c9c9cf;background:var(--panel2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#005ec4}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.danger{color:var(--bad);border-color:#f3c9c9}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;
+  font-weight:700;background:var(--panel2);border:1px solid var(--line);color:var(--ink2)}
+.pill.accent{color:var(--accent);background:rgba(0,113,227,.1);border-color:transparent}
+.pill.good{color:var(--good);background:rgba(29,158,117,.12);border-color:transparent}
+.pill.warn{color:var(--warn);background:rgba(186,117,23,.12);border-color:transparent}
+.muted{color:var(--ink2)}
+.empty{text-align:center;color:var(--ink2);padding:34px 20px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--ink2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+td.num,th.num{text-align:right}
+input,select,textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
+label.fld{display:block;font-size:12px;color:var(--ink2);font-weight:700;margin-bottom:5px}
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{border:none;background:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
+.seg button.active{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* ===== Profile cards ===== */
+.pcard{cursor:pointer;display:flex;flex-direction:column;gap:12px;position:relative}
+.pcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pcard .top{display:flex;gap:12px;align-items:center}
+.pcard .num{width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
+.pcard .kpis{display:flex;gap:8px}
+.pcard .mini{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 8px;text-align:center}
+.pcard .mini b{font-size:15px}
+.pcard .mini span{display:block;font-size:10px;color:var(--ink2);font-weight:600}
+.cdot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 10px}
+
+/* ===== Tabs (profile modal) ===== */
+.tabsrow{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;margin:4px 0 16px;scrollbar-width:thin}
+.tabsrow button{padding:9px 14px;border:none;background:none;color:var(--ink2);font-weight:700;font-size:13px;
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;cursor:pointer}
+.tabsrow button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.evrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:13px}
+.evrow .lbl{flex:1;color:var(--ink2)}
+.bar{flex:0 0 120px;height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;border-radius:4px}
+.evrow .vv{width:28px;text-align:right;font-weight:700}
+dl.bio{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:0}
+dl.bio dt{font-size:11px;color:var(--ink2);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+dl.bio dd{margin:2px 0 0;font-weight:600}
+
+/* ===== Lineup board (Estimated Composition + edit) ===== */
+.rline{display:flex;gap:8px;margin-bottom:8px}
+.rslot{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:var(--panel);
+  cursor:pointer;position:relative;min-height:56px;display:flex;flex-direction:column;gap:3px}
+.rslot .pos{font-size:10px;font-weight:800;color:var(--ink2);text-transform:uppercase}
+.rslot .pl{font-weight:700;font-size:13px}
+.rslot.filled{border-color:var(--accent);background:rgba(0,113,227,.05)}
+.rslot.eligible{border-style:dashed;border-color:var(--accent);background:rgba(0,113,227,.07)}
+.rslot.dragover{border-color:var(--accent);background:rgba(0,113,227,.14)}
+.rslot .x{position:absolute;top:4px;right:6px;border:none;background:none;color:var(--ink2);cursor:pointer;font-size:15px;line-height:1}
+.poolzone{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;min-height:38px;padding:4px;border-radius:9px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;
+  background:var(--panel);cursor:grab;font-size:12px;font-weight:700}
+.pchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pchip.sel{border-color:var(--accent);background:rgba(0,113,227,.1);color:var(--accent)}
+
+/* ===== Ice / Match-Day presentation ===== */
+.ice{background:linear-gradient(180deg,#f0f7ff,#e8f1fb);border:1px solid #d3e3f5;border-radius:14px;padding:16px}
+.ice .hd{font-size:11px;font-weight:800;color:var(--ink2);letter-spacing:.4px;margin:10px 0 6px}
+.ice .hd:first-child{margin-top:0}
+.slot{background:var(--panel);border:1px dashed #b9cfe6;border-radius:10px;padding:8px;min-height:54px;
+  text-align:center;font-size:12px;flex:1}
+.slot.filled{border-style:solid;border-color:var(--accent);background:#fff}
+.slot .pos{font-size:10px;color:var(--ink2);font-weight:800;text-transform:uppercase}
+.slot .nm{font-weight:700;font-size:13px;margin-top:3px}
+.gkrow{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ===== Modal ===== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;
+  padding:28px 16px;z-index:1000;overflow:auto}
+.modal.open{display:flex}
+.modal .box{background:var(--panel);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.3);width:100%;max-width:840px}
+.modal .head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--panel);border-radius:18px 18px 0 0;z-index:2}
+.modal .head h2{font-size:17px}
+.modal .head .x{margin-left:auto;width:32px;height:32px;border-radius:9px;border:none;background:var(--panel2);
+  font-size:18px;color:var(--ink2);cursor:pointer}
+.modal .body{padding:20px}
+.banner{background:#fff8e6;border:1px solid #f0e0a8;color:#7a5e12;border-radius:10px;padding:10px 14px;font-size:12.5px;margin-bottom:18px}
+
+/* ===== Responsive ===== */
+@media (max-width:760px){
+  body{flex-direction:column}
+  .sidebar{width:auto;flex:none;height:auto;position:sticky;top:0;flex-direction:row;align-items:center;
+    overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);z-index:5}
+  .brand{padding:6px 8px;flex:0 0 auto}
+  .tab{width:auto;flex:0 0 auto}
+  .tab .num{display:none}
+  main{padding:18px 14px}
+}
+</style>
+</head>
+<body>
+<nav class="sidebar" aria-label="Разделы">
+  <div class="brand"><span class="logo">H</span><div><b>Hockey CRM</b><small>Enhancement mockup</small></div></div>
+  <button class="tab" data-route="profiles">Игроки <span class="num">02</span></button>
+  <button class="tab" data-route="scout">Скаутинг · состав <span class="num">03</span></button>
+  <button class="tab" data-route="composition">Состав · Матч-день <span class="num">04</span></button>
+</nav>
+<main id="app" tabindex="-1"></main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="box">
+    <div class="head"><h2 id="modalTitle">—</h2><button class="x" aria-label="Закрыть" onclick="APP.closeModal()">&times;</button></div>
+    <div class="body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================ helpers */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function parseLocalDate(s){if(!s)return null;const m=String(s).split('-').map(Number);if(m.length<3||!m[0])return null;return new Date(m[0],m[1]-1,m[2]);}
+function fmtDate(s){const d=parseLocalDate(s);if(!d)return '—';return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});}
+function ageFromDob(dob){const d=parseLocalDate(dob);if(!d)return null;const t=new Date();let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;return a;}
+function monthsUntil(s){const d=parseLocalDate(s);if(!d)return null;return (d-new Date())/(1000*60*60*24*30.44);}
+/* contract-expiry color gradation — analogous to the Scout block grade tiers */
+function contractTier(exp){const m=monthsUntil(exp);
+  if(m==null)return{key:'none',color:'#c9c9cf',label:'Без даты'};
+  if(m<0)    return{key:'expired',color:'#7a1f1f',label:'Истёк'};
+  if(m<=3)   return{key:'urgent',color:'#e24b4a',label:'< 3 мес'};
+  if(m<=12)  return{key:'soon',color:'#ba7517',label:'< 1 года'};
+  if(m<=24)  return{key:'mid',color:'#0071e3',label:'1–2 года'};
+  return           {key:'long',color:'#1d9e75',label:'> 2 лет'};}
+function hex2rgba(h,a){const n=parseInt(h.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
+function evColor(v){if(v>=4)return '#1d9e75';if(v>=3)return '#0071e3';if(v>=2)return '#ba7517';return '#e24b4a';}
+function avg(a){a=a.filter(x=>typeof x==='number');return a.length?a.reduce((s,x)=>s+x,0)/a.length:0;}
+function round1(n){return Math.round(n*10)/10;}
+function surname(p){return (p.name||'').split(' ')[0];}
+
+const POS_FULL={C:'Центр',LW:'Лев. нап.',RW:'Прав. нап.',D:'Защитник',G:'Вратарь'};
+const POS_LABEL={C:'C',LW:'LW',RW:'RW',D:'D',G:'G'};
+function posGroup(p){return p==='G'?'G':(p==='D'?'D':'F');}
+const AXES={F:['Катание','Бросок','IQ','Борьба','Атака'],D:['Катание','Оборона','IQ','Первый пас','Игра в теле'],G:['Реакция','Позиция','Отскоки','Психика','Игра клюшкой']};
+const GRADE_TIERS=[
+  {key:'green',color:'#22c55e',label:'Зелёный',meaning:'ТОП-5 / ключевое звено'},
+  {key:'purple',color:'#8b5cf6',label:'Фиолетовый',meaning:'Игроки 5–10 состава'},
+  {key:'red',color:'#ef4444',label:'Красный',meaning:'Скорость / габариты'},
+  {key:'yellow',color:'#eab308',label:'Жёлтый',meaning:'Ролевой / меньшинство'},
+  {key:'white',color:'#e5e7eb',label:'Белый',meaning:'Глубина состава'}];
+function gradeTier(k){return GRADE_TIERS.find(t=>t.key===k)||null;}
+function gradeChip(k){const t=gradeTier(k);return t?`<span class="pill" style="border-color:transparent;background:${hex2rgba(t.color,.16)};color:${t.color}"><span class="cdot" style="background:${t.color}"></span>${t.label}</span>`:'';}
+
+/* compact dependency-free radar (replaces Chart.js in the mockup) */
+function radarSVG(group,vals){const axes=AXES[group]||AXES.F,N=axes.length,cx=110,cy=104,R=74,max=5;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/N;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  let grid='';for(let g=1;g<=4;g++){const pts=axes.map((_,i)=>pt(i,R*g/4).join(',')).join(' ');grid+=`<polygon points="${pts}" fill="none" stroke="#e3e3e6"/>`;}
+  let spokes='',labels='';axes.forEach((a,i)=>{const e=pt(i,R);spokes+=`<line x1="${cx}" y1="${cy}" x2="${e[0]}" y2="${e[1]}" stroke="#e3e3e6"/>`;const l=pt(i,R+15);labels+=`<text x="${l[0]}" y="${l[1]}" font-size="9" fill="#6e6e73" text-anchor="middle" dominant-baseline="middle">${esc(a)}</text>`;});
+  const poly=vals.map((v,i)=>pt(i,R*Math.max(0,Math.min(max,v))/max).join(',')).join(' ');
+  return `<svg viewBox="0 0 220 208" width="100%" style="max-width:250px;display:block;margin:auto" role="img" aria-label="Радар оценки">${grid}${spokes}<polygon points="${poly}" fill="rgba(0,113,227,.16)" stroke="#0071e3" stroke-width="2"/>${labels}</svg>`;}
+
+/* ============================================================ seed data */
+const TEAM=[
+  {id:'p1',number:31,name:'Орлов Илья',pos:'G',shot:'L',dob:'1997-03-12',h:188,w:84,contract:'Односторонний',contractExpiry:'2026-08-30',agent:'А. Гросс',note:'Основной вратарь. Силён в концовках матчей.',status:'active',cats:[4.5,4.2,3.8,4.6,3.2],
+    stats:{gp:38,g:0,a:2,pm:0,rating:7.8},
+    matches:[{date:'2026-04-02',opp:'Стальные Лисы',rating:8.4,g:0,a:0},{date:'2026-03-26',opp:'Северный Шторм',rating:7.1,g:0,a:1}],
+    medical:[{date:'2025-11-10',diagnosis:'Растяжение паха',status:'Восстановился'}],
+    physical:[{date:'2026-05-01',results:{'Cooper test (м)':2860,'Планка (сек)':150}}],
+    psycho:[{date:'2026-04-15',validity:92,note:'Высокая стрессоустойчивость',scores:{'Концентрация':4.6,'Стрессоустойчивость':4.4,'Лидерство':3.9}}]},
+  {id:'p2',number:4,name:'Соколов Артём',pos:'D',shot:'L',dob:'1999-07-21',h:191,w:92,contract:'Двусторонний',contractExpiry:'2027-05-01',agent:'М. Дин',note:'Габаритный защитник оборонительного плана.',status:'active',cats:[3.6,4.4,3.9,3.4,4.5],
+    stats:{gp:40,g:3,a:11,pm:14,rating:7.2},
+    matches:[{date:'2026-04-02',opp:'Стальные Лисы',rating:7.6,g:0,a:1},{date:'2026-03-26',opp:'Северный Шторм',rating:6.8,g:1,a:0}],
+    medical:[],physical:[{date:'2026-05-01',results:{'Cooper test (м)':2650,'Подтягивания':12}}],
+    psycho:[{date:'2026-04-15',validity:84,note:'Дисциплинирован',scores:{'Концентрация':4.1,'Стрессоустойчивость':3.8,'Лидерство':3.2}}]},
+  {id:'p3',number:7,name:'Морозов Данил',pos:'D',shot:'R',dob:'2001-01-05',h:185,w:86,contract:'Односторонний',contractExpiry:'2028-04-01',agent:'—',note:'Подвижный защитник, хорош в первом пасе.',status:'limited',cats:[4.3,3.7,4.1,4.4,3.3],
+    stats:{gp:36,g:5,a:18,pm:9,rating:7.5},
+    matches:[{date:'2026-04-02',opp:'Стальные Лисы',rating:8.0,g:1,a:1}],
+    medical:[{date:'2026-05-20',diagnosis:'Лёгкое сотрясение',status:'Ограничен'}],physical:[],psycho:[]},
+  {id:'p4',number:9,name:'Волков Кирилл',pos:'C',shot:'L',dob:'1996-11-02',h:183,w:85,contract:'Односторонний',contractExpiry:'2029-05-15',agent:'А. Гросс',note:'Капитан. Центр первого звена.',status:'active',cats:[4.4,4.3,4.7,4.2,4.6],
+    stats:{gp:41,g:22,a:34,pm:21,rating:8.6},
+    matches:[{date:'2026-04-02',opp:'Стальные Лисы',rating:9.1,g:2,a:1},{date:'2026-03-26',opp:'Северный Шторм',rating:8.2,g:1,a:2}],
+    medical:[],physical:[{date:'2026-05-01',results:{'Спринт 30м (сек)':4.05,'Прыжок в длину (см)':255}}],
+    psycho:[{date:'2026-04-15',validity:95,note:'Ярко выраженный лидер',scores:{'Концентрация':4.8,'Стрессоустойчивость':4.6,'Лидерство':4.9}}]},
+  {id:'p5',number:17,name:'Петров Максим',pos:'LW',shot:'R',dob:'2003-08-19',h:179,w:78,contract:'Молодёжный',contractExpiry:'2026-05-31',agent:'—',note:'Скоростной молодой крайний. Контракт истёк — требуется продление.',status:'active',cats:[4.6,3.9,3.4,3.6,4.1],
+    stats:{gp:33,g:12,a:9,pm:4,rating:6.9},
+    matches:[{date:'2026-04-02',opp:'Стальные Лисы',rating:7.3,g:1,a:0}],medical:[],physical:[],psycho:[]},
+  {id:'p6',number:22,name:'Зайцев Никита',pos:'RW',shot:'R',dob:'2000-02-14',h:182,w:83,contract:'Двусторонний',contractExpiry:'2027-12-20',agent:'М. Дин',note:'Цепкий крайний нападающий, полезен в меньшинстве.',status:'active',cats:[4.0,4.1,3.8,4.3,3.9],
+    stats:{gp:39,g:15,a:17,pm:11,rating:7.4},
+    matches:[{date:'2026-03-26',opp:'Северный Шторм',rating:7.0,g:0,a:1}],medical:[],physical:[],psycho:[]},
+  {id:'p7',number:11,name:'Новиков Глеб',pos:'C',shot:'L',dob:'2002-09-30',h:180,w:80,contract:'Просмотровый',contractExpiry:'',agent:'—',note:'На просмотре. Дата контракта не определена.',status:'active',cats:[3.8,3.6,3.9,3.7,3.5],
+    stats:{gp:14,g:3,a:5,pm:-2,rating:6.2},matches:[],medical:[],physical:[],psycho:[]}
+];
+const CANDS=[
+  {id:'c1',name:'Лебедев Роман',pos:'C',grade:'green',cats:[4.6,4.4,4.7,4.3,4.5]},
+  {id:'c2',name:'Кузнецов Егор',pos:'LW',grade:'purple',cats:[4.5,4.0,3.9,3.8,4.2]},
+  {id:'c3',name:'Сорокин Павел',pos:'RW',grade:'red',cats:[4.8,3.6,3.3,3.5,3.9]},
+  {id:'c4',name:'Михайлов Тимур',pos:'C',grade:'yellow',cats:[3.7,3.5,3.8,4.0,3.4]},
+  {id:'c5',name:'Громов Артур',pos:'LW',grade:'white',cats:[3.4,3.3,3.6,3.5,3.2]},
+  {id:'c6',name:'Беляев Степан',pos:'D',grade:'green',cats:[4.4,4.6,4.2,4.3,4.5]},
+  {id:'c7',name:'Фомин Андрей',pos:'D',grade:'purple',cats:[4.0,4.2,3.9,3.7,4.1]},
+  {id:'c8',name:'Карпов Денис',pos:'D',grade:'red',cats:[4.5,3.8,3.4,3.6,4.4]},
+  {id:'c9',name:'Тарасов Лев',pos:'G',grade:'green',cats:[4.7,4.5,4.0,4.6,3.7]},
+  {id:'c10',name:'Жуков Марк',pos:'G',grade:'yellow',cats:[3.9,3.8,3.7,4.0,3.3]}
+];
+function teamById(id){return TEAM.find(p=>p.id===id);}
+function candById(id){return CANDS.find(p=>p.id===id);}
+function overall(p){return round1(avg(p.cats));}
+
+/* ============================================================ lineup board (shared) */
+const SLOTS={
+  fwd:[1,2,3,4],fwdPos:['L','C','R'],def:[1,2,3,4],defPos:['L','R'],gk:['g1','g2','g3'],
+  fKeys(){const a=[];this.fwd.forEach(n=>this.fwdPos.forEach(p=>a.push('f'+n+p)));return a;},
+  dKeys(){const a=[];this.def.forEach(n=>this.defPos.forEach(p=>a.push('d'+n+p)));return a;},
+  label(k){if(k[0]==='g')return 'Вратарь '+k[1];const ln=k[1],ps=k[2];
+    const fp={L:'ЛН',C:'Ц',R:'ПН'},dp={L:'ЛЗ',R:'ПЗ'};
+    return (k[0]==='f'?'Звено '+ln+' · ':'Пара '+ln+' · ')+((k[0]==='f'?fp:dp)[ps]||ps);}
+};
+function Board(opts){return{
+  key:opts.key,place:opts.place||{},sel:null,drag:null,getEntities:opts.getEntities,getMeta:opts.getMeta||(()=>''),
+  byId(id){return this.getEntities().find(e=>e.id===id)||null;},
+  eligible(slot,id){const e=this.byId(id);if(!e)return false;if(slot[0]==='g')return e.pos==='G';if(slot[0]==='d')return e.pos==='D';return e.pos!=='G';},
+  assign(slot,id){if(id){for(const k in this.place){if(this.place[k]===id&&k!==slot)delete this.place[k];}this.place[slot]=id;}else{delete this.place[slot];}this.sel=null;this.render();},
+  slotClick(slot){const cur=this.place[slot];if(this.sel){if(this.sel===cur){this.sel=null;this.render();return;}if(this.eligible(slot,this.sel)){this.assign(slot,this.sel);}else{toast('Игрок не подходит на эту позицию');}return;}if(cur){this.sel=cur;this.render();}},
+  poolClick(id){this.sel=(this.sel===id?null:id);this.render();},
+  dragStart(e,id){this.drag=id;try{e.dataTransfer.setData('text/plain',id);e.dataTransfer.effectAllowed='move';}catch(_){}},
+  slotDrop(e,slot){e.preventDefault();const id=this.drag;this.drag=null;e.currentTarget.classList.remove('dragover');if(!id)return;if(!this.eligible(slot,id)){toast('Игрок не подходит на эту позицию');return;}this.assign(slot,id);},
+  poolDrop(e){e.preventDefault();const id=this.drag;this.drag=null;if(!id)return;for(const k in this.place){if(this.place[k]===id)delete this.place[k];}this.render();},
+  slotHtml(slot){const id=this.place[slot];const p=id?this.byId(id):null;const elig=this.sel&&!id&&this.eligible(slot,this.sel);const picked=this.sel&&id===this.sel;
+    return `<div class="rslot${p?' filled':''}${elig?' eligible':''}${picked?' picked':''}" role="button" tabindex="0" aria-label="${esc(SLOTS.label(slot))}"
+      ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')"
+      ondrop="APP.boards.${this.key}.slotDrop(event,'${slot}')" onclick="APP.boards.${this.key}.slotClick('${slot}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();APP.boards.${this.key}.slotClick('${slot}')}"
+      ${p?`draggable="true" ondragstart="APP.boards.${this.key}.dragStart(event,'${id}')"`:''}>
+      <span class="pos">${esc(SLOTS.label(slot))}</span>
+      ${p?`<span class="pl">${esc(surname(p))} <span class="muted" style="font-weight:600">${POS_LABEL[p.pos]||''}</span></span>
+        <button class="x" aria-label="Убрать" onclick="event.stopPropagation();APP.boards.${this.key}.assign('${slot}','')">&times;</button>`
+        :`<span class="pl muted">—</span>`}</div>`;},
+  poolGroup(title,filt){const used=Object.values(this.place);const list=this.getEntities().filter(e=>filt(e)&&used.indexOf(e.id)<0).sort((a,b)=>overall(b)-overall(a));
+    return `<div style="margin-bottom:8px"><div class="muted" style="font-size:11px;font-weight:800;margin-bottom:2px">${title}</div>
+      <div class="poolzone" ondragover="event.preventDefault()" ondrop="APP.boards.${this.key}.poolDrop(event)">
+      ${list.length?list.map(e=>`<span class="pchip${this.sel===e.id?' sel':''}" draggable="true" role="button" tabindex="0"
+        ondragstart="APP.boards.${this.key}.dragStart(event,'${e.id}')" onclick="APP.boards.${this.key}.poolClick('${e.id}')"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();APP.boards.${this.key}.poolClick('${e.id}')}">
+        ${this.getMeta(e)}${esc(surname(e))} <span class="muted">${POS_LABEL[e.pos]||''} · ${overall(e)}</span></span>`).join(''):'<span class="muted" style="font-size:12px">— все размещены —</span>'}</div></div>`;},
+  render(){const host=document.getElementById('board_'+this.key);if(!host)return;
+    const fwd=`<div class="card"><b>Нападение</b><div style="margin-top:10px">${SLOTS.fwd.map(n=>`<div class="rline">${SLOTS.fwdPos.map(ps=>this.slotHtml('f'+n+ps)).join('')}</div>`).join('')}</div></div>`;
+    const def=`<div class="card"><b>Защита и вратари</b><div style="margin-top:10px">${SLOTS.def.map(n=>`<div class="rline">${SLOTS.defPos.map(ps=>this.slotHtml('d'+n+ps)).join('')}</div>`).join('')}
+      <div class="rline">${SLOTS.gk.map(g=>this.slotHtml(g)).join('')}</div></div></div>`;
+    const pool=`<div class="card" style="margin-top:14px"><b>Доступные ${this.key==='scout'?'кандидаты':'игроки'}</b>
+      <span class="muted" style="font-size:12px"> — перетащите на позицию или кликните, затем выберите ячейку</span>
+      ${this.poolGroup('Нападающие',e=>e.pos!=='G'&&e.pos!=='D')}${this.poolGroup('Защитники',e=>e.pos==='D')}${this.poolGroup('Вратари',e=>e.pos==='G')}</div>`;
+    host.innerHTML=`<div class="grid g2">${fwd}${def}</div>${pool}`;}
+};}
+
+/* read-only Match-Day presentation */
+function iceHtml(place,resolve){
+  const rowF=n=>{const ks=['f'+n+'L','f'+n+'C','f'+n+'R'];if(!ks.some(k=>place[k]))return '';return `<div class="rline">${ks.map(k=>{const p=place[k]?resolve(place[k]):null;return `<div class="slot ${p?'filled':''}"><div class="pos">${esc(SLOTS.label(k))}</div><div class="nm">${p?esc(surname(p)):'—'}</div></div>`;}).join('')}</div>`;};
+  const rowD=n=>{const ks=['d'+n+'L','d'+n+'R'];if(!ks.some(k=>place[k]))return '';return `<div class="rline">${ks.map(k=>{const p=place[k]?resolve(place[k]):null;return `<div class="slot ${p?'filled':''}"><div class="pos">${esc(SLOTS.label(k))}</div><div class="nm">${p?esc(surname(p)):'—'}</div></div>`;}).join('')}</div>`;};
+  const gk=SLOTS.gk.map(g=>{const p=place[g]?resolve(place[g]):null;return p?`<span class="pill accent">${esc(surname(p))}</span>`:'';}).filter(Boolean).join(' ');
+  return `<div class="ice"><div class="hd">Нападение</div>${[1,2,3,4].map(rowF).join('')}
+    <div class="hd">Защита</div>${[1,2,3,4].map(rowD).join('')}
+    ${gk?`<div class="hd">Вратари</div><div class="gkrow">${gk}</div>`:''}</div>`;
+}
+
+/* ============================================================ APP / routing */
+const APP={
+  route:'profiles',
+  boards:{
+    scout:Board({key:'scout',place:{f1L:'c2',f1C:'c1',f1R:'c3',d1L:'c6',d1R:'c8',g1:'c9'},getEntities:()=>CANDS,getMeta:e=>gradeChip(e.grade)}),
+    team:Board({key:'team',place:{f1L:'p5',f1C:'p4',f1R:'p6',f2C:'p7',d1L:'p2',d1R:'p3',g1:'p1'},getEntities:()=>TEAM})
+  },
+  compView:'day',
+  go(r){this.route=r;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.route===r));this.render();},
+  render(){const el=document.getElementById('app');
+    if(this.route==='profiles')this.renderProfiles(el);
+    else if(this.route==='scout')this.renderScout(el);
+    else this.renderComposition(el);},
+
+  /* ---------- Block 1 + 2: Profiles (card grid) ---------- */
+  renderProfiles(el){
+    const cards=TEAM.map(p=>{const t=contractTier(p.contractExpiry);const a=ageFromDob(p.dob);
+      return `<article class="card pcard" style="border-left:3px solid ${t.color}" role="button" tabindex="0"
+        aria-label="Профиль: ${esc(p.name)}" onclick="APP.openProfile('${p.id}')"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();APP.openProfile('${p.id}')}">
+        <div class="top"><div class="num">${p.number}</div>
+          <div style="min-width:0;flex:1"><b>${esc(p.name)}</b>
+            <div class="muted" style="font-size:12px">${POS_FULL[p.pos]||''}${a!=null?' · '+a+' лет':''} · хват ${p.shot}</div></div>
+        </div>
+        <div class="row" style="gap:6px">
+          <span class="pill" style="border-color:transparent;background:${hex2rgba(t.color,.14)};color:${t.color==='#c9c9cf'?'#6e6e73':t.color}">
+            <span class="cdot" style="background:${t.color}"></span>Контракт: ${t.label}</span>
+          ${p.contract?`<span class="pill">${esc(p.contract)}</span>`:''}
+        </div>
+        <div class="kpis">
+          <div class="mini"><b>${p.stats.gp}</b><span>Матчи</span></div>
+          <div class="mini"><b>${p.stats.g+p.stats.a}</b><span>Очки</span></div>
+          <div class="mini"><b>${p.stats.rating}</b><span>Рейтинг</span></div>
+        </div></article>`;}).join('');
+    el.innerHTML=`<header class="sec-title"><div class="badge">02</div>
+        <div><h1>Игроки команды</h1><p>Профили в виде карточек · цвет рамки — срок контракта</p></div>
+        <div class="actions"><button class="btn primary" onclick="APP.editProfile()">+ Игрок</button></div></header>
+      <div class="banner"><b>UI-прототип.</b> Демонстрирует блоки 1–2: создание профиля (дата рождения, дата окончания
+        контракта, цветовая градация, без поля «Статус») и карточный просмотр с 7 вкладками. Кликните карточку.</div>
+      <div class="grid g3">${cards}</div>`;
+  },
+  openProfile(id,tab){
+    const p=teamById(id);if(!p)return;tab=tab||'bio';
+    const TABS=[['bio','BIO'],['stats','Статистика'],['matches','Матчи'],['medical','Медицина'],['physical','Физтесты'],['psycho','Психопрофиль'],['scout','Скаут-оценка']];
+    const t=contractTier(p.contractExpiry),a=ageFromDob(p.dob),grp=posGroup(p.pos),ov=overall(p);
+    const head=`<div class="row" style="align-items:center;gap:14px;margin-bottom:6px">
+      <div class="num" style="width:50px;height:50px;border-radius:13px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${p.number}</div>
+      <div style="flex:1;min-width:160px"><h2 style="font-size:20px">${esc(p.name)}</h2>
+        <div class="muted">${POS_FULL[p.pos]||''}${a!=null?' · '+a+' лет':''} · хват ${p.shot}</div></div>
+      <span class="pill" style="border-color:transparent;background:${hex2rgba(t.color,.14)};color:${t.color==='#c9c9cf'?'#6e6e73':t.color}"><span class="cdot" style="background:${t.color}"></span>Контракт: ${t.label}</span>
+    </div>
+    <div class="tabsrow" role="tablist" aria-label="Разделы профиля">
+      ${TABS.map(([k,l])=>`<button role="tab" id="tab_${k}" aria-controls="panel_${k}" aria-selected="${tab===k?'true':'false'}" onclick="APP.openProfile('${id}','${k}')">${l}</button>`).join('')}
+    </div>`;
+    let body='';
+    if(tab==='bio'){
+      const row=(dt,dd)=>`<div><dt>${dt}</dt><dd>${dd}</dd></div>`;
+      body=`<dl class="bio">
+        ${row('Дата рождения',fmtDate(p.dob)+(a!=null?` · ${a} лет`:''))}
+        ${row('Рост / вес',`${p.h} см · ${p.w} кг`)}
+        ${row('Хват',p.shot==='L'?'Левый':'Правый')}
+        ${row('Тип контракта',esc(p.contract||'—'))}
+        ${row('Контракт до',`${fmtDate(p.contractExpiry)} <span class="pill" style="margin-left:6px;border-color:transparent;background:${hex2rgba(t.color,.14)};color:${t.color==='#c9c9cf'?'#6e6e73':t.color}">${t.label}</span>`)}
+        ${row('Агент',esc(p.agent||'—'))}
+      </dl><div class="card" style="margin-top:14px;background:var(--panel2)"><b>Заметка</b><p style="margin:6px 0 0">${esc(p.note||'—')}</p></div>`;
+    } else if(tab==='stats'){
+      const s=p.stats;body=`<div class="grid g4">
+        ${[['Матчи',s.gp],['Голы',s.g],['Передачи',s.a],['Очки',s.g+s.a],['+/−',(s.pm>=0?'+':'')+s.pm],['Ср. рейтинг',s.rating]].map(([l,v])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`;
+    } else if(tab==='matches'){
+      body=p.matches.length?`<div class="card" style="padding:0"><table><thead><tr><th>Дата</th><th>Соперник</th><th class="num">Г</th><th class="num">П</th><th class="num">Оценка</th></tr></thead><tbody>
+        ${p.matches.map(m=>`<tr><td>${fmtDate(m.date)}</td><td><b>${esc(m.opp)}</b></td><td class="num">${m.g}</td><td class="num">${m.a}</td><td class="num"><b>${m.rating}</b></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty card">Нет сыгранных матчей.</div>';
+    } else if(tab==='medical'){
+      body=p.medical.length?`<div class="card" style="padding:0"><table><thead><tr><th>Дата</th><th>Диагноз</th><th>Статус</th></tr></thead><tbody>
+        ${p.medical.map(m=>`<tr><td>${fmtDate(m.date)}</td><td><b>${esc(m.diagnosis)}</b></td><td><span class="pill">${esc(m.status)}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty card">Медицинских записей нет — игрок здоров.</div>';
+    } else if(tab==='physical'){
+      body=p.physical.length?p.physical.map(r=>`<div class="card" style="margin-bottom:10px"><b>${fmtDate(r.date)}</b>
+        <div class="grid g3" style="margin-top:8px">${Object.entries(r.results).map(([k,v])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${esc(k)}</div></div>`).join('')}</div></div>`).join(''):'<div class="empty card">Нет данных физического тестирования.</div>';
+    } else if(tab==='psycho'){
+      body=p.psycho.length?p.psycho.map(r=>`<div class="card"><div class="row" style="align-items:center"><b>Оценка ${fmtDate(r.date)}</b>
+        <span class="pill ${r.validity>=80?'good':'warn'}" style="margin-left:auto">Достоверность ${r.validity}%</span></div>
+        <div style="margin-top:10px">${Object.entries(r.scores).map(([k,v])=>`<div class="evrow"><span class="lbl">${esc(k)}</span><span class="bar"><i style="width:${v/5*100}%;background:${evColor(v)}"></i></span><span class="vv">${v}</span></div>`).join('')}</div>
+        <p class="muted" style="margin-top:8px">${esc(r.note)}</p></div>`).join(''):'<div class="empty card">Психологический профиль не заполнен.</div>';
+    } else { /* scout */
+      body=`<div class="grid g2">
+        <div class="card"><div class="row" style="align-items:center"><b>Профиль по категориям</b><span style="margin-left:auto;font-size:22px;font-weight:800">${ov}<span class="muted" style="font-size:11px">&nbsp;/5</span></span></div>${radarSVG(grp,p.cats)}</div>
+        <div class="card"><b>Оценки</b><div style="margin-top:10px">${AXES[grp].map((ax,i)=>`<div class="evrow"><span class="lbl">${esc(ax)}</span><span class="bar"><i style="width:${p.cats[i]/5*100}%;background:${evColor(p.cats[i])}"></i></span><span class="vv">${round1(p.cats[i])}</span></div>`).join('')}</div></div>
+      </div>`;
+    }
+    this.modal(esc(p.name),head+`<div id="panel_${tab}" role="tabpanel" aria-labelledby="tab_${tab}">${body}</div>`);
+  },
+  editProfile(){ /* Block 1: creation form — DOB + contract expiry (live tier) + NO status */
+    const body=`<div class="row">
+        <div style="flex:1;min-width:120px"><label class="fld">Фамилия Имя</label><input id="f_name" placeholder="Напр. Иванов Иван"></div>
+        <div style="flex:0 0 90px"><label class="fld">Номер</label><input id="f_num" type="number"></div>
+        <div style="flex:0 0 120px"><label class="fld">Позиция</label><select id="f_pos">${Object.keys(POS_FULL).map(k=>`<option value="${k}">${POS_FULL[k]}</option>`).join('')}</select></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1;min-width:140px"><label class="fld">Дата рождения</label>
+          <input id="f_dob" type="date" oninput="document.getElementById('f_age').textContent=(function(v){var a=ageFromDob(v);return a==null?'—':a+' лет';})(this.value)"></div>
+        <div style="flex:0 0 110px"><label class="fld">Возраст</label><div class="pill" id="f_age" style="height:36px">—</div></div>
+        <div style="flex:1;min-width:160px"><label class="fld">Контракт до</label>
+          <input id="f_exp" type="date" oninput="(function(t){var d=document.getElementById('f_expChip');d.style.background=hex2rgba(t.color,.16);d.style.color=t.color==='#c9c9cf'?'#6e6e73':t.color;d.innerHTML='<span class=cdot style=background:'+t.color+'></span>'+t.label;})(contractTier(this.value))"></div>
+        <div style="flex:0 0 130px"><label class="fld">Градация</label><span class="pill" id="f_expChip" style="height:36px;border-color:transparent;background:#eee;color:#6e6e73">Без даты</span></div>
+      </div>
+      <div style="margin-top:10px"><label class="fld">Заметка</label><textarea id="f_note" rows="2"></textarea></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">Поле «Статус» намеренно отсутствует: оно управляется блоком «Медицина» (инвариант §2.6.2), а не вводится вручную в профиле.</p>
+      <div class="row" style="margin-top:16px"><button class="btn primary" onclick="APP.saveProfile()">Сохранить</button><button class="btn" onclick="APP.closeModal()">Отмена</button></div>`;
+    this.modal('Новый игрок',body);
+  },
+  saveProfile(){
+    const name=(document.getElementById('f_name').value||'').trim();if(!name){toast('Укажите имя');return;}
+    const p={id:'p'+(TEAM.length+1),name,number:+document.getElementById('f_num').value||0,pos:document.getElementById('f_pos').value,
+      shot:'L',dob:document.getElementById('f_dob').value,contractExpiry:document.getElementById('f_exp').value,
+      contract:'Двусторонний',agent:'—',note:document.getElementById('f_note').value,status:'active',h:182,w:84,
+      cats:[3,3,3,3,3],stats:{gp:0,g:0,a:0,pm:0,rating:0},matches:[],medical:[],physical:[],psycho:[]};
+    TEAM.push(p);this.closeModal();this.render();toast('Игрок добавлен');
+  },
+
+  /* ---------- Block 3: Scout — Estimated Composition ---------- */
+  renderScout(el){
+    el.innerHTML=`<header class="sec-title"><div class="badge">03</div>
+        <div><h1>Скаутинг — Предполагаемый состав</h1><p>Расстановка кандидатов по позициям (отдельно от основной команды)</p></div></header>
+      <div class="seg" style="margin-bottom:14px" role="tablist">
+        <button>Кандидаты</button><button>Градация</button><button>Приоритеты</button><button>Сравнение</button>
+        <button class="active" aria-current="true">Предполагаемый состав</button></div>
+      <div class="banner"><b>Блок 3.</b> Новая вкладка «Предполагаемый состав»: назначайте кандидатов на позиции формации.
+        Данные хранятся отдельно (<code>scoutLineup</code>) и не затрагивают реальный состав команды.
+        <i>Референс-скриншот не был предоставлен — макет повторяет существующую доску состава.</i></div>
+      <div id="board_scout"></div>`;
+    this.boards.scout.render();
+  },
+
+  /* ---------- Block 4: Composition (Match-Day layout) ---------- */
+  renderComposition(el){
+    const v=this.compView;
+    el.innerHTML=`<header class="sec-title"><div class="badge">04</div>
+        <div><h1>Состав</h1><p>Презентация в стиле вкладки «Матч-день» · сортировка по позициям</p></div>
+        <div class="actions"><div class="seg" role="tablist">
+          <button class="${v==='day'?'active':''}" onclick="APP.setComp('day')">Матч-день</button>
+          <button class="${v==='edit'?'active':''}" onclick="APP.setComp('edit')">Редактировать</button>
+        </div></div></header>
+      <div class="banner"><b>Блок 4.</b> Отображение состава повторяет дизайн вкладки «Матч-день» (площадка <code>.ice</code>:
+        Нападение → Защита → Вратари). «Редактировать» открывает интерактивную доску.</div>`;
+    if(v==='day'){
+      const box=document.createElement('div');box.className='grid g2';
+      box.innerHTML=`<div class="card"><b>Состав в день матча</b><p class="muted" style="font-size:12px;margin:4px 0 0">Только просмотр · отсортировано по ролям</p>
+          ${iceHtml(this.boards.team.place,teamById)}</div>
+        <div class="card"><b>Сводка</b>
+          <div class="grid g2" style="margin-top:10px">
+            <div class="kpi"><div class="v">${Object.keys(this.boards.team.place).filter(k=>k[0]==='f').length}</div><div class="l">Нападающие</div></div>
+            <div class="kpi"><div class="v">${Object.keys(this.boards.team.place).filter(k=>k[0]==='d').length}</div><div class="l">Защитники</div></div>
+            <div class="kpi"><div class="v">${Object.keys(this.boards.team.place).filter(k=>k[0]==='g').length}</div><div class="l">Вратари</div></div>
+            <div class="kpi"><div class="v">${Object.keys(this.boards.team.place).length}</div><div class="l">Всего в составе</div></div>
+          </div></div>`;
+      el.appendChild(box);
+    } else {
+      const host=document.createElement('div');host.id='board_team';el.appendChild(host);this.boards.team.render();
+    }
+  },
+  setComp(v){this.compView=v;this.render();},
+
+  /* ---------- modal infra ---------- */
+  modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;
+    const m=document.getElementById('modal');m.classList.add('open');const box=m.querySelector('.box');if(box){box.setAttribute('tabindex','-1');box.focus();}},
+  closeModal(){document.getElementById('modal').classList.remove('open');}
+};
+function toast(msg){const t=document.createElement('div');t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:10px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:3000;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+
+/* close modal on backdrop click + Esc */
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')APP.closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')APP.closeModal();});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>APP.go(b.dataset.route)));
+window.APP=APP; /* expose for inline handlers */
+APP.go('profiles');
+</script>
+</body>
+</html>
